@@ -14,6 +14,11 @@ from sitehost import HERE
 def main():
     made = setup()
     print("render_start: created", ", ".join(made) or "nothing (already there)")
+    if os.environ.get("DEMO_MODE", "1") == "1":
+        # Never take real money on the demo (its data can be erased): hide every Pay button.
+        for env_file in sorted((HERE / "env").glob("*.env")):
+            set_env_values(env_file, {"PAYMENT_LINK": ""})
+        print("render_start: demo mode, payment links switched off")
     url = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
     if url:
         set_env_values(HERE / "site.env", {"BASE_URL": url})

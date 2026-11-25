@@ -99,7 +99,8 @@
         "TRUST_PROXY": "1",
         "AI_MOCK": "1",
         "DEMO_MODE": "1",
-        "DATABASE_PATH": "{DATA}/reviewboost.sqlite"
+        "DATABASE_PATH": "{DATA}/reviewboost.sqlite",
+        "PAYMENT_LINK": "https://buy.stripe.com/28E4gz0pYf9EdJz6IPdMI09"
       }
     },
     "invoicechaser": {
@@ -115,7 +116,8 @@
         "APP_ENV": "production",
         "TRUST_PROXY": "1",
         "AI_MOCK": "1",
-        "DATABASE_PATH": "{DATA}/invoicechaser.sqlite3"
+        "DATABASE_PATH": "{DATA}/invoicechaser.sqlite3",
+        "PAYMENT_LINK": "https://buy.stripe.com/dRm4gz0pY0eKfRHd7ddMI0m"
       }
     },
     "quoteflow": {
@@ -132,7 +134,8 @@
         "COOKIE_SECURE": "1",
         "BEHIND_PROXY": "1",
         "DATABASE_PATH": "{DATA}/quoteflow.db",
-        "APP_BASE_URL": "{BASE}/quoteflow"
+        "APP_BASE_URL": "{BASE}/quoteflow",
+        "PAYMENT_LINK": "https://buy.stripe.com/9B6bJ11u2gdI7lbffldMI0c"
       }
     },
     "contractordocs": {
@@ -146,7 +149,8 @@
       "price": "$29 per month",
       "env": {
         "AI_MOCK": "1",
-        "SESSION_COOKIE_SECURE": "1"
+        "SESSION_COOKIE_SECURE": "1",
+        "PAYMENT_LINK": "https://buy.stripe.com/14AdR9dcK1iObBr0krdMI07"
       }
     },
     "payrecover": {
@@ -160,7 +164,8 @@
       "price": "$12 per month",
       "env": {
         "AI_MOCK": "1",
-        "SESSION_COOKIE_SECURE": "1"
+        "SESSION_COOKIE_SECURE": "1",
+        "PAYMENT_LINK": "https://buy.stripe.com/28E14nfkSd1w34V5ELdMI0g"
       }
     },
     "leadfollowup": {
@@ -175,7 +180,8 @@
       "env": {
         "AI_MOCK": "1",
         "SESSION_COOKIE_SECURE": "1",
-        "DATABASE_PATH": "{DATA}/leadfollowup.db"
+        "DATABASE_PATH": "{DATA}/leadfollowup.db",
+        "PAYMENT_LINK": "https://buy.stripe.com/aFadR90pYbXs34V0krdMI0i"
       }
     },
     "jobproof": {
@@ -194,7 +200,8 @@
         "JOBPROOF_ENV": "production",
         "JOBPROOF_DATA_DIR": "{DATA}",
         "JOBPROOF_SECURE_COOKIES": "1",
-        "AI_MOCK": "1"
+        "AI_MOCK": "1",
+        "PAYMENT_LINK": "https://buy.stripe.com/9B6dR93Caf9EdJz7MTdMI0d"
       }
     },
     "proofpay": {
@@ -213,7 +220,8 @@
         "SESSION_COOKIE_SECURE": "1",
         "DATABASE_URL": "sqlite:///{DATA}/proofpay.db",
         "UPLOAD_FOLDER": "{DATA}/uploads",
-        "APP_BASE_URL": "{BASE}/proofpay"
+        "APP_BASE_URL": "{BASE}/proofpay",
+        "PAYMENT_LINK": "https://buy.stripe.com/aFa8wP7Sq0eK6h7d7ddMI0h"
       }
     },
     "stockping": {
@@ -228,7 +236,8 @@
       "env": {
         "APP_ENV": "production",
         "TRUST_PROXY": "1",
-        "DATABASE_PATH": "{DATA}/stockping.sqlite3"
+        "DATABASE_PATH": "{DATA}/stockping.sqlite3",
+        "PAYMENT_LINK": "https://buy.stripe.com/3cI6oH2y68LgeND2szdMI0l"
       }
     },
     "slotsimple": {
@@ -245,7 +254,8 @@
         "TRUST_PROXY": "1",
         "SESSION_COOKIE_SECURE": "1",
         "DEMO_MODE": "0",
-        "DATABASE_PATH": "{DATA}/slotsimple.sqlite3"
+        "DATABASE_PATH": "{DATA}/slotsimple.sqlite3",
+        "PAYMENT_LINK": "https://buy.stripe.com/14AdR98Wue5A0WNffldMI0k"
       }
     },
     "shiftsnap": {
@@ -260,7 +270,8 @@
       "env": {
         "TRUST_PROXY": "1",
         "SESSION_COOKIE_SECURE": "1",
-        "DATABASE_PATH": "{DATA}/shiftsnap.sqlite3"
+        "DATABASE_PATH": "{DATA}/shiftsnap.sqlite3",
+        "PAYMENT_LINK": "https://buy.stripe.com/6oU9AT2y6gdI6h70krdMI0b"
       }
     },
     "testimonialtap": {
@@ -276,7 +287,8 @@
         "APP_ENV": "production",
         "TRUST_PROXY": "1",
         "SESSION_COOKIE_SECURE": "1",
-        "DATABASE_PATH": "{DATA}/testimonialtap.sqlite"
+        "DATABASE_PATH": "{DATA}/testimonialtap.sqlite",
+        "PAYMENT_LINK": "https://buy.stripe.com/3cI5kDc8G0eK34V2szdMI0o"
       }
     },
     "signedextra": {
@@ -295,7 +307,8 @@
         "SIGNEDEXTRA_ENV": "production",
         "TRUST_PROXY": "1",
         "SIGNEDEXTRA_INSTANCE": "{DATA}",
-        "PUBLIC_BASE_URL": "{BASE}/signedextra"
+        "PUBLIC_BASE_URL": "{BASE}/signedextra",
+        "PAYMENT_LINK": "https://buy.stripe.com/6oU28r7SqaTobBr7MTdMI08"
       }
     },
     "clientstart": {
@@ -310,7 +323,8 @@
       "env": {
         "CLIENTSTART_DATA_DIR": "{DATA}",
         "CLIENTSTART_BEHIND_PROXY": "1",
-        "CLIENTSTART_SECURE_COOKIES": "1"
+        "CLIENTSTART_SECURE_COOKIES": "1",
+        "PAYMENT_LINK": "https://buy.stripe.com/bJe8wPc8G6D87lb7MTdMI0e"
       }
     },
     "contentqueue": {
@@ -326,7 +340,8 @@
         "APP_ENV": "production",
         "TRUST_PROXY": "1",
         "SESSION_COOKIE_SECURE": "1",
-        "DATABASE_PATH": "{DATA}/contentqueue.sqlite3"
+        "DATABASE_PATH": "{DATA}/contentqueue.sqlite3",
+        "PAYMENT_LINK": "https://buy.stripe.com/eVq4gzfkSbXs48Z9V1dMI0p"
       }
     },
     "licenseledger": {
@@ -344,7 +359,8 @@
       "env": {
         "SESSION_COOKIE_SECURE": "1",
         "DATABASE_PATH": "{DATA}/licenseledger.db",
-        "BACKUP_DIR": "{DATA}/backups"
+        "BACKUP_DIR": "{DATA}/backups",
+        "PAYMENT_LINK": "https://buy.stripe.com/3cI14n4Ge1iO48Z4AHdMI0n"
       }
     },
     "scopeguard": {
@@ -361,7 +377,8 @@
         "SESSION_COOKIE_SECURE": "1",
         "DEMO_MODE": "0",
         "DATABASE_PATH": "{DATA}/scopeguard.db",
-        "APP_BASE_URL": "{BASE}/scopeguard"
+        "APP_BASE_URL": "{BASE}/scopeguard",
+        "PAYMENT_LINK": "https://buy.stripe.com/5kQ4gzfkS5z49tj4AHdMI0j"
       }
     },
     "proofofwork": {
@@ -382,7 +399,8 @@
         "PROOFOFWORK_DATABASE": "{DATA}/proofofwork.sqlite3",
         "PROOFOFWORK_UPLOAD_DIR": "{DATA}/uploads",
         "PROOFOFWORK_SECURE_COOKIES": "1",
-        "PROOFOFWORK_BASE_URL": "{BASE}/proofofwork"
+        "PROOFOFWORK_BASE_URL": "{BASE}/proofofwork",
+        "PAYMENT_LINK": "https://buy.stripe.com/bJe6oHc8G3qW7lb3wDdMI0a"
       }
     },
     "sitecare": {
@@ -399,7 +417,8 @@
         "TRUST_PROXY": "1",
         "SESSION_COOKIE_SECURE": "1",
         "DATABASE_PATH": "{DATA}/sitecare.sqlite3",
-        "UPLOAD_FOLDER": "{DATA}/uploads"
+        "UPLOAD_FOLDER": "{DATA}/uploads",
+        "PAYMENT_LINK": "https://buy.stripe.com/cNibJ16Om3qW34V0krdMI0f"
       }
     },
     "leadrescue": {
@@ -418,7 +437,8 @@
         "DRAFT_PROVIDER": "template",
         "TRIAL_DAYS": "14",
         "AUTO_MIGRATE": "1",
-        "APP_BASE_URL": "{BASE}/leadrescue"
+        "APP_BASE_URL": "{BASE}/leadrescue",
+        "PAYMENT_LINK": "https://buy.stripe.com/14A8wP1u20eKeND3wDdMI06"
       }
     }
   }

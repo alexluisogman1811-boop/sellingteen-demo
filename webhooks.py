@@ -1,8 +1,15 @@
-"""Automatic activation after payment: /webhooks/lemonsqueezy and /webhooks/dodo
+"""Automatic activation after payment: /webhooks/stripe, /webhooks/lemonsqueezy and /webhooks/dodo
 
 Each provider is OFF (404) until its secret is in site.env:
+    STRIPE_WEBHOOK_SECRET=whsec_...   (Stripe > Developers > Webhooks > your endpoint > "Signing secret")
     LEMONSQUEEZY_WEBHOOK_SECRET=...   (the "Signing secret" you type when creating the webhook in Lemon Squeezy)
     DODO_WEBHOOK_SECRET=whsec_...     (the secret Dodo Payments shows for your webhook endpoint)
+
+Stripe (payment links): webhooks.json maps each payment link to its app:
+    {"stripe": {"payment_links": {"plink_123": {"app": "reviewboost", "months": 1}}}}
+  Events to send: checkout.session.completed, invoice.paid, customer.subscription.deleted.
+  Signature: header Stripe-Signature "t=<time>,v1=<hex>", HMAC-SHA256 of "<t>.<raw body>" keyed with the
+  whole signing secret text. Timestamps more than 5 minutes away are refused.
 
 Which product belongs to which app is in webhooks.json (the owner fills it in), for example:
     {"lemonsqueezy": {"variants": {"123456": {"app": "reviewboost", "months": 1}}, "products": {}},
@@ -78,6 +85,36 @@ def verify_dodo(secret, raw_body, msg_id, timestamp, signature_header, now=None)
     return False
 
 
+def verify_stripe(secret, raw_body, signature_header, now=None):
+    if not secret or not signature_header:
+        return False
+    parts = [p.split("=", 1) for p in signature_header.split(",") if "=" in p]
+    stamps = [v for k, v in parts if k.strip() == "t"]
+    sigs = [v.strip() for k, v in parts if k.strip() == "v1"]
+    if not stamps or not sigs:
+        return False
+    try:
+        ts = int(stamps[0])
+    except ValueError:
+        return False
+    now = int(now if now is not None else time.time())
+    if abs(now - ts) > TOLERANCE_SECONDS:
+        return False
+    expected = hmac.new(secret.strip().encode("utf-8"), str(ts).encode() + b"." + raw_body, hashlib.sha256).hexdigest()
+    return any(hmac.compare_digest(expected, s) for s in sigs)
+
+
+def _stripe_invoice_subscription(inv):
+    """Older Stripe API versions put it at invoice.subscription, newer ones under invoice.parent."""
+    sub = inv.get("subscription")
+    if isinstance(sub, dict):
+        sub = sub.get("id")
+    if not sub:
+        details = ((inv.get("parent") or {}).get("subscription_details") or {})
+        sub = details.get("subscription")
+    return sub
+
+
 # ---------------------------------------------------------------- product mapping
 def load_mapping(path):
     try:
@@ -119,7 +156,8 @@ def create_webhooks_app(registry, settings, data_dir, mapping_path, now=None):
     store = Store(data_dir / "control.sqlite3")
     log = AppendLog(data_dir / "webhook_log.jsonl")
     secrets_ = {"lemonsqueezy": (settings.get("LEMONSQUEEZY_WEBHOOK_SECRET") or "").strip(),
-                "dodo": (settings.get("DODO_WEBHOOK_SECRET") or "").strip()}
+                "dodo": (settings.get("DODO_WEBHOOK_SECRET") or "").strip(),
+                "stripe": (settings.get("STRIPE_WEBHOOK_SECRET") or "").strip()}
     clock = now or time.time
 
     app = Flask("sellingteen_webhooks")
@@ -236,6 +274,36 @@ def create_webhooks_app(registry, settings, data_dir, mapping_path, now=None):
             return event, "noted: stays on until the paid time runs out", None, email
         return event, "ignored (not needed)", None, email
 
+    def handle_stripe(payload, mapping):
+        event = payload.get("type", "")
+        obj = (payload.get("data") or {}).get("object") or {}
+        if payload.get("livemode") is False and not mapping.get("accept_test_mode"):
+            return event, "ignored (test mode)", None, ""
+        if event == "checkout.session.completed":
+            email = ((obj.get("customer_details") or {}).get("email") or obj.get("customer_email") or "").strip().lower()
+            app_slug, months = _lookup(mapping, "stripe", [("payment_links", obj.get("payment_link"))])
+            if obj.get("payment_status") not in ("paid", "no_payment_required"):
+                return event, f"ignored (payment status {obj.get('payment_status')})", app_slug, email
+            store.link("stripe", "subscription", obj.get("subscription"), app_slug, email, months or 1)
+            store.link("stripe", "session", obj.get("id"), app_slug, email, months or 1)
+            return event, act("stripe", event, app_slug, email, months or 1, obj), app_slug, email
+        if event == "invoice.paid":
+            email = (obj.get("customer_email") or "").strip().lower()
+            if obj.get("billing_reason") == "subscription_create":
+                return event, "ignored (first payment already handled by checkout.session.completed)", None, email
+            link = store.find("stripe", "subscription", _stripe_invoice_subscription(obj))
+            if not link:
+                return event, "unknown subscription: switch on by hand in /admin", None, email
+            return event, act("stripe", "renewal", link["app"], link["email"] or email, link["months"], obj), link["app"], link["email"]
+        if event == "customer.subscription.deleted":
+            link = store.find("stripe", "subscription", obj.get("id"))
+            if not link:
+                return event, "unknown subscription: check it and switch off by hand in /admin", None, ""
+            return event, act("stripe", event, link["app"], link["email"], 0, obj), link["app"], link["email"]
+        if event == "customer.subscription.updated" and obj.get("cancel_at_period_end"):
+            return event, "noted: stays on until the paid time runs out", None, ""
+        return event, "ignored (not needed)", None, ""
+
     @app.route("/<provider>", methods=["POST"])
     def receive(provider):
         if provider not in secrets_ or not secrets_[provider]:
@@ -244,6 +312,9 @@ def create_webhooks_app(registry, settings, data_dir, mapping_path, now=None):
         if provider == "lemonsqueezy":
             ok = verify_lemonsqueezy(secrets_[provider], raw, request.headers.get("X-Signature", ""))
             key = "ls:" + hashlib.sha256(raw).hexdigest()
+        elif provider == "stripe":
+            ok = verify_stripe(secrets_[provider], raw, request.headers.get("Stripe-Signature", ""), now=clock())
+            key = None  # set from the event id below
         else:
             ok = verify_dodo(secrets_[provider], raw, request.headers.get("webhook-id", ""),
                              request.headers.get("webhook-timestamp", ""), request.headers.get("webhook-signature", ""), now=clock())
@@ -258,12 +329,14 @@ def create_webhooks_app(registry, settings, data_dir, mapping_path, now=None):
         except ValueError:
             log.write("rejected", provider=provider, type="", result="not JSON")
             return jsonify({"error": "bad payload"}), 400
+        if provider == "stripe":
+            key = "stripe:" + str(payload.get("id") or hashlib.sha256(raw).hexdigest())
         if store.seen(key):
             log.write("duplicate", provider=provider, type=str(payload.get("type") or (payload.get("meta") or {}).get("event_name", "")),
                       result="already handled, nothing done")
             return jsonify({"status": "duplicate"}), 200
         mapping = load_mapping(mapping_path)
-        handler = handle_lemonsqueezy if provider == "lemonsqueezy" else handle_dodo
+        handler = {"lemonsqueezy": handle_lemonsqueezy, "stripe": handle_stripe}.get(provider, handle_dodo)
         event, result, app_slug, email = handler(payload, mapping)
         store.mark(key, provider, event)
         log.write("webhook", provider=provider, type=event, result=result, app=app_slug or "", email=email or "")

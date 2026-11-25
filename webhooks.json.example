@@ -1,6 +1,94 @@
 {
   "_help": "Put each payment product's ID next to the app it unlocks. months: 1 for monthly, 12 for yearly. See HOW-TO-PUT-ALL-APPS-ONLINE.md.",
   "accept_test_mode": false,
+  "stripe": {
+    "payment_links": {
+      "plink_1UfetLFecLxMdRAbB2fS99GU": {
+        "app": "leadrescue",
+        "months": 1
+      },
+      "plink_1UfevEFecLxMdRAbiVMMsrLw": {
+        "app": "contractordocs",
+        "months": 1
+      },
+      "plink_1UfewrFecLxMdRAbx8yfb4vq": {
+        "app": "signedextra",
+        "months": 1
+      },
+      "plink_1Ufey6FecLxMdRAbeW6UvYBw": {
+        "app": "reviewboost",
+        "months": 1
+      },
+      "plink_1Uff0LFecLxMdRAbWSODjvw1": {
+        "app": "proofofwork",
+        "months": 1
+      },
+      "plink_1Uff29FecLxMdRAbNgKfd5mW": {
+        "app": "shiftsnap",
+        "months": 1
+      },
+      "plink_1Uff3ZFecLxMdRAbqZDNciJu": {
+        "app": "quoteflow",
+        "months": 1
+      },
+      "plink_1Uff4mFecLxMdRAbMFAmu3r3": {
+        "app": "jobproof",
+        "months": 1
+      },
+      "plink_1Uff5uFecLxMdRAbFJOIOVs5": {
+        "app": "clientstart",
+        "months": 1
+      },
+      "plink_1Uff70FecLxMdRAbHGmO6mz8": {
+        "app": "sitecare",
+        "months": 1
+      },
+      "plink_1Uff8EFecLxMdRAbfmsIeMP8": {
+        "app": "payrecover",
+        "months": 1
+      },
+      "plink_1Uff9mFecLxMdRAbF1ELI1yy": {
+        "app": "proofpay",
+        "months": 1
+      },
+      "plink_1UffB1FecLxMdRAbhDJBW02J": {
+        "app": "leadfollowup",
+        "months": 1
+      },
+      "plink_1UffCFFecLxMdRAbEpfONHW5": {
+        "app": "scopeguard",
+        "months": 1
+      },
+      "plink_1UffDdFecLxMdRAbGhsMTgv4": {
+        "app": "slotsimple",
+        "months": 1
+      },
+      "plink_1UffEzFecLxMdRAbDk98hG5y": {
+        "app": "stockping",
+        "months": 1
+      },
+      "plink_1UffGRFecLxMdRAbOrdoeerG": {
+        "app": "invoicechaser",
+        "months": 1
+      },
+      "plink_1UffK8FecLxMdRAbVtBH3grT": {
+        "app": "licenseledger",
+        "months": 1
+      },
+      "plink_1UffMCFecLxMdRAb9DR3KEJx": {
+        "app": "testimonialtap",
+        "months": 1
+      },
+      "plink_1UffNKFecLxMdRAbhPf55DMK": {
+        "app": "contentqueue",
+        "months": 1
+      },
+      "plink_1UffOUFecLxMdRAbJr2Wf7I2": {
+        "app": "all",
+        "months": 1
+      }
+    }
+  },
   "lemonsqueezy": {
     "variants": {},
     "products": {}
