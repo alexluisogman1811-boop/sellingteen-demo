@@ -1,0 +1,5 @@
+{# Usage meter. Expects `usage` from billing.usage_summary(). #}
+<p class="usage-line"><strong>{{ usage.used }} of {{ usage.quota }}</strong> quotes used <span class="muted">· resets {{ usage.resets_on }}</span></p>
+<div class="progress {{ 'full' if usage.remaining == 0 }}" role="progressbar" aria-valuenow="{{ usage.used }}" aria-valuemin="0" aria-valuemax="{{ usage.quota }}" aria-label="Quotes used this month">
+  <span style="width: {{ [100, (usage.used / usage.quota * 100) | round | int] | min }}%"></span>
+</div>

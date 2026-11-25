@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Online appointment booking for small businesses{% endblock %}
+{% block content %}
+<section class="hero landing-hero">
+  <h1>Let customers book appointments online.</h1>
+  <p class="lead">SlotSimple gives your business its own booking page. Customers pick a service, a day and a free time.
+    You confirm, reschedule or cancel from one simple dashboard.</p>
+  <p class="actions">
+    <a class="btn btn-primary btn-large" href="{{ url_for('admin.signup') }}">{% if billing %}Start your {{ trial_days }}-day free trial{% else %}Create your account{% endif %}</a>
+    <a class="btn btn-ghost" href="{{ url_for('admin.login') }}">Log in</a>
+  </p>
+  {% if billing %}<p class="small muted">No card needed for the trial.</p>{% endif %}
+</section>
+
+<div class="feature-grid">
+  <section class="card">
+    <h2>Your booking page</h2>
+    <ul>
+      <li>Your services with prices and durations</li>
+      <li>A calendar that only shows days with free times</li>
+      <li>Customers give their name, email and optional notes</li>
+      <li>An on-screen confirmation with a booking reference</li>
+      <li>Customers can look up or cancel with their reference and email</li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>Your rules</h2>
+    <ul>
+      <li>Opening hours and weekly availability</li>
+      <li>Blocked dates and times (holidays, breaks)</li>
+      <li>Buffer time between bookings and minimum notice</li>
+      <li>How far ahead customers can book</li>
+      <li>No double bookings, checked again on the server when each booking is saved</li>
+      <li>All times shown in your business's timezone</li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>Your dashboard</h2>
+    <ul>
+      <li>Confirm, cancel, reschedule and complete appointments</li>
+      <li>Add phone or walk-in appointments yourself</li>
+      <li>Upcoming, completed and cancelled views, with search</li>
+      <li>Printable daily schedule and CSV export</li>
+    </ul>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Good to know before you start</h2>
+  <ul>
+    <li><strong>One calendar per business:</strong> SlotSimple suits one practitioner, room or resource. It doesn't schedule several staff members separately.</li>
+    <li><strong>SlotSimple does not send emails, SMS messages or calendar invites.</strong> Customers see their confirmation on screen, and you contact them yourself when something changes.</li>
+    <li>Customers can cancel online; rescheduling is done by you.</li>
+    <li>No online payments or deposits for appointments.</li>
+  </ul>
+</section>
+
+{% if billing %}
+<section class="card pricing" id="pricing">
+  <h2>Pricing</h2>
+  <p class="plan-price">{{ price }}</p>
+  <p>Every feature is included. Start with a {{ trial_days }}-day free trial, then subscribe to keep managing your bookings.
+    Your booking page keeps taking bookings even if your trial ends.</p>
+  <a class="btn btn-primary" href="{{ url_for('admin.signup') }}">Start free trial</a>
+</section>
+{% endif %}
+{% endblock %}

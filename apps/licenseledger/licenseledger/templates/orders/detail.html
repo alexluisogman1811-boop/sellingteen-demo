@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, license_table, delete_button, order_pills %}
+{% block title %}Order {{ order.order_ref }}{% endblock %}
+{% block content %}
+{% set is_open = order.order_status == 'open' %}
+<div class="page-head">
+  <div>
+    <p class="crumb"><a href="{{ url_for('main.orders') }}">Orders</a></p>
+    <h1>Order {{ order.order_ref }}</h1>
+    <p class="muted"><a href="{{ url_for('main.customer_detail', customer_id=order.customer_id) }}">{{ order.customer_name }}</a>
+      · {{ order.customer_email }} · {{ order.order_date }}{% if order.amount %} · {{ order.amount }}{% endif %}</p>
+    <div class="pills">{{ order_pills(order) }}</div>
+  </div>
+  <div class="actions">
+    {% if is_open %}<a class="btn btn-primary" href="{{ url_for('main.license_new', order_id=order.id) }}">+ Issue license</a>{% endif %}
+    <a class="btn" href="{{ url_for('main.order_form', order_id=order.id) }}">Edit</a>
+    {{ delete_button(url_for('main.order_delete', order_id=order.id), 'order') }}
+  </div>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Items &amp; seats</h2>
+    {% if items %}
+    <div class="table-wrap">
+    <table class="table stack">
+      <thead><tr><th>Product</th><th>Seats</th><th>Licenses assigned</th><th>Delivered</th><th></th></tr></thead>
+      <tbody>
+      {% for i in items %}
+        <tr>
+          <td data-label="Product">{{ i.product_name }}</td>
+          <td data-label="Seats">{{ i.quantity }}</td>
+          <td data-label="Assigned">{{ i.assigned }}{% if i.assigned < i.quantity %} <span class="rel rel-soon">{{ i.quantity - i.assigned }} to issue</span>{% endif %}</td>
+          <td data-label="Delivered">{{ i.delivered }} / {{ i.quantity }}</td>
+          <td class="row-actions">
+            {% if is_open %}
+            {% if i.assigned < i.quantity %}<a class="btn btn-sm" href="{{ url_for('main.license_new', order_id=order.id, product_id=i.product_id) }}">Issue</a>{% endif %}
+            <form method="post" action="{{ url_for('main.order_item_remove', order_id=order.id, product_id=i.product_id) }}" class="inline"
+                  data-confirm="Remove {{ i.product_name }} from this order?">{{ csrf() }}<button class="btn btn-danger-ghost btn-sm">Remove</button></form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="empty">No items listed. Without items, any product can be assigned and the seats needed equal the licenses issued.</p>
+    {% endif %}
+    {% if is_open %}
+    <form method="post" action="{{ url_for('main.order_item_set', order_id=order.id) }}" class="row action-form">
+      {{ csrf() }}
+      <div class="field grow"><label for="item-product">Add item / set seats</label>
+        <select id="item-product" name="product_id" required>
+          {% for p in products %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label for="item-qty">Seats</label><input id="item-qty" name="quantity" type="number" min="1" max="1000" value="1" required></div>
+      <div class="field filter-buttons"><button class="btn btn-sm" type="submit">Save item</button></div>
+    </form>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Status</h2>
+    <dl class="dl compact">
+      <dt>Order</dt><dd>{{ ORDER_STATUSES[order.order_status] }}</dd>
+      <dt>Payment</dt><dd>{{ PAYMENT_STATUSES[order.payment_status] }}
+        {% if order.payment_reference %}<br><span class="muted">Ref: {{ order.payment_reference }}</span>{% endif %}
+        {% if order.payment_recorded_at %}<br><span class="muted small">Recorded {{ order.payment_recorded_at }}</span>{% endif %}</dd>
+      <dt>Delivery</dt><dd>{{ ORDER_DELIVERY_STATES[order.delivery_state] }} — {{ order.delivered_count }} of {{ order.seats_required }} delivered</dd>
+    </dl>
+    <p class="help">Payment status is what you record after checking your own payment provider or bank.
+      LicenseLedger never confirms that a payment was received.</p>
+
+    <details class="action">
+      <summary>Record payment</summary>
+      <form method="post" action="{{ url_for('main.order_payment', order_id=order.id) }}" class="action-form">
+        {{ csrf() }}
+        <div class="row">
+          <div class="field"><label for="pay-status">Payment status</label>
+            <select id="pay-status" name="payment_status">
+              {% for k, v in PAYMENT_STATUSES.items() if k != 'not_recorded' and k != order.payment_status %}<option value="{{ k }}">{{ v }}</option>{% endfor %}
+            </select></div>
+          <div class="field grow"><label for="pay-ref">Reference</label><input id="pay-ref" name="reference" maxlength="100" placeholder="Invoice / transaction ID (never card numbers)"></div>
+        </div>
+        <div class="field"><label for="pay-note">Note</label><input id="pay-note" name="note" maxlength="500" placeholder="Required for refunds"></div>
+        <button class="btn btn-sm" type="submit">Record</button>
+      </form>
+    </details>
+
+    <details class="action">
+      <summary>Change order status</summary>
+      <form method="post" action="{{ url_for('main.order_status', order_id=order.id) }}" class="action-form">
+        {{ csrf() }}
+        <div class="row">
+          <div class="field"><label for="ord-status">New status</label>
+            <select id="ord-status" name="status">
+              {% if order.order_status == 'open' %}<option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+              {% else %}<option value="open">Reopen</option>{% endif %}
+            </select></div>
+          <div class="field grow"><label for="ord-reason">Reason</label><input id="ord-reason" name="reason" maxlength="500" placeholder="Required to cancel or reopen"></div>
+        </div>
+        <p class="help">Completing requires every seat delivered and payment recorded as paid or not required.</p>
+        <button class="btn btn-sm" type="submit">Update status</button>
+      </form>
+    </details>
+  </section>
+</div>
+
+{% if order.notes %}<section class="card"><h2>Notes</h2><p class="prewrap">{{ order.notes }}</p></section>{% endif %}
+<section class="card">
+  <h2>Licenses on this order</h2>
+  {{ license_table(licenses, show_customer=False, empty="No licenses on this order yet.") }}
+  {% if order.delivery_state in ('pending', 'partial') %}
+  <p class="help">Open a license with “Delivery pending” to record how and when you sent it.</p>
+  {% endif %}
+</section>
+<section class="card">
+  <h2>Order history</h2>
+  {% include "_events.html" %}
+</section>
+{% endblock %}

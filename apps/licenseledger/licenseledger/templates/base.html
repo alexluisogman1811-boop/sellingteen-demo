@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% block robots %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+  <title>{% block title %}LicenseLedger{% endblock %} · LicenseLedger</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% macro site_footer() %}
+<footer class="site-footer">
+  <span>LicenseLedger by sellingteen</span>
+  <a href="{{ url_for('legal.terms') }}">Terms</a>
+  <a href="{{ url_for('legal.privacy') }}">Privacy</a>
+  <a href="{{ url_for('legal.refunds') }}">Refunds</a>
+</footer>
+{% endmacro %}
+{% if account %}
+<div class="shell">
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('main.dashboard') }}">
+      <span class="brand-mark" aria-hidden="true">LL</span>
+      <span>LicenseLedger</span>
+    </a>
+    <span class="local-badge" title="Signed in as {{ account.email }}">{{ account.business_name }}</span>
+    <form method="post" action="{{ url_for('auth.logout') }}" class="logout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-ghost btn-sm" type="submit">Sign out</button>
+    </form>
+  </header>
+  {% set ep = request.endpoint or '' %}
+  <nav class="sidenav" aria-label="Main">
+    <a href="{{ url_for('main.dashboard') }}" class="{{ 'active' if ep == 'main.dashboard' }}">Dashboard</a>
+    <a href="{{ url_for('main.licenses') }}" class="{{ 'active' if ep.startswith('main.license') }}">Licenses</a>
+    <a href="{{ url_for('main.customers') }}" class="{{ 'active' if ep.startswith('main.customer') }}">Customers</a>
+    <a href="{{ url_for('main.orders') }}" class="{{ 'active' if ep.startswith('main.order') }}">Orders</a>
+    <a href="{{ url_for('main.products') }}" class="{{ 'active' if ep.startswith('main.product') }}">Products</a>
+    <a href="{{ url_for('main.templates') }}" class="{{ 'active' if ep.startswith('main.template') }}">Reminders</a>
+    <a href="{{ url_for('main.data') }}" class="{{ 'active' if ep.startswith('main.data') }}">Import / Export</a>
+    <a href="{{ url_for('main.settings') }}" class="{{ 'active' if ep == 'main.settings' or ep.startswith('auth.') }}">Settings</a>
+    <a href="{{ url_for('billing.subscribe') }}" class="{{ 'active' if ep == 'billing.subscribe' }}">Subscription</a>
+  </nav>
+  <main class="content">
+    {% if access and access.state == 'trial' %}
+    <p class="trial-banner">Free trial: {{ access.days_left }} day{{ '' if access.days_left == 1 else 's' }} left.
+      <a href="{{ url_for('billing.subscribe') }}">Subscribe</a></p>
+    {% endif %}
+    {% include "_flashes.html" %}
+    {% block content %}{% endblock %}
+    <p class="footnote">
+      LicenseLedger {{ app_version }} — an administrative tracker for manual fulfillment.
+      It does not process payments, validate licenses for your software, or connect to any store.
+    </p>
+    {{ site_footer() }}
+  </main>
+</div>
+{% else %}
+<main class="auth-wrap">
+  {% include "_flashes.html" %}
+  {% block auth_content %}{% endblock %}
+  {{ site_footer() }}
+</main>
+{% endif %}
+</body>
+</html>

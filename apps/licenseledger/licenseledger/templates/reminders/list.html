@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import delete_button %}
+{% block title %}Reminder templates{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Reminder templates</h1>
+    <p class="muted">Copyable renewal messages. Open any license and choose <em>Reminder text</em> to fill one in.
+      Nothing is sent automatically.</p></div>
+  <div class="actions"><a class="btn btn-primary" href="{{ url_for('main.template_form') }}">+ New template</a></div>
+</div>
+<div class="grid-2 wide-left">
+  <section class="card">
+    {% if templates %}
+    <ul class="list">
+      {% for t in templates %}
+      <li>
+        <div><strong>{{ t.name }}</strong><div class="muted small">{{ t.subject }}</div></div>
+        <div class="row-actions">
+          <a class="btn btn-sm" href="{{ url_for('main.template_form', template_id=t.id) }}">Edit</a>
+          {{ delete_button(url_for('main.template_delete', template_id=t.id), 'template') }}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="empty">No templates yet.</p>{% endif %}
+  </section>
+  <section class="card">
+    <h2>Placeholders</h2>
+    {% include "reminders/_placeholders.html" %}
+  </section>
+</div>
+{% endblock %}

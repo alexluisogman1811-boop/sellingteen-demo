@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}JobProof AI{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% block header %}
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="{{ url_for('dashboard.index') if g.user else url_for('dashboard.landing') }}">
+        <span class="brand-mark" aria-hidden="true">✓</span> JobProof <span class="brand-ai">AI</span>
+      </a>
+      {% if g.user %}
+      <nav class="nav" aria-label="Main">
+        <a href="{{ url_for('dashboard.index') }}" class="{{ 'active' if request.endpoint == 'dashboard.index' }}">Dashboard</a>
+        <a href="{{ url_for('jobs.index') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('jobs.') or request.endpoint and request.endpoint.startswith('reports.') }}">Jobs</a>
+        <a href="{{ url_for('profile.edit') }}" class="{{ 'active' if request.endpoint == 'profile.edit' }}">Business</a>
+        <a href="{{ url_for('account.settings') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('account.') }}">Account</a>
+        <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="linklike">Log out</button>
+        </form>
+      </nav>
+      {% else %}
+      <nav class="nav" aria-label="Account">
+        <a href="{{ url_for('auth.login') }}">Log in</a>
+        <a href="{{ url_for('auth.signup') }}" class="btn btn-small">Sign up</a>
+      </nav>
+      {% endif %}
+    </div>
+  </header>
+  {% if g.user and g.access and g.access.state == 'trial' and request.endpoint != 'billing.subscribe' %}
+  <div class="trial-bar" role="note">
+    <div class="trial-bar-inner">
+      <span><strong>Free trial:</strong> {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.</span>
+      <a class="trial-bar-link" href="{{ url_for('billing.subscribe') }}">Subscribe</a>
+    </div>
+  </div>
+  {% endif %}
+  {% endblock %}
+
+  <main class="container {% block container_class %}{% endblock %}">
+    {# photo-* messages are shown inside the Photos card on the job page #}
+    {% with messages = get_flashed_messages(with_categories=true, category_filter=["success", "error", "warning", "message"]) %}
+      {% if messages %}
+      <div class="flashes" role="status">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  {% block footer %}
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <span>JobProof AI · by sellingteen</span>
+      <nav aria-label="Legal">
+        <a href="{{ url_for('legal.terms') }}">Terms</a>
+        <a href="{{ url_for('legal.privacy') }}">Privacy</a>
+        <a href="{{ url_for('legal.refunds') }}">Refunds</a>
+        {% if g.user and config.BILLING_ENABLED %}<a href="{{ url_for('billing.subscribe') }}">Subscription</a>{% endif %}
+      </nav>
+    </div>
+  </footer>
+  {% endblock %}
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

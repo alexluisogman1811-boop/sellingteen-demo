@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty, invoice_row %}
+{% block title %}Invoices{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Invoices</h1>
+    <p class="muted">Everything you've billed, with what's due and what's late.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('invoices.new') }}">+ New invoice</a>
+</div>
+
+{% if has_any %}
+<nav class="tabs" aria-label="Filter by status">
+  {% for key, label in [('', 'All'), ('unpaid', 'Unpaid'), ('overdue', 'Overdue'), ('due_soon', 'Due soon'), ('open', 'Not due yet'), ('paid', 'Paid')] %}
+  <a href="{{ url_for('invoices.index', status=key or None, q=q or None, customer=customer_id) }}" class="{{ 'active' if status == key }}" {{ 'aria-current="page"' | safe if status == key }}>{{ label }}</a>
+  {% endfor %}
+</nav>
+<form class="filters" method="get" role="search">
+  {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+  <input name="q" type="search" placeholder="Search invoice # or customer" value="{{ q }}" aria-label="Search invoices">
+  <select name="customer" aria-label="Customer" data-autosubmit>
+    <option value="">All customers</option>
+    {% for c in customers %}<option value="{{ c.id }}" {{ 'selected' if customer_id == c.id }}>{{ c.name }}</option>{% endfor %}
+  </select>
+  <button class="btn" type="submit">Search</button>
+  {% if q or customer_id or status %}<a class="btn btn-ghost" href="{{ url_for('invoices.index') }}">Clear filters</a>{% endif %}
+</form>
+{% endif %}
+
+{% if invoices %}
+<p class="small muted">{{ plural(total, 'invoice') }}{% if pages > 1 %} · page {{ page }} of {{ pages }}{% endif %}</p>
+<ul class="rows card flush">{% for inv in invoices %}{{ invoice_row(inv) }}{% endfor %}</ul>
+{% if pages > 1 %}
+<nav class="pager" aria-label="Pages">
+  {% if page > 1 %}<a class="btn btn-small" href="{{ url_for('invoices.index', status=status or None, q=q or None, customer=customer_id, page=page - 1) }}">← Previous</a>{% endif %}
+  {% if page < pages %}<a class="btn btn-small" href="{{ url_for('invoices.index', status=status or None, q=q or None, customer=customer_id, page=page + 1) }}">Next →</a>{% endif %}
+</nav>
+{% endif %}
+{% elif has_any %}
+  {% if status == 'overdue' and not q and not customer_id %}
+  {{ empty("Nothing is overdue 🎉", "Every unpaid invoice is still within its due date.") }}
+  {% else %}
+  {{ empty("No invoices match", "Try a different filter or search term.", url_for('invoices.index'), "Show all invoices") }}
+  {% endif %}
+{% else %}
+  {{ empty("No invoices yet", "Record invoices you've sent and we'll flag them when they're due soon or overdue.", url_for('invoices.new'), "Add your first invoice") }}
+{% endif %}
+{% endblock %}

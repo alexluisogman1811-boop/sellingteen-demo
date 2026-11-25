@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ticket_no %}
+{% block title %}Thank you{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="card mt-lg">
+  {% if outcome == "signed" %}
+  <h1>Signed. Thank you.</h1>
+  <p>Ticket {{ ticket_no(ticket) }} for {{ ticket.job_name }} was signed and recorded. It now shows as signed in {{ ticket.company_name }}'s account.</p>
+  {% else %}
+  <h1>Your response was recorded</h1>
+  <p>You declined ticket {{ ticket_no(ticket) }}. {{ ticket.company_name }} will see your reason.</p>
+  {% endif %}
+  <p class="small muted">You can close this page.</p>
+</div>
+{% endblock %}

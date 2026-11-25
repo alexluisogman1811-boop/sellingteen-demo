@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Settings</h1></div>
+<section class="card">
+  <h2>Business</h2>
+  {% if is_owner %}
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    <div class="row">{{ field(form.name) }}{{ field(form.timezone) }}</div>
+    <button class="btn btn-primary" type="submit">Save</button>
+  </form>
+  {% else %}
+  <p>{{ active_business.name }}</p>
+  <p class="muted small">Time zone: {{ current_zone }}. Only the owner can change business settings.</p>
+  {% endif %}
+  <p class="muted small">Your role: {{ active_membership.role }}</p>
+</section>
+
+<section class="card">
+  <h2>Account</h2>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('passwords.change_password') }}">Change password</a>
+    {% if is_owner %}<a class="btn" href="{{ url_for('workspace.audit_log') }}">Data activity log</a>{% endif %}
+    {% if is_owner and config.BILLING_ENABLED and not active_business.is_demo %}<a class="btn" href="{{ url_for('billing.subscribe') }}">Subscription</a>{% endif %}
+  </div>
+</section>
+
+{% if is_admin %}
+<section class="card">
+  <h2>Demo data</h2>
+  <p>Load 10 fictional leads to try LeadRescue. They're marked <span class="badge badge-demo">DEMO</span>, use reserved 555 phone numbers and example.com emails, and can be removed in one click.</p>
+  <div class="actions">
+    <form method="post" action="{{ url_for('workspace.demo_add') }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn" type="submit">Add demo leads</button>
+    </form>
+    <form method="post" action="{{ url_for('workspace.demo_remove') }}" class="inline" data-confirm="Remove all DEMO leads from this workspace?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-danger" type="submit">Remove demo leads</button>
+    </form>
+  </div>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Your data</h2>
+  <p>Download all your workspace data, delete the workspace, or delete your own account.</p>
+  <a class="btn" href="{{ url_for('data.page') }}">Export or delete data</a>
+  <p class="muted small">How we handle data: <a href="{{ url_for('main.privacy') }}">Privacy Notice</a> · <a href="{{ url_for('main.terms') }}">Terms</a></p>
+</section>
+
+<section class="card">
+  <h2>Not in this version</h2>
+  <p class="muted small">LeadRescue doesn't send texts or emails and doesn't use AI in this phase. It only reminds <em>you</em> who to contact, inside the app.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error %}
+{% block title %}Create your account{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Create your ShiftSnap account</h1>
+  <p class="muted">For your business. Free for {{ trial_days }} days, no card needed. You'll be its first manager,
+    and you can add your employees and give them their own sign-ins afterwards.</p>
+  {% if errors.form %}<div class="flash flash-error" role="alert">{{ errors.form }}</div>
+  {% elif errors %}<div class="flash flash-error" role="alert">Please fix the highlighted fields.</div>{% endif %}
+  <form method="post" class="form" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label><span>Business name <span class="req">*</span></span>
+      <input name="business_name" value="{{ form.business_name }}" maxlength="100" autocomplete="organization"
+             placeholder="e.g. Corner Café" required autofocus class="{{ 'invalid' if errors.business_name }}">
+      {{ field_error(errors, 'business_name') }}</label>
+    <label><span>Email <span class="req">*</span></span>
+      <input name="email" type="email" value="{{ form.email }}" maxlength="100" autocomplete="email"
+             autocapitalize="none" spellcheck="false" required class="{{ 'invalid' if errors.email }}">
+      {{ field_error(errors, 'email') }}
+      <span class="muted small">You'll sign in with this email.</span></label>
+    <label><span>Password <span class="req">*</span></span>
+      <input name="password" type="password" minlength="10" maxlength="200" autocomplete="new-password" required
+             class="{{ 'invalid' if errors.password }}">
+      {{ field_error(errors, 'password') }}
+      <span class="muted small">At least 10 characters.</span></label>
+    <div class="form-actions"><button class="btn" type="submit">Create account</button></div>
+  </form>
+  <p class="muted small">By creating an account you agree to the <a href="{{ url_for('legal.terms') }}">Terms</a>
+    and <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>.</p>
+  <p class="muted small">Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+</section>
+{% endblock %}

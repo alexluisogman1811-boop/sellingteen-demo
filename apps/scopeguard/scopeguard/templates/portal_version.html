@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, record, diff_view, scope_view %}
+{% block title %}Version {{ v.version_no }} · {{ p.name }}{% endblock %}
+{% block header %}
+<header class="topbar"><div class="topbar-inner"><span class="brand">Scope<span>Guard</span></span><span class="muted">Scope review for {{ p.client_name }}</span></div></header>
+{% if p.is_demo %}<div class="demo-banner">Sample project: this page uses demo data.</div>{% endif %}
+{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('portal.review', token=token) }}">← Back to the current scope</a></p>
+<div class="page-head">
+  <div>
+    <h1>{{ p.name }}: version {{ v.version_no }}</h1>
+    <div class="meta">Published {{ v.created_at|ts }}{% if v.change_note %} · {{ v.change_note }}{% endif %}</div>
+  </div>
+  {% if is_latest %}{{ badge('active', 'Current version') }}{% else %}{{ badge('info', 'Earlier version, read-only') }}{% endif %}
+</div>
+{% if not is_latest %}<p class="notice">This is an earlier version, kept exactly as it was published. To respond, go back to the current version.</p>{% endif %}
+<div class="card">
+  <h2>Overview</h2>
+  {% if scope.terms.description %}<p>{{ scope.terms.description }}</p>{% endif %}
+  <p class="muted">Start {{ scope.terms.start_date or '—' }} · Deadline {{ scope.terms.deadline or '—' }} · {{ scope.terms.revision_allowance }} revision round(s) per deliverable</p>
+</div>
+{{ scope_view(scope) }}
+{% if diff %}<div class="card"><h2>Changes from version {{ v.version_no - 1 }}</h2>{{ diff_view(diff) }}</div>{% endif %}
+<div class="card">
+  <h2>Decisions on this version</h2>
+  {% for a in decisions %}{{ record(a, show_private=False) }}{% else %}<p class="empty">No decision recorded for this version.</p>{% endfor %}
+</div>
+{% endblock %}

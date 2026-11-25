@@ -1,0 +1,9 @@
+data/
+env/
+site.env
+webhooks.json
+__pycache__/
+*.pyc
+*.db
+*.sqlite
+*.sqlite3

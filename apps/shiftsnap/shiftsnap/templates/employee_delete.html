@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Remove {{ employee.name }}{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Remove {{ employee.name }}?</h1>
+  <p>This permanently deletes their contact details and availability.</p>
+  {% if future %}
+  <p class="flash flash-warning">They have <strong>{{ future }}</strong> upcoming shift(s). Those shifts will be kept but
+    marked <strong>Unfilled</strong>.</p>
+  {% endif %}
+  {% if has_login %}<p>Their sign-in will also be deleted and they will be signed out.</p>{% endif %}
+  <p class="muted">If they might come back, <strong>deactivate</strong> them instead — that keeps their details and history.</p>
+  <div class="form-actions">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-danger" type="submit">Yes, remove {{ employee.name }}</button>
+    </form>
+    <a class="btn btn-ghost" href="{{ url_for('main.employees') }}">Cancel</a>
+  </div>
+</section>
+{% endblock %}

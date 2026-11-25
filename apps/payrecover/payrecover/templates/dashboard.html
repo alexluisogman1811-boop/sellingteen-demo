@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, invoice_row %}
+{% block title %}Today{% endblock %}
+{% block content %}
+{% if not has_invoices %}
+<section class="onboard card">
+  <h1>Let's recover your unpaid invoices</h1>
+  <p class="muted">Three steps and PayRecover will tell you who to chase each day.</p>
+  <ol class="steps">
+    <li class="{{ 'done' if has_customers }}"><strong>Add a customer</strong> you've done work for.</li>
+    <li><strong>Add their invoice</strong> with the amount and due date.</li>
+    <li><strong>Check this page daily.</strong> When an invoice goes overdue, we draft a polite reminder for you to copy and send.</li>
+  </ol>
+  {% if has_customers %}
+    <a class="btn btn-primary" href="{{ url_for('routes.invoice_new') }}">Add an invoice</a>
+  {% else %}
+    <a class="btn btn-primary" href="{{ url_for('routes.customer_new') }}">Add your first customer</a>
+  {% endif %}
+</section>
+{% else %}
+
+<section class="hero">
+  <h1>
+    {% if stats.outstanding %}You're owed <span class="text-money">{{ stats.outstanding|money }}</span>{% else %}Nobody owes you money right now{% endif %}
+  </h1>
+  <p class="muted">
+    {% if stats.followups_today %}{{ stats.followups_today }} follow-up{{ 's' if stats.followups_today != 1 }} to send today.
+    {% elif stats.outstanding %}No follow-ups needed today.
+    {% else %}Nice work.{% endif %}
+    <span class="nowrap">{{ today|nice_date }}</span>
+  </p>
+</section>
+
+<section class="stats">
+  <div class="stat">
+    <div class="stat-label">Outstanding</div>
+    <div class="stat-value">{{ stats.outstanding|money }}</div>
+    <div class="stat-sub">{{ stats.outstanding_count }} unpaid invoice{{ 's' if stats.outstanding_count != 1 }}</div>
+  </div>
+  <a class="stat stat-danger" href="{{ url_for('routes.invoices', filter='overdue') }}">
+    <div class="stat-label">Overdue</div>
+    <div class="stat-value">{{ stats.overdue|money }}</div>
+    <div class="stat-sub">{{ stats.overdue_count }} overdue invoice{{ 's' if stats.overdue_count != 1 }}</div>
+  </a>
+  <a class="stat stat-warn" href="{{ url_for('routes.invoices', filter='due_soon') }}">
+    <div class="stat-label">Due soon</div>
+    <div class="stat-value">{{ stats.due_soon|money }}</div>
+    <div class="stat-sub">{{ stats.due_soon_count }} due in the next 7 days</div>
+  </a>
+  <a class="stat stat-accent" href="{{ url_for('routes.invoices', filter='followup') }}">
+    <div class="stat-label">Follow-ups today</div>
+    <div class="stat-value">{{ stats.followups_today }}</div>
+    <div class="stat-sub">reminder{{ 's' if stats.followups_today != 1 }} to send</div>
+  </a>
+  <a class="stat stat-good" href="{{ url_for('routes.invoices', filter='paid') }}">
+    <div class="stat-label">Paid / recovered</div>
+    <div class="stat-value">{{ stats.recovered|money }}</div>
+    <div class="stat-sub">{{ stats.recovered_after_followup|money }} after a follow-up</div>
+  </a>
+</section>
+
+<section>
+  <h2>Follow up today</h2>
+  {% if followups %}
+  <div class="cards">
+    {% for inv in followups %}
+    <article class="card followup-card">
+      <div class="followup-head">
+        <div>
+          <div class="row-title">{{ inv.customer_name }}</div>
+          <div class="row-sub">{{ inv.number }} · <strong class="text-danger">{{ inv.days_overdue|days }} overdue</strong></div>
+        </div>
+        <div class="row-amount">{{ inv.amount_cents|money }}</div>
+      </div>
+      <p class="followup-stage"><span class="dot"></span> Follow-up recommended: <strong>{{ inv.next.stage.label }}</strong></p>
+      <div class="actions">
+        <a class="btn btn-primary" href="{{ url_for('routes.followup', invoice_id=inv.id) }}">Write reminder</a>
+        <a class="btn" href="{{ url_for('routes.invoice_detail', invoice_id=inv.id) }}#paid">They paid</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="card muted">All caught up. No reminders are due today.</p>
+  {% endif %}
+</section>
+
+<section>
+  <div class="section-head">
+    <h2>Who owes you</h2>
+    <a class="btn btn-small" href="{{ url_for('routes.invoice_new') }}">+ New invoice</a>
+  </div>
+  {% if owed %}
+  <div class="list card">
+    {% for inv in owed %}{{ invoice_row(inv) }}{% endfor %}
+  </div>
+  {% else %}
+  <p class="card muted">Every sent invoice is paid.{% if stats.drafts %} You have {{ stats.drafts }} draft invoice{{ 's' if stats.drafts != 1 }} not sent yet.{% endif %}</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

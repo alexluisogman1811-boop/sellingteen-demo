@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Choose a new password{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <h1>Choose a new password</h1>
+  <form method="post" action="{{ url_for('auth.reset_password', token=token) }}" class="stack">
+    {{ csrf_field() }}
+    <label class="field"><span class="field-label">New password</span>
+      <input type="password" name="password" required minlength="10" maxlength="200" autocomplete="new-password">
+      <span class="hint">At least 10 characters.</span></label>
+    <label class="field"><span class="field-label">Confirm new password</span>
+      <input type="password" name="confirm" required minlength="10" maxlength="200" autocomplete="new-password"></label>
+    <button class="btn btn-primary btn-block" type="submit">Save new password</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Your account:</strong> business name, email address, a secure hash of your password (never the password itself), and your timezone.</li>
+    <li><strong>Emails we send:</strong> only a password reset link when you ask for one (if email is switched on). We never send marketing email.</li>
+    <li><strong>Your content:</strong> post titles, captions, hashtags, planned dates, statuses, notes, campaigns, categories, caption templates, ideas, and images you upload.</li>
+    <li><strong>Basic technical logs</strong> (time, page, IP address) to keep the service secure and working.</li>
+  </ul>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't ask for, store or use your Instagram, TikTok, Facebook, LinkedIn, X, YouTube or other social media passwords, and we don't connect to those accounts.</li>
+    <li>We don't post anything for you.</li>
+    <li>We don't sell your data.</li>
+    <li>We don't use advertising or tracking cookies. We use one cookie to keep you logged in.</li>
+    <li>We never see your card details. Payments are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>Why we use it</h2>
+  <p>Only to run the service for you: to show and save your content, keep your account secure, manage your subscription, and answer your questions.</p>
+
+  <h2>Where it is stored</h2>
+  <p>On the server that hosts ContentQueue, protected by your login. Each business can only see its own content, including its own images. The post editor may also keep unsaved text in your own browser until you save it or log out.</p>
+
+  <h2>Your choices</h2>
+  <p>You can change, export or delete your content at any time. You can delete your whole account and all its content yourself on the Account page under "Delete account"; it is removed straight away. If you can't log in{% if support_email %}, email {{ support_email }} from your account email{% else %}, contact us{% endif %} and we will do it within 30 days.</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }}{% if support_email %} · {{ support_email }}{% endif %}</p>
+</article>
+{% endblock %}

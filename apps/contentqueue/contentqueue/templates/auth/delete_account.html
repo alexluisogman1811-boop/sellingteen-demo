@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Delete account{% endblock %}
+{% block content %}
+<div class="narrow">
+  <form method="post" action="{{ url_for('auth.delete_account') }}" class="card stack danger-zone">
+    {{ csrf() }}
+    <h1>Delete your account</h1>
+    <p>This permanently deletes <strong>{{ g.account.business_name }}</strong> and everything in it:
+      {{ counts.posts }} post{{ '' if counts.posts == 1 else 's' }}, {{ counts.ideas }} idea{{ '' if counts.ideas == 1 else 's' }}
+      and {{ counts.templates }} template{{ '' if counts.templates == 1 else 's' }}, plus uploaded images. This can’t be undone.</p>
+    <p class="help">Want a copy first? <a href="{{ url_for('auth.export_data') }}">Download all my data (ZIP)</a>.</p>
+    {% if error %}<p class="flash flash-error" role="alert">{{ error }}</p>{% endif %}
+    <div class="field">
+      <label for="confirm_text">Type <strong>{{ delete_word }}</strong> (or your email) to confirm</label>
+      <input id="confirm_text" name="confirm_text" autocomplete="off" required>
+    </div>
+    <div class="field">
+      <label for="password">Type your password to confirm</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-danger" type="submit">Delete my account</button>
+      <a class="btn btn-ghost" href="{{ url_for('auth.account') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

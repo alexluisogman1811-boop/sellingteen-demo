@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+{% block content %}
+<h1>Admin</h1>
+<section class="panel">
+  <h2>Data on record</h2>
+  <div class="stats">
+    {% for name, count in counts.items() %}
+    <div class="stat"><span class="stat-num">{{ count }}</span><span>{{ name|replace('_', ' ')|capitalize }}</span></div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="panel" id="storage">
+  <h2>Photo storage check</h2>
+  {% if not audit.missing and not audit.orphans %}
+  <p class="flash flash-success">All {{ audit.photo_count }} photo record(s) have their files, and there are no unused files.</p>
+  {% endif %}
+  {% if audit.missing %}
+  <p class="flash flash-error">{{ audit.missing|length }} photo record(s) have no file on the server. Reports show “Photo unavailable” for these. Restore the uploads folder from backup, or delete these photos from their jobs.</p>
+  <ul class="plain-list">
+    {% for m in audit.missing %}<li><a href="{{ url_for('main.job_detail', job_id=m.job_id) }}#photos">Job #{{ m.job_id }} · {{ m.title }}</a><span class="muted small">{{ m.kind }} – {{ m.label }}</span></li>{% endfor %}
+  </ul>
+  {% endif %}
+  {% if audit.orphans %}
+  <p>{{ audit.orphans|length }} unused photo file(s) are taking up space (e.g. from interrupted uploads).</p>
+  <form method="post" action="{{ url_for('main.admin_storage_cleanup') }}" data-confirm="Delete unused photo files older than one hour?">
+    {{ csrf_field() }}<button class="btn" type="submit">Remove unused files</button>
+  </form>
+  {% endif %}
+</section>
+
+<section class="panel danger-zone">
+  <h2>Reset data</h2>
+  {% if reset_allowed %}
+  <p>Deletes <strong>all customers, properties, templates, jobs, photos and share links</strong>. User accounts are kept. This cannot be undone.</p>
+  <form method="post" action="{{ url_for('main.admin_reset') }}" class="stack" data-confirm="Really delete all job data?">
+    {{ csrf_field() }}
+    <fieldset class="seg">
+      <legend class="field-label">After reset</legend>
+      <label class="seg-opt"><input type="radio" name="mode" value="demo" checked> Load demo data</label>
+      <label class="seg-opt"><input type="radio" name="mode" value="empty"> Leave empty</label>
+    </fieldset>
+    <label class="field"><span class="field-label">Type RESET to confirm</span>
+      <input type="text" name="confirm" required autocomplete="off" pattern="RESET"></label>
+    <button class="btn btn-danger" type="submit">Reset data</button>
+  </form>
+  {% else %}
+  <p class="muted">Reset is disabled on this server (PROOFOFWORK_ALLOW_RESET=0).</p>
+  {% endif %}
+</section>
+{% endblock %}

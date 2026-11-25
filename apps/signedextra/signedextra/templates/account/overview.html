@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Account{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>Account</h1>
+<div class="card">
+  <h2>Your login</h2>
+  <p>{{ g.user.name }} · {{ g.user.email }} · {{ g.user.role|capitalize }}</p>
+  <a class="btn btn-secondary" href="{{ url_for('account.change_password') }}">Change password</a>
+</div>
+
+{% if g.user.role == 'owner' %}
+{% if config.BILLING_ENABLED and not g.company.is_demo %}
+<div class="card">
+  <h2>Subscription</h2>
+  {% if g.access and g.access.state == 'paid' %}<p>Active until {{ g.access.until|nice_date }}.</p>
+  {% elif g.access and g.access.state == 'trial' %}<p>Free trial: {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.</p>
+  {% elif g.access and g.access.state == 'ended' %}<p>Your trial or subscription has ended. Your data is saved.</p>{% endif %}
+  <a class="btn btn-secondary" href="{{ url_for('billing.subscribe') }}">Subscription</a>
+</div>
+{% endif %}
+<div class="card">
+  <h2>Your company's data</h2>
+  <p class="small muted">Download everything as a ZIP: every record as a spreadsheet (CSV), the original photos and the signature images.</p>
+  <a class="btn btn-secondary" href="{{ url_for('account.export_company') }}">Export all company data</a>
+</div>
+<div class="card">
+  <h2>Delete my account</h2>
+  <p class="small muted">Permanently delete {{ g.company.name }}, its team logins and all of its data.</p>
+  <a class="btn btn-danger" href="{{ url_for('account.delete_company') }}">Delete my account…</a>
+</div>
+{% else %}
+<div class="card">
+  <p class="small muted">Your company's Owner manages the subscription, data export and deleting the company.</p>
+</div>
+{% endif %}
+{% endblock %}

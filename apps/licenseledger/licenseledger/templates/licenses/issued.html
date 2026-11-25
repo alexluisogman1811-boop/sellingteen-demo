@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, type_pill, expiry %}
+{% block title %}{{ heading }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ heading }}</h1>
+    <p>{{ badge(lic.effective_status) }} {{ type_pill(lic.license_type) }}</p>
+  </div>
+</div>
+
+<section class="card key-card">
+  <h2>License code</h2>
+  {% if generated %}
+  <p class="warn"><strong>Copy this code now.</strong> It is stored only as a one-way hash and will not be shown again.
+    If it is lost, use <em>Replace key</em> to issue a new one.</p>
+  <div class="key-box">
+    <code id="license-key" class="key-full">{{ key }}</code>
+    <button class="btn btn-primary" type="button" data-copy="#license-key">Copy</button>
+  </div>
+  {% else %}
+  <p>The existing key you entered was recorded as a one-way hash (ending <code>{{ lic.key_hint }}</code>).
+    It is not displayed here.</p>
+  {% endif %}
+  <dl class="dl compact">
+    <dt>Customer</dt><dd>{{ lic.customer_name }} — {{ lic.customer_email }}</dd>
+    <dt>Product</dt><dd>{{ lic.product_name }}</dd>
+    <dt>Order</dt><dd>{{ lic.order_ref or '—' }}</dd>
+    <dt>Issued</dt><dd>{{ lic.issue_date }}</dd>
+    <dt>Expires</dt><dd>{{ expiry(lic) }}</dd>
+  </dl>
+  <p><a class="btn" href="{{ url_for('main.license_detail', license_id=lic.id) }}">Done — go to license</a></p>
+</section>
+{% if generated %}
+<p class="help">Sent the code to the customer just now? Record the delivery below. You can also do it later from the license page,
+  but the code itself will not be shown again.</p>
+{% endif %}
+{% include "licenses/_delivery.html" %}
+{% endblock %}

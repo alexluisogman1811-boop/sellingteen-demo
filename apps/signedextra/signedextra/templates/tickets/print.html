@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_macros.html" import ticket_no %}
+{% block title %}{{ ticket_no(ticket) }} printable{% endblock %}
+{% block content %}
+<div class="row no-print">
+  <a class="btn btn-secondary" href="{{ url_for('tickets.ticket_detail', ticket_id=ticket.id) }}">← Back</a>
+  <button class="btn btn-primary" type="button" data-print>Print / Save as PDF</button>
+</div>
+<div class="card mt">
+  <div class="spread">
+    <div><h1>Extra work / T&amp;M ticket {{ ticket_no(ticket) }}</h1>
+      <p>{{ company.name }}<br><span class="small">{{ company.address }} {{ company.phone }} {{ company.email }}</span></p></div>
+    <div class="right small">Status: {{ ticket.status|status_label }}<br>Work date: {{ ticket.work_date }}<br>Version {{ ticket.version }}</div>
+  </div>
+  <p><strong>GC:</strong> {{ job.customer_name }} · <strong>Job:</strong> {{ job.name }}{% if job.gc_reference %} ({{ job.gc_reference }}){% endif %}</p>
+  <p><strong>Requested by:</strong> {{ ticket.requested_by_name }}{% if ticket.requested_by_role %} ({{ ticket.requested_by_role }}){% endif %}</p>
+  <p><strong>Description:</strong> {{ ticket.description }}</p>
+  <div class="table-scroll">
+  <table class="table">
+    <thead><tr><th>Type</th><th>Description</th><th class="num">Qty</th>{% if can_see_prices() %}<th class="num">Unit price</th><th class="num">Amount</th>{% endif %}</tr></thead>
+    <tbody>
+    {% for l in lines %}
+    <tr><td>{{ l.labor_label if l.kind == 'labor' else l.kind|capitalize }}</td><td>{{ l.description }}</td>
+      <td class="num">{{ l.qty_x100|qty }} {{ l.unit }}</td>
+      {% if can_see_prices() %}<td class="num">{{ l.rate_cents|money if l.rate_cents is not none else "-" }}</td><td class="num">{{ l.amount_cents|money }}</td>{% endif %}</tr>
+    {% endfor %}
+    </tbody>
+    {% if can_see_prices() %}
+    <tfoot>
+      <tr><td colspan="4" class="right">Markup ({{ ticket.markup_bp|qty }}%)</td><td class="num">{{ ticket.markup_cents|money }}</td></tr>
+      <tr><td colspan="4" class="right"><strong>Total</strong></td><td class="num"><strong>{{ ticket.total_cents|money }}</strong></td></tr>
+    </tfoot>
+    {% endif %}
+  </table>
+  </div>
+  <p class="small">Photos on file: {{ photos|length }}</p>
+  {% for s in signatures %}
+  <div class="mt">
+    <p><strong>{{ "Signed" if s.outcome == 'signed' else "Declined" }}:</strong> {{ s.signer_name }}{% if s.signer_title %}, {{ s.signer_title }}{% endif %} · {{ s.created_at|dt }}</p>
+    {% if s.outcome == 'signed' %}<img class="signature-img" src="{{ url_for('tickets.signature_image', ticket_id=ticket.id, sig_id=s.id) }}" alt="Signature">{% endif %}
+    {% if s.decline_reason %}<p>Reason: {{ s.decline_reason }}</p>{% endif %}
+  </div>
+  {% endfor %}
+  <p class="small muted mt">Fingerprint of recorded work (SHA-256): <span class="mono">{{ ticket.content_hash }}</span></p>
+</div>
+{% endblock %}

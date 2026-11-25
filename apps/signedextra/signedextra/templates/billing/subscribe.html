@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Subscription{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<section class="card">
+  {% if access.state == 'ended' %}
+    <h1>{{ 'Your subscription has ended' if access.was_paid else 'Your free trial has ended' }}</h1>
+    <p class="muted">Your tickets, photos, signatures, notices and invoices are saved. Subscribe to keep using SignedExtra.
+      Signature links you already sent to GCs keep working.</p>
+  {% elif access.state == 'paid' %}
+    <h1>You're subscribed</h1>
+    <p class="muted">{{ g.company.name }} is active until {{ access.until|nice_date }}. Thank you!</p>
+  {% elif access.state == 'demo' %}
+    <h1>Demo company</h1>
+    <p class="muted">The demo company never needs a subscription.</p>
+  {% else %}
+    <h1>Subscribe to SignedExtra</h1>
+    <p class="muted">{% if access.days_left is defined %}You have {{ access.days_left }} day{{ '' if access.days_left == 1 else 's' }} left in your free trial.{% endif %} Subscribe any time to keep going after it.</p>
+  {% endif %}
+
+  {% if access.state not in ('paid', 'demo') %}
+  <div class="plan">
+    <p class="plan-price">{{ price }}</p>
+    <ul class="plan-list">
+      <li>One price for the whole company, with Owner, Office and Foreman logins</li>
+      <li>Unlimited extra-work tickets, photos, signature links and written notices</li>
+      <li>Change-order invoices and data export</li>
+    </ul>
+    {% if payment_link %}
+      <a class="btn btn-primary btn-block" href="{{ payment_link }}" target="_blank" rel="noopener noreferrer">Subscribe now</a>
+      <p class="muted small mt">You pay on our payment provider's secure page. Use your Owner email: <strong>{{ g.user.email }}</strong>. Your company is switched on within 24 hours of payment.</p>
+    {% else %}
+      <p class="flash flash-info">Online payment is opening soon.{% if support_email %} To subscribe now, email <strong>{{ support_email }}</strong> from <strong>{{ g.user.email }}</strong>.{% endif %}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <p class="muted small mt">Questions? {% if support_email %}Email {{ support_email }}.{% endif %} See our <a href="{{ url_for('legal.terms') }}">Terms</a> and <a href="{{ url_for('legal.refunds') }}">Refund policy</a>.</p>
+  <div class="row mt">
+    {% if access.state != 'ended' %}<a class="btn btn-secondary" href="{{ url_for('core.dashboard') }}">Back to dashboard</a>{% endif %}
+    <a class="btn btn-secondary" href="{{ url_for('account.overview') }}">Account &amp; data</a>
+  </div>
+</section>
+{% endblock %}

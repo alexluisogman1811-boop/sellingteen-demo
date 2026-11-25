@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Choose a time · {{ service.name }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('public.index') }}">← All services</a></p>
+<header class="page-head">
+  <div>
+    <h1>{{ service.name }}</h1>
+    <p class="muted">{{ service.duration_minutes }} min · {{ service.price_cents|money if service.price_cents else 'Free' }}</p>
+  </div>
+  <ol class="steps" aria-label="Booking progress">
+    <li class="done">Service</li><li class="active">Pick a time</li><li>Your details</li>
+  </ol>
+</header>
+
+<div class="layout-2 picker">
+  <section class="card" aria-labelledby="cal-h">
+    <div class="cal-head">
+      {% if prev_month %}<a class="btn btn-ghost" href="{{ url_for('public.choose_time', service_id=service.id, month=prev_month.strftime('%Y-%m')) }}" aria-label="Previous month">‹</a>{% else %}<span class="btn btn-ghost disabled" aria-hidden="true">‹</span>{% endif %}
+      <h2 id="cal-h">{{ month_start.strftime('%B %Y') }}</h2>
+      {% if next_month %}<a class="btn btn-ghost" href="{{ url_for('public.choose_time', service_id=service.id, month=next_month.strftime('%Y-%m')) }}" aria-label="Next month">›</a>{% else %}<span class="btn btn-ghost disabled" aria-hidden="true">›</span>{% endif %}
+    </div>
+    <table class="calendar">
+      <thead><tr>{% for d in ['Mo','Tu','We','Th','Fr','Sa','Su'] %}<th scope="col">{{ d }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for week in weeks %}
+        <tr>
+        {% for day in week %}
+          {% if day.month != month_start.month %}
+            <td class="out"></td>
+          {% elif day in open_days %}
+            <td><a class="day available{% if day == selected %} selected{% endif %}{% if day == today %} today{% endif %}"
+                   href="{{ url_for('public.choose_time', service_id=service.id, date=day.isoformat()) }}#times"
+                   {% if day == selected %}aria-current="date"{% endif %}
+                   aria-label="{{ day.strftime('%A %d %B') }}, times available">{{ day.day }}</a></td>
+          {% else %}
+            <td><span class="day{% if day == today %} today{% endif %}" aria-label="{{ day.strftime('%A %d %B') }}, unavailable">{{ day.day }}</span></td>
+          {% endif %}
+        {% endfor %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="small muted legend"><span class="dot available"></span> Available <span class="dot"></span> Unavailable</p>
+    {% if not open_days %}<p class="muted">No availability this month{% if next_month %} — try the next month{% endif %}.</p>{% endif %}
+  </section>
+
+  <section class="card" id="times" aria-labelledby="slots-h" tabindex="-1">
+    {% if selected %}
+      <h2 id="slots-h">{{ selected.strftime('%A %d %B') }}</h2>
+      <p class="small muted">{{ slots|length }} time{{ '' if slots|length == 1 else 's' }} available · {{ service.duration_minutes }} min each · times in {{ settings.timezone }} ({{ tz_label }})</p>
+      {% if slots %}
+      <ul class="slots">
+        {% for s in slots %}
+        <li><a class="slot" href="{{ url_for('public.details', service_id=service.id, date=s.date().isoformat(), time=s.strftime('%H:%M')) }}" aria-label="Book {{ s.strftime('%H:%M') }} on {{ s.strftime('%A %d %B') }}">{{ s.strftime('%H:%M') }}</a></li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No times left on this day. Please choose another date.</p>
+      {% endif %}
+    {% else %}
+      <h2 id="slots-h">Select a date</h2>
+      <p class="muted">Pick a highlighted day to see available times.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

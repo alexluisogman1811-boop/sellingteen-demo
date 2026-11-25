@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Demo mode{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Demo business</h1>
+  <p>This is the shared demo account. Its business, customers and bookings are fictional
+    sample data (customer emails use <code>example.com</code>). Resetting or clearing only affects this demo account.</p>
+  <ul>
+    <li>{{ counts.bookings }} bookings ({{ counts.sample }} sample)</li>
+    <li>{{ counts.services }} services</li>
+  </ul>
+  <form method="post" action="{{ url_for('admin.demo_reset') }}" data-confirm="Replace ALL data with fresh sample data?">
+    {{ csrf() }}
+    <button class="btn btn-primary" type="submit">Reset to fresh sample data</button>
+  </form>
+  <form method="post" action="{{ url_for('admin.demo_clear') }}" class="danger-zone" data-confirm="Delete all bookings, services, availability and blocks?">
+    {{ csrf() }}
+    <p class="small muted">Start from an empty setup (settings and admin login are kept).</p>
+    <button class="btn btn-danger" type="submit">Clear all data</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, movement_table, pagination %}
+{% block title %}{{ product.sku }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="muted small"><a href="{{ url_for('main.product_list') }}">← Products</a></p>
+    <h1>{{ product.name }} <span class="muted">{{ product.sku }}</span></h1>
+    <p>{{ status_badge(product.status) }}
+      {% if not product.is_active %}<span class="badge">Archived</span>{% endif %}
+      {% if product.is_demo %}<span class="badge badge-demo">Demo</span>{% endif %}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.product_edit', product_id=product.id) }}">Edit</a>
+    {% if product.is_active %}
+      <form method="post" action="{{ url_for('main.product_archive', product_id=product.id) }}" data-confirm="Archive {{ product.sku }}? It will be hidden from lists but its history is kept.">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn" type="submit">Archive</button>
+      </form>
+    {% else %}
+      <form method="post" action="{{ url_for('main.product_restore', product_id=product.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn" type="submit">Restore</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if product.is_active and product.status != 'ok' %}
+<div class="stock-alert stock-alert-{{ product.status }}" role="status" id="stock-alert">
+  <strong>{{ '✕ Out of stock' if product.status == 'out' else '▲ Low stock' }}:</strong>
+  {{ product.quantity }} on hand, reorder threshold {{ product.reorder_threshold }}.
+  Suggested order: {{ [2 * product.reorder_threshold - product.quantity, 1]|max }}.
+  <a href="{{ url_for('main.reorder') }}">Reorder list →</a>
+</div>
+{% endif %}
+
+{% if product.is_demo %}
+<div class="flash flash-info">
+  This is a demo product. Resetting or removing demo data deletes it and its history.
+  <form method="post" action="{{ url_for('main.product_keep', product_id=product.id) }}" class="inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-small" type="submit">Keep as a real product</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="grid-2">
+  <section class="card">
+    <div class="qty-hero">
+      <span class="stat-label">On hand</span>
+      <span class="stat-value" id="on-hand">{{ product.quantity }}</span>
+      <span class="muted">Reorder at {{ product.reorder_threshold }}</span>
+    </div>
+    {% if product.is_active %}
+    <div class="stock-actions">
+      <a class="btn btn-in" href="{{ url_for('main.stock_movement', product_id=product.id, kind='in') }}">+ Stock in</a>
+      <a class="btn btn-out" href="{{ url_for('main.stock_movement', product_id=product.id, kind='out') }}">− Stock out</a>
+      <a class="btn" href="{{ url_for('main.stock_movement', product_id=product.id, kind='adjust') }}">Adjust count</a>
+    </div>
+    {% else %}
+    <p class="muted">Restore this product to record stock movements.</p>
+    {% endif %}
+  </section>
+  <section class="card">
+    <dl class="details">
+      <dt>Category</dt><dd>{{ product.category or '—' }}</dd>
+      <dt>Supplier</dt><dd>{{ product.supplier_name or '—' }}</dd>
+      <dt>Unit cost</dt><dd>{{ product.cost_cents|money }}</dd>
+      <dt>Selling price</dt><dd>{{ product.price_cents|money }}</dd>
+      <dt>Stock value at cost</dt><dd>{{ (product.cost_cents * product.quantity)|money }}</dd>
+      {% if product.description %}<dt>Description</dt><dd class="pre">{{ product.description }}</dd>{% endif %}
+      <dt>Created</dt><dd>{{ product.created_at }} UTC</dd>
+    </dl>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Stock history ({{ total }})</h2>
+    <a href="{{ url_for('main.export_movements', product=product.id) }}">Export CSV</a>
+  </div>
+  {{ movement_table(movements, show_product=false) }}
+  {{ pagination(page, pages) }}
+</section>
+{% endblock %}

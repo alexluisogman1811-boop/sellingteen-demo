@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, status_badge, priority_badge, who_badge with context %}
+{% block title %}{{ task.title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('owner.client_detail', client_id=client.id) }}">{{ client.company or client.name }}</a> / {{ KIND_LABELS[task.kind] }}</p>
+    <h1>{{ task.title }}</h1>
+    <p class="badges">{{ status_badge(task.status) }} {{ who_badge(task.assignee) }} {{ priority_badge(task.priority) }}
+      {% if task.due_date %}<span class="muted small">Due {{ task.due_date }}</span>{% endif %}
+      {% if overdue %}<span class="badge st-overdue">Overdue</span>{% endif %}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('owner.task_edit', task_id=task.id) }}">Edit</a>
+    <form method="post" action="{{ url_for('owner.task_delete', task_id=task.id) }}" class="inline">
+      {{ csrf() }}<button class="btn btn-danger confirm" data-confirm="Delete this item, its files and comments?" type="submit">Delete</button>
+    </form>
+  </div>
+</div>
+
+<div class="cols cols-wide">
+  <div>
+    {% if task.description %}<section class="card"><h2>Instructions</h2><p class="pre">{{ task.description }}</p></section>{% endif %}
+
+    {% if task.kind == 'question' %}
+    <section class="card">
+      <h2>Client's answer</h2>
+      {% if task.answer %}<blockquote class="pre">{{ task.answer }}</blockquote>{% else %}<p class="muted">No answer yet.</p>{% endif %}
+    </section>
+    {% endif %}
+
+    {% if task.kind == 'file' or files %}
+    <section class="card">
+      <h2>Files <span class="count">{{ files|length }}</span></h2>
+      {% if files %}
+      <ul class="list">
+        {% for f in files %}
+        <li><a href="{{ url_for('owner.file_download', file_id=f.id) }}">{{ f.original_name }}</a>
+          <span class="muted small">{{ f.size_bytes|filesize }} · {{ f.uploaded_by }} · {{ f.created_at }}</span>
+          <form method="post" action="{{ url_for('owner.file_delete', file_id=f.id) }}" class="inline">
+            {{ csrf() }}<button class="btn btn-sm btn-link confirm" data-confirm="Delete this file?" type="submit">Delete</button>
+          </form></li>
+        {% endfor %}
+      </ul>
+      <p class="muted small">Files are always downloaded, never opened in the browser.</p>
+      {% else %}<p class="muted">Nothing uploaded yet.</p>{% endif %}
+    </section>
+    {% endif %}
+
+    <section class="card" id="comments">
+      <h2>Comments</h2>
+      <ul class="comments">
+        {% for c in comments %}
+        <li class="comment {{ 'from-client' if c.author == 'client' }} {{ 'is-correction' if c.is_correction }} {{ 'is-internal' if c.is_internal }}">
+          <div class="muted small">{{ 'Client' if c.author == 'client' else 'You' }} · {{ c.created_at }}{% if c.is_correction %} · <strong>Correction requested</strong>{% endif %}{% if c.is_internal %} · <strong>Internal — hidden from client</strong>{% endif %}</div>
+          <p class="pre">{{ c.body }}</p>
+        </li>
+        {% else %}<li class="muted">No comments yet.</li>{% endfor %}
+      </ul>
+      <form method="post" action="{{ url_for('owner.task_comment', task_id=task.id) }}" class="form">
+        {{ csrf() }}
+        <label>Add a comment
+          <textarea name="body" rows="3" maxlength="4000" required></textarea></label>
+        {% if task.assignee == 'client' %}
+        <label class="check"><input type="checkbox" name="internal" value="1" checked> Internal note — hide from the client</label>
+        <p class="hint">Untick to send this comment to the client's portal.</p>
+        {% else %}
+        <p class="hint">Agency tasks are never shown to the client, so comments here are always internal.</p>
+        {% endif %}
+        <button class="btn" type="submit">Post comment</button>
+      </form>
+    </section>
+  </div>
+
+  <div>
+    {% if task.assignee == 'client' and task.status != 'done' %}
+    <section class="card review-card">
+      <h2>Review</h2>
+      {% if task.status == 'submitted' %}<p class="muted small">The client has submitted this item.</p>{% endif %}
+      <form method="post" action="{{ url_for('owner.task_review', task_id=task.id) }}" class="form">
+        {{ csrf() }}
+        <label>Note to client <textarea name="comment" rows="3" maxlength="4000" placeholder="Required when requesting a correction"></textarea></label>
+        <div class="btn-row">
+          <button class="btn btn-primary" name="decision" value="approve" type="submit">Approve</button>
+          <button class="btn btn-warn" name="decision" value="correction" type="submit">Request correction</button>
+        </div>
+      </form>
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <h2>Status</h2>
+      <form method="post" action="{{ url_for('owner.task_status', task_id=task.id) }}" class="form inline-form">
+        {{ csrf() }}
+        <select name="status" aria-label="Status">
+          {% for s, label in STATUS_LABELS.items() %}<option value="{{ s }}" {{ 'selected' if task.status == s }}>{{ label }}</option>{% endfor %}
+        </select>
+        <button class="btn" type="submit">Update</button>
+      </form>
+      <dl class="dl">
+        <dt>Created</dt><dd>{{ task.created_at }}</dd>
+        <dt>Updated</dt><dd>{{ task.updated_at }}</dd>
+        {% if task.completed_at %}<dt>Completed</dt><dd>{{ task.completed_at }}</dd>{% endif %}
+      </dl>
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}{{ customer.name }} · ProofPay{% endblock %}
+{% block content %}
+<p class="crumb"><a href="{{ url_for('customers.list_customers') }}">&larr; Customers</a></p>
+<div class="page-head">
+  <div>
+    <h1>{{ customer.name }}</h1>
+    <p class="muted">{{ customer.email or 'No email' }} &middot; {{ customer.phone or 'No phone' }}</p>
+  </div>
+  <div class="btn-row">
+    <a class="btn btn-ghost" href="{{ url_for('customers.edit_customer', ref=customer.ref) }}">Edit</a>
+    <a class="btn" href="{{ url_for('jobs.new_job', customer=customer.ref) }}">+ New job</a>
+  </div>
+</div>
+<section class="card flush">
+  <h2 class="card-title">Jobs</h2>
+  {% if jobs %}
+  <table class="table">
+    <thead><tr><th>Job</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for job in jobs %}
+      <tr>
+        <td data-label="Job">{{ job.title }}</td>
+        <td data-label="Amount" class="num">{{ job.price_cents|money }}</td>
+        <td data-label="Status">{{ badge(job.display_status) }}</td>
+        <td class="actions"><a class="btn btn-sm btn-ghost" href="{{ url_for('jobs.job_detail', ref=job.ref) }}">Open</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<div class="empty"><p class="muted">No jobs for this customer yet.</p></div>{% endif %}
+</section>
+{% endblock %}

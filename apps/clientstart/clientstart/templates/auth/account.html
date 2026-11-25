@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block title %}Account{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Account</h1></div></div>
+<div class="cols">
+  <form method="post" action="{{ url_for('auth.account') }}" class="card form">
+    {{ csrf() }}
+    <h2>Business</h2>
+    <label>Business name <span class="hint">Shown to your clients in their portal and in reminder messages.</span>
+      <input name="name" required maxlength="100" value="{{ form.name or '' }}"></label>
+    {% if errors.name %}<p class="field-error">{{ errors.name }}</p>{% endif %}
+    <label>Login email <input type="email" name="email" required maxlength="254" value="{{ form.email or '' }}"></label>
+    {% if errors.email %}<p class="field-error">{{ errors.email }}</p>{% endif %}
+    <button class="btn btn-primary" type="submit">Save</button>
+  </form>
+  <section class="card">
+    <h2>Security</h2>
+    <p><a class="btn btn-sm" href="{{ url_for('auth.change_password') }}">Change password</a></p>
+    {% if config.BILLING_ENABLED %}
+    <h2>Subscription</h2>
+    <p class="small">
+      {% if g.access and g.access.state == 'trial' %}Free trial — {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.
+      {% elif g.access and g.access.state == 'paid' %}Subscribed until {{ g.access.until.isoformat() }}.
+      {% else %}Not active.{% endif %}
+      <a href="{{ url_for('billing.subscribe') }}">Subscription page</a></p>
+    {% endif %}
+    <h2>Your data</h2>
+    <p><a class="btn btn-sm" href="{{ url_for('owner.export_all') }}">Export all my data</a></p>
+    <p><a class="btn btn-sm btn-danger" href="{{ url_for('auth.delete_account') }}">Delete my account</a></p>
+  </section>
+</div>
+{% endblock %}

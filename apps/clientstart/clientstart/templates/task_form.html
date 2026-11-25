@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, task_fields with context %}
+{% block title %}Edit item{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Edit checklist item</h1></div>
+  <a class="btn" href="{{ url_for('owner.task_detail', task_id=task.id) }}">Cancel</a>
+</div>
+<form method="post" class="card form narrow-form">
+  {{ csrf() }}
+  {{ task_fields(task) }}
+  <div class="form-actions"><button class="btn btn-primary" type="submit">Save</button></div>
+</form>
+{% endblock %}

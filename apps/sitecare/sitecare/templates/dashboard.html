@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted">{{ today.strftime('%A, %d %B %Y') }}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.issue_new') }}">Log issue</a>
+    <a class="btn btn-primary" href="{{ url_for('main.website_new') }}">Add website</a>
+  </div>
+</div>
+
+{% if not has_clients %}
+<section class="card onboarding">
+  <h2>Welcome to SiteCare Desk</h2>
+  <p>Track routine maintenance for your client websites and turn it into monthly reports.</p>
+  <ol>
+    <li>Add a client, then their websites.</li>
+    <li>Add recurring tasks (backup verification, updates, form tests...).</li>
+    <li>Record each result as you do the work, with notes and evidence.</li>
+    <li>Generate the monthly report.</li>
+  </ol>
+  <div class="actions">
+    <a class="btn btn-primary" href="{{ url_for('main.client_new') }}">Add your first client</a>
+    <a class="btn" href="{{ url_for('main.settings') }}">Explore with demo data</a>
+  </div>
+</section>
+{% endif %}
+
+<section class="stats" aria-label="Summary">
+  <a class="stat" href="{{ url_for('main.websites_list', status='active') }}">
+    <span class="stat-value">{{ stats.active_websites }}</span><span class="stat-label">Active websites</span></a>
+  <a class="stat{% if stats.overdue %} stat-danger{% endif %}" href="{{ url_for('main.tasks_list', view='overdue') }}">
+    <span class="stat-value">{{ stats.overdue }}</span><span class="stat-label">Overdue tasks</span></a>
+  <a class="stat" href="{{ url_for('main.tasks_list', view='upcoming') }}">
+    <span class="stat-value">{{ stats.upcoming }}</span><span class="stat-label">Due in {{ upcoming_days }} days</span></a>
+  <a class="stat stat-ok" href="{{ url_for('main.tasks_list', view='completed') }}">
+    <span class="stat-value">{{ stats.completed_month }}</span><span class="stat-label">Completed this month</span></a>
+  <a class="stat{% if stats.open_issues %} stat-warn{% endif %}" href="{{ url_for('main.issues_list') }}">
+    <span class="stat-value">{{ stats.open_issues }}</span><span class="stat-label">Open issues</span></a>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><h2>Overdue</h2><a href="{{ url_for('main.tasks_list', view='overdue') }}">View all</a></div>
+    {% if overdue %}
+      <ul class="task-list">
+      {% for o in overdue %}
+        <li>
+          <div><a href="{{ url_for('main.occurrence_record', occ_id=o.id) }}" class="task-title">{{ o.title }}</a>
+            <span class="muted small">{{ o.website_name }} · due {{ o.due_date|nice_date }}</span></div>
+          <a class="btn btn-sm btn-primary" href="{{ url_for('main.occurrence_record', occ_id=o.id) }}">Record</a>
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}<p class="empty">Nothing overdue.</p>{% endif %}
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Upcoming</h2><a href="{{ url_for('main.tasks_list', view='upcoming') }}">View all</a></div>
+    {% if upcoming %}
+      <ul class="task-list">
+      {% for o in upcoming %}
+        <li>
+          <div><a href="{{ url_for('main.occurrence_record', occ_id=o.id) }}" class="task-title">{{ o.title }}</a>
+            <span class="muted small">{{ o.website_name }} · {{ o.due_date|nice_date }}</span></div>
+          {{ m.occ_status(o, today) }}
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}<p class="empty">Nothing scheduled in the next {{ upcoming_days }} days.</p>{% endif %}
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head"><h2>Active websites</h2><a href="{{ url_for('main.websites_list') }}">All websites</a></div>
+  {% if sites %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Website</th><th class="hide-sm">Client</th><th>Overdue</th><th>Next due</th><th class="hide-sm">Last completed</th><th class="hide-sm">Open issues</th></tr></thead>
+      <tbody>
+      {% for s in sites %}
+        <tr>
+          <td><a href="{{ url_for('main.website_detail', website_id=s.id) }}">{{ s.name }}</a><br><span class="muted small">{{ s.domain }}</span></td>
+          <td class="hide-sm">{{ s.client_name }}</td>
+          <td>{% if s.overdue %}<span class="badge badge-danger">{{ s.overdue }}</span>{% else %}<span class="muted">0</span>{% endif %}</td>
+          <td>{{ s.next_due|nice_date or '-' }}</td>
+          <td class="hide-sm">{{ s.last_done|nice_date or 'Never' }}</td>
+          <td class="hide-sm">{{ s.open_issues }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="empty">No active websites yet.</p>{% endif %}
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><h2>Recently completed</h2><a href="{{ url_for('main.tasks_list', view='completed') }}">History</a></div>
+    {% if completed %}
+      <ul class="task-list">
+      {% for o in completed %}
+        <li>
+          <div><a href="{{ url_for('main.occurrence_record', occ_id=o.id) }}" class="task-title">{{ o.title }}</a>
+            <span class="muted small">{{ o.website_name }} · {{ o.completed_on|nice_date }}</span></div>
+          {{ m.result_badge(o.result) }}
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}<p class="empty">No completed work recorded yet.</p>{% endif %}
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Open issues</h2><a href="{{ url_for('main.issues_list') }}">All issues</a></div>
+    {% if issues %}
+      <ul class="task-list">
+      {% for i in issues %}
+        <li>
+          <div><a href="{{ url_for('main.issue_edit', issue_id=i.id) }}" class="task-title">{{ i.title }}</a>
+            <span class="muted small">{{ i.website_name }} · reported {{ i.reported_on|nice_date }}</span></div>
+          {{ m.severity_badge(i.severity) }}
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}<p class="empty">No open issues.</p>{% endif %}
+  </section>
+</div>
+
+{{ m.manual_notice() }}
+{% endblock %}

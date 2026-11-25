@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}New quote — QuoteFlow AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>New quote</h1>
+    <p class="muted" style="margin:4px 0 0">Paste the customer's message exactly as you received it.</p>
+  </div>
+</div>
+
+{% if usage.remaining == 0 %}
+  <div class="notice limit" role="alert" style="margin-bottom:20px">
+    {% if usage.plan == 'free' %}
+      <h3>You've used all {{ usage.quota }} free quotes for this month</h3>
+      <p>Upgrade to Pro for {{ plans.pro.quota }} quotes a month, or wait until your free quotes reset on {{ usage.resets_on }}. Your saved quotes are still available.</p>
+      <a href="{{ url_for('billing_page') }}" class="btn">Upgrade to Pro — ${{ plans.pro.price }}/month</a>
+    {% else %}
+      <h3>You've used all {{ usage.quota }} quotes for this month</h3>
+      <p style="margin:0">Your quotes reset on {{ usage.resets_on }}. Your saved quotes are still available.</p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if essentials_missing %}
+  <div class="notice" style="margin-bottom:20px">
+    <h3>Add your {{ essentials_missing | join(', ') }} first</h3>
+    <p style="margin:0">Without {{ 'it' if essentials_missing | length == 1 else 'them' }}, quotes will mostly list what's missing. <a href="{{ url_for('onboarding', step=1) if not g.user.onboarded else url_for('profile') }}">Add {{ 'it' if essentials_missing | length == 1 else 'them' }} now</a> — it takes a couple of minutes.</p>
+  </div>
+{% endif %}
+
+<form method="post" class="card" id="quote-form" data-busy-label="Generating…">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="field">
+    <label for="customer_request">Customer request</label>
+    <textarea id="customer_request" name="customer_request" rows="8" required maxlength="5000" autofocus
+      placeholder="I need a deep clean for a 3-bedroom, 2-bathroom house. How much would it cost?">{{ customer_request }}</textarea>
+  </div>
+  <div class="generate-row">
+    <button class="btn lg" type="submit" {{ 'disabled' if usage.remaining == 0 }}>Generate Quote</button>
+    <span class="muted small">{{ usage.remaining }} of {{ usage.quota }} quotes left this month{% if usage.plan == 'free' %} · <a href="{{ url_for('billing_page') }}">Get more</a>{% endif %}</span>
+  </div>
+
+  <div class="generating" id="generating" role="status" aria-live="polite" hidden>
+    <span class="spinner" aria-hidden="true"></span>
+    <div>
+      <strong>Writing your quote… <span id="generating-elapsed" class="muted">0s</span></strong>
+      <p class="muted small">Reading the request, calculating the price from your pricing rules, and drafting a reply. This usually takes 10–40 seconds.</p>
+      <p class="muted small" id="generating-slow" hidden>Still working. Longer messages can take up to a minute — please keep this page open.</p>
+    </div>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field_error %}
+{% block title %}Account{% endblock %}
+{% block content %}
+<div class="narrow">
+  <h1>Account</h1>
+  <dl class="card details">
+    <dt>Business</dt><dd>{{ g.user.business_name }}</dd>
+    <dt>Email</dt><dd>{{ g.user.email }}</dd>
+    {% if g.access and g.access.state == 'trial' %}<dt>Plan</dt><dd>Free trial, {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left · <a href="{{ url_for('billing.subscribe') }}">Subscribe</a></dd>
+    {% elif g.access and g.access.state == 'paid' %}<dt>Plan</dt><dd>Subscribed until {{ g.access.until|nice_date }}</dd>{% endif %}
+  </dl>
+
+  <h2>Change password</h2>
+  <form method="post" action="{{ url_for('account.change_password') }}" class="card form" novalidate>
+    {{ csrf() }}
+    <label>Current password <input type="password" name="current_password" required autocomplete="current-password"></label>
+    {{ field_error(errors, 'current_password') }}
+    <label>New password <input type="password" name="new_password" required minlength="8" autocomplete="new-password"></label>
+    {% if errors.new_password %}{{ field_error(errors, 'new_password') }}{% else %}<p class="hint">At least 8 characters.</p>{% endif %}
+    <label>New password again <input type="password" name="confirm_password" required minlength="8" autocomplete="new-password"></label>
+    {{ field_error(errors, 'confirm_password') }}
+    <button class="btn btn-primary btn-block" type="submit">Change password</button>
+    <p class="hint">Other browsers you're logged in on will be logged out.</p>
+  </form>
+
+  <h2>Export your data</h2>
+  <div class="card">
+    <p>Download all your customers, invoices and follow-up history as CSV files (in one ZIP file).</p>
+    <a class="btn" href="{{ url_for('account.export') }}">Download my data</a>
+  </div>
+
+  <h2>Delete account</h2>
+  <div class="card danger-zone">
+    <p>Permanently delete your account, customers, invoices and follow-up history. This can't be undone.</p>
+    <a class="btn btn-danger" href="{{ url_for('account.delete') }}">Delete my account…</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "_macros.html" import booking_summary, csrf %}
+{% block title %}Booking {{ booking.reference }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('admin.bookings') }}">← Bookings</a></p>
+<header class="page-head">
+  <div><h1>{{ booking.customer_name }}</h1><p class="muted">{{ booking.service_name }} · {{ booking.start_utc|local('%A %d %B %Y, %H:%M') }}</p></div>
+  {% if booking.is_demo %}<span class="badge">Sample data</span>{% endif %}
+</header>
+
+<div class="layout-2">
+  <section class="card">
+    {{ booking_summary(booking) }}
+    <dl class="summary">
+      <div><dt>Customer</dt><dd>{{ booking.customer_name }}</dd></div>
+      <div><dt>Email</dt><dd><a href="mailto:{{ booking.customer_email }}">{{ booking.customer_email }}</a></dd></div>
+      <div><dt>Notes</dt><dd class="prewrap">{{ booking.notes or '—' }}</dd></div>
+      {% if booking.cancel_reason %}<div><dt>Cancellation reason</dt><dd>{{ booking.cancel_reason }}</dd></div>{% endif %}
+      <div><dt>Booked</dt><dd>{{ booking.created_at|local }}</dd></div>
+    </dl>
+  </section>
+
+  <aside class="card side">
+    <h2>Actions</h2>
+    {% if not allowed %}<p class="muted">This booking is {{ booking.status }}; no further actions are available.</p>{% endif %}
+    {% if 'confirmed' in allowed %}
+    <form method="post" action="{{ url_for('admin.booking_status', booking_id=booking.id) }}">
+      {{ csrf() }}<input type="hidden" name="action" value="confirm">
+      <button class="btn btn-primary btn-block" type="submit">Confirm booking</button>
+    </form>
+    {% endif %}
+    {% if 'completed' in allowed %}
+    <form method="post" action="{{ url_for('admin.booking_status', booking_id=booking.id) }}">
+      {{ csrf() }}<input type="hidden" name="action" value="complete">
+      <button class="btn btn-block" type="submit" {% if not started %}disabled title="Available once the appointment has started"{% endif %}>Mark completed</button>
+    </form>
+    {% if not started %}<p class="hint">Can be marked completed once it has started.</p>{% endif %}
+    {% endif %}
+    {% if booking.status in ('pending', 'confirmed') %}
+    <a class="btn btn-block" href="{{ url_for('admin.booking_reschedule', booking_id=booking.id) }}">Reschedule…</a>
+    {% endif %}
+    <a class="btn btn-block btn-ghost" href="{{ url_for('admin.booking_edit', booking_id=booking.id) }}">Edit customer details</a>
+    {% if 'cancelled' in allowed %}
+    <form method="post" action="{{ url_for('admin.booking_status', booking_id=booking.id) }}" class="form danger-zone"
+          data-confirm="Cancel this booking? The time slot will be released.">
+      {{ csrf() }}<input type="hidden" name="action" value="cancel">
+      <label for="reason">Cancellation reason</label>
+      <input id="reason" name="reason" maxlength="300" placeholder="Optional, shown to the customer">
+      <button class="btn btn-danger btn-block" type="submit">Cancel booking</button>
+    </form>
+    {% endif %}
+    <p class="hint">SlotSimple doesn't send messages. Contact the customer yourself after changes.</p>
+  </aside>
+</div>
+
+<section class="card">
+  <h2>History</h2>
+  <ul class="history">
+    {% for e in events %}
+    <li><span class="muted small">{{ e.created_at|local('%d %b %Y %H:%M') }}</span> · <strong>{{ e.event|capitalize }}</strong>
+      by {{ e.actor }}{% if e.detail %} — {{ e.detail }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

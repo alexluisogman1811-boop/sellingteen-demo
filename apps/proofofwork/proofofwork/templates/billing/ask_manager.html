@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Ask your manager{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  {% if access.state == 'ended' %}
+    <h1>ProofOfWork is paused for {{ g.account.name }}</h1>
+    <p>Hi {{ g.user.name }}, your business's ProofOfWork {{ 'subscription' if access.was_paid else 'free trial' }} has ended, so jobs can't be opened or updated right now.</p>
+    <p><strong>Please ask your manager to renew it.</strong> Nothing has been lost: your jobs, checklists and photos are saved and will be here again as soon as it's renewed.</p>
+  {% else %}
+    <h1>Your business's account is active</h1>
+    <p>Subscriptions are handled by your manager, so there's nothing you need to do.</p>
+    <a class="btn" href="{{ url_for('main.dashboard') }}">Back to dashboard</a>
+  {% endif %}
+</section>
+{% endblock %}

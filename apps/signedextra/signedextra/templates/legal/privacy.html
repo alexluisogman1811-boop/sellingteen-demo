@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>What we store</h2>
+  <ul>
+    <li><strong>Company and team accounts:</strong> company name and contact details, each user's name, email, role, and a secure
+      hash of their password (never the password itself).</li>
+    <li><strong>What your team enters:</strong> GCs and their contacts, jobs, labor rates, extra-work tickets, prices, written notices
+      and invoices.</li>
+    <li><strong>Photos and signatures:</strong> uploaded photos, and the name, title, optional contact details and drawn signature of
+      the person who signs or declines a ticket, with the time, IP address and browser of that signature. Photos and signed tickets
+      are stored with a content fingerprint (SHA-256) so changes can be detected.</li>
+    <li><strong>A history log</strong> of actions in your account (who did what, when, from which IP address).</li>
+    <li><strong>Basic technical records</strong> to keep the service secure, such as recent failed logins and request counts per IP
+      address for rate limits.</li>
+  </ul>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't send email or text messages to you, your team or your GCs.</li>
+    <li>We don't sell your data.</li>
+    <li>We don't use advertising or tracking cookies. We use one cookie to keep you logged in (and to protect forms).</li>
+    <li>We never see card details. Subscription payments are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>Who can see it</h2>
+  <p>Only your company's users, according to their role (foremen only see their assigned jobs and, by default, no prices).
+    A person you send a signing link to can see that one ticket's work and photos until the link is used, replaced or expires.</p>
+
+  <h2>Where it is stored</h2>
+  <p>On the server that hosts SignedExtra. Each company can only see its own data.</p>
+
+  <h2>Your choices</h2>
+  <ul>
+    <li>The Owner can <strong>export all company data</strong> (records, photos and signatures) from the Account page.</li>
+    <li>The Owner can <strong>permanently delete the company</strong> from the Account page. Team logins, tickets, photos,
+      signatures, notices, invoices and links are deleted straight away.</li>
+    <li><strong>History log:</strong> it is append-only by design, so its entries are kept after a company is deleted. They are
+      no longer linked to an account and record actions, times, names of the people involved (including the name a GC typed when
+      signing), IP addresses and some details such as GC contact names. They don't contain ticket descriptions, photos,
+      signature images, prices or notice text.</li>
+  </ul>
+  <p>Questions or requests{% if support_email %}: email {{ support_email }} from your account email{% else %}: contact us{% endif %}.</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }}{% if support_email %} · {{ support_email }}{% endif %}</p>
+</article>
+{% endblock %}

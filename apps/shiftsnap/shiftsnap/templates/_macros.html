@@ -1,0 +1,30 @@
+{% macro field_error(errors, name) -%}
+  {% if errors.get(name) %}<p class="field-error" id="{{ name }}-error">{{ errors[name] }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro shift_card(s, next_url, show_date=false) -%}
+<article class="shift {{ 'mine' if s.is_mine }} {{ 'unfilled' if not s.employee_id }} {{ 'has-warning' if s.warnings }}">
+  <div class="shift-time">
+    {% if show_date %}<span class="shift-date">{{ s.date|dshort }}</span>{% endif %}
+    {{ s.start_time }}–{{ s.end_time }}{% if s.end_time == "00:00" %} <span class="tag tag-night" title="Ends at midnight">midnight</span>{% elif s.overnight %} <span class="tag tag-night" title="Ends the next day">+1 day</span>{% endif %}
+    <span class="muted">· {{ s.hours|hours }}</span>
+  </div>
+  <div class="shift-who">
+    {% if s.employee_id %}{{ s.employee_name }}{% if s.is_mine %} <span class="tag tag-me">You</span>{% endif %}{% else %}<span class="tag tag-open">Unfilled</span>{% endif %}
+  </div>
+  <div class="shift-role">{{ s.role }}</div>
+  {% if s.notes %}<div class="shift-notes">{{ s.notes }}</div>{% endif %}
+  {% for w in s.warnings %}<div class="shift-warning">⚠ {{ w }}</div>{% endfor %}
+  {% if is_manager %}
+  <div class="shift-actions no-print">
+    <a href="{{ url_for('main.shift_edit', shift_id=s.id, next=next_url) }}">Edit</a>
+    <form method="post" action="{{ url_for('main.shift_delete', shift_id=s.id) }}"
+          data-confirm="Delete this shift ({{ s.date|dshort }} {{ s.start_time }}–{{ s.end_time }})?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="next" value="{{ next_url }}">
+      <button type="submit" class="linkish danger">Delete</button>
+    </form>
+  </div>
+  {% endif %}
+</article>
+{%- endmacro %}

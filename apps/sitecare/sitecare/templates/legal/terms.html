@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>1. Who we are</h2>
+  <p>SiteCare Desk ("the service") is provided by {{ operator }} ("we", "us").{% if support_email %} You can contact us at {{ support_email }}.{% endif %}</p>
+
+  <h2>2. What the service does</h2>
+  <p>SiteCare Desk helps you keep a record of the maintenance work you do on your clients' websites, track issues,
+    and make reports for your clients. <strong>Everything is recorded by you.</strong> SiteCare Desk does not run backups,
+    uptime monitoring, performance tests or security scans, and it never marks work as done on its own.</p>
+
+  <h2>3. Your account</h2>
+  <p>You must give a valid email address and keep your password private. You are responsible for what happens in your
+    account. You must be allowed to enter into this agreement where you live.</p>
+
+  <h2>4. Your responsibilities</h2>
+  <ul>
+    <li>Only record work that was really done, and only share reports that are true.</li>
+    <li>Do not store passwords, API keys or other login details for your clients' websites in SiteCare Desk.</li>
+    <li>Only add client details you are allowed to keep, and follow the privacy laws where you operate.</li>
+    <li>Do not use the service to break any law or to harm anyone.</li>
+  </ul>
+
+  <h2>5. Shared report links</h2>
+  <p>When you share a saved report, anyone with the link can view that one report, without logging in. A shared report is a
+    fixed copy: later changes to your records do not change it. You can turn a link off at any time. Links keep working after
+    a trial or subscription ends, and stop working if you delete the report, the client or your account.</p>
+
+  <h2>6. Free trial and subscription</h2>
+  <p>New accounts get a free trial of {{ trial_days }} days. After the trial, using the service requires a paid subscription
+    ({{ price }}), billed through our payment provider. Subscriptions renew each month until you cancel. You can cancel at any
+    time; access continues until the end of the period you paid for. See the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+
+  <h2>7. Your data</h2>
+  <p>Your records belong to you. You can export them or delete your account at any time from the Account page. We handle your
+    data as described in the <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>. If your account ends, we may delete its data after 90 days.</p>
+
+  <h2>8. Availability and changes</h2>
+  <p>We work to keep the service available but cannot promise it will always be online or error-free. Keep your own copy of
+    anything important (use "Export all my data"). We may change features or these terms; we will update the date above and,
+    for important changes, tell you in the app.</p>
+
+  <h2>9. Limitation of liability</h2>
+  <p>The service is provided "as is". To the extent the law allows, we are not liable for indirect losses, lost profits, or
+    the content of records and reports you make. Our total liability is limited to the amount you paid us in the last 3 months.</p>
+
+  <h2>10. Ending the agreement</h2>
+  <p>You can stop using the service at any time. We may suspend accounts that break these terms.</p>
+</article>
+{% endblock %}

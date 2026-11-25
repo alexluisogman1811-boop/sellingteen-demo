@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="narrow">
+  <h1>Log in</h1>
+  {% if error %}<div class="flash error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('auth.login', next=next) if next else url_for('auth.login') }}" class="stack card">
+    {{ csrf() }}
+    <div class="field"><label for="email">Email</label>
+      <input id="email" name="email" type="text" required autocomplete="username" autofocus></div>
+    <div class="field"><label for="password">Password</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password"></div>
+    <button class="btn primary" type="submit">Log in</button>
+    {% if mail_on %}<p class="hint"><a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a></p>{% endif %}
+  </form>
+  <p>New to ScopeGuard? <a href="{{ url_for('auth.signup') }}">Create an account</a></p>
+</div>
+{% endblock %}

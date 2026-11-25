@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error, aria_err %}
+{% block title %}Choose a new password{% endblock %}
+{% block content %}
+<div class="auth-card">
+  <h1>Choose a new password</h1>
+  <form method="post" action="{{ url_for('auth.reset_password', token=request.view_args.token) }}" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+      <label for="password">New password</label>
+      <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password" aria-describedby="password-hint{% if errors.password %} password-error{% endif %}" {% if errors.password %}aria-invalid="true"{% endif %}>
+      <p class="hint" id="password-hint">At least 8 characters.</p>
+      {{ field_error(errors, 'password') }}
+    </div>
+    <div class="field">
+      <label for="confirm_password">Confirm new password</label>
+      <input id="confirm_password" name="confirm_password" type="password" required autocomplete="new-password" {{ aria_err(errors, 'confirm_password') }}>
+      {{ field_error(errors, 'confirm_password') }}
+    </div>
+    <button type="submit" class="btn btn-primary btn-block" data-loading-text="Saving…">Save new password</button>
+  </form>
+</div>
+{% endblock %}

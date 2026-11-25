@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error %}
+{% block title %}Account{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Account</h1></div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Your details</h2>
+    <form method="post" class="stack" action="{{ url_for('auth.account') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="f-name">Name or studio name</label>
+      <input id="f-name" name="name" value="{{ form.name }}" required maxlength="100">
+      {{ field_error(errors, 'name') }}
+      <label for="f-email">Email (used to log in)</label>
+      <input id="f-email" name="email" type="email" value="{{ form.email }}" required maxlength="254">
+      {{ field_error(errors, 'email') }}
+      <label for="f-current">Current password (only needed to change your email)</label>
+      <input id="f-current" name="current_password" type="password" maxlength="128" autocomplete="current-password">
+      {{ field_error(errors, 'current_password') }}
+      <button class="btn btn-primary" type="submit">Save details</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Change password</h2>
+    <form method="post" class="stack" action="{{ url_for('auth.change_password') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="f-cp">Current password</label>
+      <input id="f-cp" name="current_password" type="password" required maxlength="128" autocomplete="current-password">
+      {{ field_error(password_errors, 'current_password') }}
+      <label for="f-np">New password</label>
+      <input id="f-np" name="new_password" type="password" required minlength="10" maxlength="128" autocomplete="new-password">
+      <p class="hint">At least 10 characters. You stay logged in here; other devices are logged out.</p>
+      <label for="f-np2">New password again</label>
+      <input id="f-np2" name="confirm_password" type="password" required maxlength="128" autocomplete="new-password">
+      {{ field_error(password_errors, 'new_password') }}
+      <button class="btn btn-primary" type="submit">Change password</button>
+    </form>
+  </section>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Subscription</h2>
+    {% if not config.BILLING_ENABLED %}
+      <p class="muted">Billing is switched off on this copy of SiteCare Desk.</p>
+    {% elif g.access and g.access.state == 'trial' %}
+      <p>Free trial: {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.</p>
+    {% elif g.access and g.access.state == 'paid' %}
+      <p>Active until {{ g.access.until|nice_date }}.</p>
+    {% elif g.access and g.access.state == 'ended' %}
+      <p>Your {{ 'subscription' if g.access.was_paid else 'free trial' }} has ended.</p>
+    {% endif %}
+    {% if config.BILLING_ENABLED %}<a class="btn" href="{{ url_for('billing.subscribe') }}">Subscription details</a>{% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Your data</h2>
+    <p>Download everything in your account (clients, websites, tasks, history, issues and saved reports) as a ZIP of CSV files.</p>
+    <a class="btn" href="{{ url_for('auth.export_data') }}">Export all my data</a>
+  </section>
+</div>
+
+<section class="card danger-zone">
+  <h2>Delete my account</h2>
+  <p>Permanently deletes your account, all its records and evidence files. Shared report links stop working.</p>
+  <a class="btn btn-danger" href="{{ url_for('auth.delete_account') }}">Delete my account…</a>
+</section>
+{% endblock %}

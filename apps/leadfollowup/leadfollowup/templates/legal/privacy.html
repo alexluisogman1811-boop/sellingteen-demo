@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Your account:</strong> business name, email address, and a secure hash of your password (never the password itself).</li>
+    <li><strong>What you enter about your leads:</strong> name, phone, email, where the lead came from, the service they're interested in, notes, status, follow-up dates, and the contact history you record.</li>
+    <li><strong>Basic technical logs</strong> (time, page, IP address) to keep the service secure and working. Search terms are removed from logs.</li>
+  </ul>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't sell your data or your leads' data.</li>
+    <li>We don't send messages to your leads.</li>
+    <li>We don't use advertising or tracking cookies. We use one cookie to keep you logged in.</li>
+    <li>We never see your card details. Payments are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>Why we use it</h2>
+  <p>Only to run the service for you: to show your leads and follow-ups, write follow-up messages, keep your account secure, manage your subscription, and answer your questions.</p>
+
+  <h2>Message writing</h2>
+  <p>Follow-up messages are normally written from built-in templates on our server. If AI writing is switched on, then when you ask for a message only what is needed to write it (the lead's name, service, status, source, notes and most recent recorded contact, plus your business name) is sent to our AI provider.</p>
+
+  <h2>Where it is stored</h2>
+  <p>On the server that hosts LeadFollowUp AI, protected by your login. Each business can only see its own leads.</p>
+
+  <h2>Your leads' information</h2>
+  <p>You add your leads' details, so you are responsible for having a good reason to keep them (for example, they asked you about a service) and for following privacy laws where you operate (such as Thailand's PDPA or similar laws). Delete a lead at any time and its details and contact history are removed.</p>
+
+  <h2>Your choices</h2>
+  <p>You can change or delete your leads at any time. On your Account page you can download a copy of all your data (CSV files) and delete your whole account and all its data yourself.{% if support_email %} You can also email {{ support_email }} from your account email for help.{% endif %}</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }}{% if support_email %} · {{ support_email }}{% endif %}</p>
+</article>
+{% endblock %}

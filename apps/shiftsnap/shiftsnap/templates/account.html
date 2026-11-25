@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error %}
+{% block title %}Account{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Your account</h1>
+  <p>Signed in as <strong>{{ current_user.username }}</strong>
+    ({{ 'Manager' if is_manager else 'Employee' }}{% if current_user.employee_name %} · {{ current_user.employee_name }}{% endif %}).</p>
+  {% if current_user.must_change_password %}
+  <div class="flash flash-warning">You're using a temporary password. Choose your own to continue.</div>
+  {% endif %}
+  {% if errors %}<div class="flash flash-error" role="alert">Your password was not changed. Please fix the highlighted field.</div>{% endif %}
+  <h2>Change password</h2>
+  <form method="post" action="{{ url_for('auth.account') }}" class="form" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Current password
+      <input type="password" name="current_password" autocomplete="current-password" required
+             class="{{ 'invalid' if errors.current_password }}">
+      {{ field_error(errors, 'current_password') }}</label>
+    <label>New password <span class="muted small">(at least 10 characters)</span>
+      <input type="password" name="new_password" autocomplete="new-password" minlength="10" required
+             class="{{ 'invalid' if errors.new_password }}">
+      {{ field_error(errors, 'new_password') }}</label>
+    <label>Repeat new password
+      <input type="password" name="confirm_password" autocomplete="new-password" required
+             class="{{ 'invalid' if errors.confirm_password }}">
+      {{ field_error(errors, 'confirm_password') }}</label>
+    <div class="form-actions"><button class="btn" type="submit">Change password</button></div>
+  </form>
+</section>
+
+{% if is_manager %}
+<section class="card narrow">
+  <h2>Business details</h2>
+  {% if not current_account.email %}
+  <div class="flash flash-warning">Your business has no email yet. Add one so we can reach you about your subscription.</div>
+  {% endif %}
+  {% if business_errors %}<div class="flash flash-error" role="alert">The business details were not saved. Please fix the highlighted field.</div>{% endif %}
+  <form method="post" action="{{ url_for('auth.business') }}" class="form" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Business name
+      <input name="name" value="{{ business.name }}" maxlength="100" required class="{{ 'invalid' if business_errors.name }}">
+      {{ field_error(business_errors, 'name') }}</label>
+    <label>Business email <span class="muted small">(for your subscription; use it when you pay)</span>
+      <input name="email" type="email" value="{{ business.email }}" maxlength="100" autocomplete="email" required
+             class="{{ 'invalid' if business_errors.email }}">
+      {{ field_error(business_errors, 'email') }}</label>
+    <div class="form-actions"><button class="btn" type="submit">Save business details</button></div>
+  </form>
+  {% if config.BILLING_ENABLED and not current_account.is_demo %}
+  <p class="muted small"><a href="{{ url_for('billing.subscribe') }}">Subscription</a></p>
+  {% endif %}
+</section>
+
+<section class="card narrow">
+  <h2>Your data</h2>
+  <p>Download everything your business has stored in ShiftSnap (business details, employees, availability, shifts,
+    sign-ins without passwords, settings) as a ZIP of CSV files.</p>
+  <p><a class="btn" href="{{ url_for('auth.export_data') }}">Export all my data</a></p>
+  <h2>Delete my account</h2>
+  <p>Permanently delete this business and all of its data, including every sign-in. This cannot be undone.</p>
+  <p><a class="btn btn-danger" href="{{ url_for('auth.delete_account') }}">Delete my account…</a></p>
+</section>
+{% else %}
+<section class="card narrow">
+  <h2>Your data</h2>
+  <p class="muted small">Your manager controls this business's data. To get a copy of your details or have them
+    removed, ask your manager.</p>
+</section>
+{% endif %}
+{% endblock %}

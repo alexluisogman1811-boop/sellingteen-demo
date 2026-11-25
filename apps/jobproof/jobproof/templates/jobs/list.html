@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_macros.html" import job_badge, report_badge %}
+{% block title %}Jobs – JobProof AI{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Jobs</h1></div>
+  <a class="btn" href="{{ url_for('jobs.new') }}">+ New Job</a>
+</div>
+
+<form method="get" class="card filters" role="search">
+  <div class="filter-search">
+    <label for="q" class="sr-only">Search</label>
+    <input id="q" name="q" type="search" value="{{ q }}" placeholder="Search customer or job…">
+  </div>
+  <div>
+    <label for="in" class="sr-only">Search in</label>
+    <select id="in" name="in">
+      <option value="all" {{ 'selected' if search_in == 'all' }}>Customer &amp; job</option>
+      <option value="customer" {{ 'selected' if search_in == 'customer' }}>Customer only</option>
+      <option value="job" {{ 'selected' if search_in == 'job' }}>Job title only</option>
+    </select>
+  </div>
+  <div>
+    <label for="status" class="sr-only">Status</label>
+    <select id="status" name="status">
+      <option value="">All statuses</option>
+      {% for key, label in JOB_STATUSES.items() %}
+      <option value="{{ key }}" {{ 'selected' if status == key }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="sort" class="sr-only">Sort</label>
+    <select id="sort" name="sort">
+      <option value="newest" {{ 'selected' if sort != 'oldest' }}>Newest first</option>
+      <option value="oldest" {{ 'selected' if sort == 'oldest' }}>Oldest first</option>
+    </select>
+  </div>
+  <button type="submit" class="btn btn-secondary">Apply</button>
+</form>
+
+{% if jobs %}
+<div class="card table-card">
+  <table class="jobs-table">
+    <thead><tr><th>Job</th><th>Customer</th><th>Date</th><th>Status</th><th class="right">Actions</th></tr></thead>
+    <tbody>
+    {% for job in jobs %}
+      <tr>
+        <td data-label="Job"><a href="{{ url_for('jobs.detail', job_id=job.id) }}"><strong>{{ job.title }}</strong></a></td>
+        <td data-label="Customer">{{ job.customer_name }}</td>
+        <td data-label="Date">{{ job.job_date|date or "—" }}</td>
+        <td data-label="Status">{{ job_badge(job.status) }} {{ report_badge(job.report_status) }}</td>
+        <td class="right actions" data-label="">
+          <a class="btn btn-small btn-secondary" href="{{ url_for('jobs.detail', job_id=job.id) }}">Open</a>
+          <a class="btn btn-small btn-secondary" href="{{ url_for('jobs.edit', job_id=job.id) }}">Edit</a>
+          <form method="post" action="{{ url_for('jobs.delete', job_id=job.id) }}" class="inline"
+                data-confirm="Delete “{{ job.title }}” for {{ job.customer_name }}? Its photos, report and share link will be permanently removed.">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-small btn-danger-outline">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card empty">
+  {% if q or status %}
+    <p>No jobs match your search. <a href="{{ url_for('jobs.index') }}">Clear filters</a></p>
+  {% else %}
+    <p><strong>No jobs yet.</strong></p>
+    <a class="btn" href="{{ url_for('jobs.new') }}">+ New Job</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ 'Edit client' if client else 'Add client' }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ 'Edit ' ~ client.name if client else 'Add client' }}</h1></div>
+<form method="post" class="card form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if errors %}<p class="form-alert" role="alert">Please fix the highlighted fields.</p>{% endif %}
+  <div class="form-grid">
+    {{ m.input('name', 'Client name', values, errors, required=True, attrs='maxlength="120" autofocus') }}
+    {{ m.input('contact_name', 'Contact name', values, errors, attrs='maxlength="120"') }}
+    {{ m.input('contact_email', 'Contact email', values, errors, type='email', attrs='maxlength="200"') }}
+    {{ m.textarea('notes', 'Notes', values, errors, hint="Preferences, billing notes, who to contact. Don't store passwords or keys here.") }}
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">{{ 'Save changes' if client else 'Add client' }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.client_detail', client_id=client.id) if client else url_for('main.clients_list') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

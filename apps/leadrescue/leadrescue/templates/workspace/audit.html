@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Activity log{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Data activity log</h1></div>
+<section class="card">
+  <p class="muted small">Every CSV export and import, full workspace download, deletion and password reset link in this workspace, newest first (last 500).
+    Entries show counts and record numbers only, never your customers' names or contact details. Times are in your workspace's time zone.</p>
+  {% if events %}
+  <div class="table-scroll"><table class="table compact audit-table">
+    <thead><tr><th>When</th><th>Who</th><th>What</th><th>Details</th></tr></thead>
+    <tbody>
+    {% for e in events %}
+    <tr><td>{{ e.created_at|localfmt('%b %d, %Y %I:%M %p') }}</td><td>{{ e.user_name }}</td><td>{{ e.action_label }}</td><td>{{ e.detail }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="muted">Nothing yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

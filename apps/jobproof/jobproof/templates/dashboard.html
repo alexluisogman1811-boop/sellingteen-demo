@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_macros.html" import job_rows %}
+{% block title %}Dashboard – JobProof AI{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ g.business.name or "Dashboard" }}</h1>
+    <p class="muted">Your job reports at a glance.</p>
+  </div>
+  <a class="btn btn-large" href="{{ url_for('jobs.new') }}">+ New Job</a>
+</div>
+
+{% if not g.business.name %}
+<div class="notice">Add your business name and contact details so they appear on your reports.
+  <a href="{{ url_for('profile.edit') }}">Set up business profile →</a></div>
+{% endif %}
+
+<section class="stats" aria-label="Summary">
+  <div class="stat"><span class="stat-value">{{ stats.total }}</span><span class="stat-label">Total jobs</span></div>
+  <div class="stat"><span class="stat-value">{{ stats.completed }}</span><span class="stat-label">Completed jobs</span></div>
+  <div class="stat"><span class="stat-value">{{ stats.draft }}</span><span class="stat-label">Draft jobs</span></div>
+  <div class="stat"><span class="stat-value">{{ stats.shared }}</span><span class="stat-label">Reports sent</span></div>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Recent jobs</h2>
+    {% if recent %}<a href="{{ url_for('jobs.index') }}">View all jobs →</a>{% endif %}
+  </div>
+  {% if recent %}
+    {{ job_rows(recent) }}
+    <p class="muted small">Reports: {{ stats.total - stats.generated - stats.shared }} draft · {{ stats.generated }} generated · {{ stats.shared }} shared</p>
+  {% else %}
+    <div class="empty">
+      <p><strong>No jobs yet.</strong> Create your first job to make a customer report.</p>
+      <div class="empty-actions">
+        <a class="btn" href="{{ url_for('jobs.new') }}">+ New Job</a>
+        <form method="post" action="{{ url_for('dashboard.load_demo') }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-secondary">Load a demo job</button>
+        </form>
+      </div>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

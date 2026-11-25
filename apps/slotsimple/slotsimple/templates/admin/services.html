@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Services{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div><h1>Services</h1><p class="muted">Only active services can be booked online.</p></div>
+  <div class="actions"><a class="btn btn-primary" href="{{ url_for('admin.service_edit') }}">+ New service</a></div>
+</header>
+{% if rows %}
+<div class="table-wrap">
+<table class="table responsive">
+  <thead><tr><th>Service</th><th>Duration</th><th>Price</th><th>Status</th><th>Bookings</th><th><span class="sr-only">Actions</span></th></tr></thead>
+  <tbody>
+  {% for s in rows %}
+    <tr class="{{ '' if s.active else 'inactive' }}">
+      <td data-label="Service"><div><strong>{{ s.name }}</strong>{% if s.description %}<br><span class="small muted">{{ s.description|truncate(90) }}</span>{% endif %}</div></td>
+      <td data-label="Duration"><div>{{ s.duration_minutes }} min</div></td>
+      <td data-label="Price"><div>{{ s.price_cents|money }}</div></td>
+      <td data-label="Status"><div>{% if s.active %}<span class="badge badge-confirmed">Active</span>{% else %}<span class="badge badge-cancelled">Inactive</span>{% endif %}</div></td>
+      <td data-label="Bookings"><div>{{ s.booking_count }}</div></td>
+      <td class="row-actions">
+        <a class="btn btn-small" href="{{ url_for('admin.service_edit', service_id=s.id) }}">Edit</a>
+        <form method="post" action="{{ url_for('admin.service_toggle', service_id=s.id) }}" class="inline">{{ csrf() }}
+          <button class="btn btn-small btn-ghost" type="submit">{{ 'Deactivate' if s.active else 'Activate' }}</button></form>
+        {% if not s.booking_count %}
+        <form method="post" action="{{ url_for('admin.service_delete', service_id=s.id) }}" class="inline" data-confirm="Delete {{ s.name }}?">{{ csrf() }}
+          <button class="btn btn-small btn-ghost danger-text" type="submit">Delete</button></form>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="card empty">No services yet. <a href="{{ url_for('admin.service_edit') }}">Create your first service</a>.</div>
+{% endif %}
+{% endblock %}

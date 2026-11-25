@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>1. Who we are</h2>
+  <p>ContentQueue ("the service") is provided by {{ operator }} ("we", "us").{% if support_email %} You can contact us at {{ support_email }}.{% endif %}</p>
+
+  <h2>2. What the service does</h2>
+  <p>ContentQueue helps you collect ideas, write captions, plan posts on a calendar and keep a record of what you have published. <strong>ContentQueue never posts, schedules or publishes anything on Instagram, TikTok, Facebook, LinkedIn, X, YouTube or any other platform, and never asks for your social media passwords.</strong> A "scheduled" post is a plan inside ContentQueue only. You publish each post yourself, and a post is marked "published" only when you confirm it.</p>
+
+  <h2>3. Your account</h2>
+  <p>You must give a valid email address and keep your password private. You are responsible for what happens in your account. You must be allowed to enter into this agreement where you live.</p>
+
+  <h2>4. Your responsibilities</h2>
+  <ul>
+    <li>Only upload images and write content you have the right to use.</li>
+    <li>Follow the rules of the social networks you publish on, and the law where you operate.</li>
+    <li>Do not use the service to store unlawful content, spam, or to harass anyone.</li>
+  </ul>
+
+  <h2>5. Free trial and subscription</h2>
+  <p>New accounts get a free trial of {{ trial_days }} days. After the trial, using the service requires a paid subscription ({{ price }}), billed through our payment provider. Subscriptions renew each month until you cancel. You can cancel at any time; access continues until the end of the period you paid for. See the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+
+  <h2>6. Your content</h2>
+  <p>Your posts, captions, images and ideas belong to you. We handle them as described in the <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>. You can export your posts to CSV at any time, even after your trial ends. If your account ends, we may delete its data after 90 days.</p>
+
+  <h2>7. Availability and changes</h2>
+  <p>We work to keep the service available but cannot promise it will always be online or error-free. Keep your own copy of anything important. We may change features or these terms; we will update the date above and, for important changes, tell you by email or in the app.</p>
+
+  <h2>8. Limitation of liability</h2>
+  <p>The service is provided "as is". To the extent the law allows, we are not liable for indirect losses, lost profits, missed or late posts, or the content you choose to publish. Our total liability is limited to the amount you paid us in the last 3 months.</p>
+
+  <h2>9. Ending the agreement</h2>
+  <p>You can stop using the service and delete your account at any time. We may suspend accounts that break these terms.</p>
+</article>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service — QuoteFlow AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<article class="card prose legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>1. Who we are</h2>
+  <p>QuoteFlow AI ("the service") is provided by {{ operator }} ("we", "us"). You can contact us at {% include "_support.html" %}.</p>
+
+  <h2>2. What the service does</h2>
+  <p>QuoteFlow AI turns the messages your customers send you into quotes and replies you can copy. Prices are calculated from the pricing rules you enter — they are never made up. The reply text is drafted for you, either by Anthropic's Claude AI or by QuoteFlow's built-in templates, and it can contain mistakes. <strong>QuoteFlow never sends messages to your customers.</strong> You decide what to send, to whom, and how.</p>
+
+  <h2>3. Your account</h2>
+  <p>You must give a valid email address and keep your password private. You are responsible for what happens in your account and for the business information and prices you enter. QuoteFlow is meant for businesses, and you must be allowed to enter into this agreement where you live.</p>
+
+  <h2>4. Your responsibilities</h2>
+  <ul>
+    <li>Check every quote and reply before you send it. You are responsible for the prices, terms and messages you send to your customers.</li>
+    <li>Only paste in customer messages you have a real reason to use, such as an inquiry a customer sent you.</li>
+    <li>Do not use the service to send spam, harass anyone, break any law, or try to get into other people's accounts.</li>
+  </ul>
+
+  <h2>5. Free trial, plans and payment</h2>
+  <ul>
+    {% if billing_enabled %}<li><strong>Free trial:</strong> new accounts get the Pro plan free for {{ trial_days }} days. Nothing is charged during the trial.</li>{% endif %}
+    <li><strong>Free plan:</strong> {{ plans.free.quota }} generated quotes per month, at no cost.{% if billing_enabled %} Accounts that don't subscribe move to the Free plan automatically when the trial ends, and keep their saved quotes.{% endif %}</li>
+    <li><strong>Pro plan:</strong> {{ price }}, billed monthly through our payment provider. It renews each month until you cancel.</li>
+    <li>Quote allowances reset on the 1st of each month (UTC). Unused quotes don't carry over.</li>
+    <li>You can cancel at any time. Pro stays active until the end of the month you paid for, then your account moves to the Free plan.</li>
+    <li><strong>14-day money-back guarantee:</strong> if you're not happy with your first paid month, ask within 14 days of that payment for a full refund. See the <a href="{{ url_for('refunds') }}">Refund Policy</a>.</li>
+  </ul>
+
+  <h2>6. Your data</h2>
+  <p>Your business information, customer messages and quotes belong to you. We use them only to run the service, as described in the <a href="{{ url_for('privacy') }}">Privacy Policy</a>. If your account ends, we may delete its data after 90 days.</p>
+
+  <h2>7. Availability and changes</h2>
+  <p>We work to keep the service available but cannot promise it will always be online or error-free. We may change features, prices or these terms; we will update the date above and, for important changes, tell you by email or in the app before they apply to you.</p>
+
+  <h2>8. Limitation of liability</h2>
+  <p>The service is provided "as is". To the extent the law allows, we are not liable for indirect losses, lost profits, or the prices and messages you choose to send. Our total liability is limited to the amount you paid us in the last 3 months.</p>
+
+  <h2>9. Ending the agreement</h2>
+  <p>You can stop using the service at any time. You can download your data and delete your account yourself under Account settings, or ask us by emailing {% include "_support.html" %}. We may suspend accounts that break these terms.</p>
+
+  <p class="legal-note">Still to be decided by a parent or guardian: which country's law governs these terms, and the business address.</p>
+</article>
+{% endblock %}

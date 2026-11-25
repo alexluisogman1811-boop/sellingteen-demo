@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "macros.html" import post_row, filter_form %}
+{% block title %}Posts{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Posts</h1>
+    <p class="muted">{{ posts|length }} matching post{{ '' if posts|length == 1 else 's' }}{% if filters.undated %} without a date{% endif %}</p>
+  </div>
+  <div class="head-actions">
+    <a class="btn" href="{{ url_for('main.export_csv', **filter_args) }}">Export CSV</a>
+    <a class="btn btn-primary" href="{{ url_for('posts.new_post') }}">+ New post</a>
+  </div>
+</div>
+
+<details class="filter-panel" open>
+  <summary>Filters</summary>
+  {{ filter_form(url_for('posts.list_posts'), filters, campaigns, categories) }}
+</details>
+
+<section class="post-list">
+  {% for p in posts %}
+    {{ post_row(p) }}
+  {% else %}
+    <div class="card empty-state">
+      <p>No posts match these filters.</p>
+      <a class="btn btn-primary" href="{{ url_for('posts.new_post') }}">Create a post</a>
+    </div>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, field_error %}
+{% block title %}Edit category{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="crumbs"><a href="{{ url_for('library.categories') }}">Categories</a> /</p><h1>Edit category</h1></div></div>
+<div class="narrow">
+  <form method="post" class="card stack" novalidate>
+    {{ csrf() }}
+    <div class="field">
+      <label for="k-name">Name <span class="req">*</span></label>
+      <input id="k-name" name="name" value="{{ form.name or '' }}" maxlength="80" required>
+      {{ field_error(errors, 'name') }}
+    </div>
+    <div class="field">
+      <label for="k-desc">Description</label>
+      <textarea id="k-desc" name="description" rows="3">{{ form.description or '' }}</textarea>
+      {{ field_error(errors, 'description') }}
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Save</button>
+      <a class="btn btn-ghost" href="{{ url_for('library.categories') }}">Cancel</a>
+    </div>
+  </form>
+  <form method="post" action="{{ url_for('library.delete_category', item_id=item.id) }}" class="danger-inline"
+        data-confirm="Delete this category? Posts and ideas are kept without it.">
+    {{ csrf() }}<button class="btn btn-danger btn-sm" type="submit">Delete category</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Delete account{% endblock %}
+{% block content %}
+<div class="card confirm-card">
+  <h1>Delete your account?</h1>
+  <p>This permanently deletes <strong>{{ g.user.business_name }}</strong> ({{ g.user.email }}), your {{ lead_count }} lead{{ '' if lead_count == 1 else 's' }} and all contact history. This can't be undone.</p>
+  {% if config.BILLING_ENABLED %}<p class="muted small">Deleting your account doesn't cancel a subscription with the payment provider. See the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>{% endif %}
+  {% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+      <label for="password">Enter your password to confirm</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password" {% if error %}aria-invalid="true"{% endif %}>
+    </div>
+    <div class="field">
+      <label for="confirm">Type <strong>DELETE</strong> (or your email) to confirm</label>
+      <input id="confirm" name="confirm" type="text" required autocomplete="off" spellcheck="false">
+    </div>
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="{{ url_for('account.settings') }}">Cancel</a>
+      <button type="submit" class="btn btn-danger" data-loading-text="Deleting…">Delete account permanently</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

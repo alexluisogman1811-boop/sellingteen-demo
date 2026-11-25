@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Sign up{% endblock %}
+{% block content %}
+<div class="auth-card card">
+  <div class="brand"><span class="brand-mark">LR</span> LeadRescue</div>
+  {% if invite %}
+  <h1>Join {{ invite.business.name }}</h1>
+  <p class="muted">You'll join as <strong>{{ invite.role }}</strong>.</p>
+  {% else %}
+  <h1>Create your workspace</h1>
+  {% endif %}
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.full_name) }}
+    {% if not invite %}{{ field(form.business_name) }}{% endif %}
+    {{ field(form.email) }}
+    {{ field(form.password) }}
+    {{ field(form.confirm) }}
+    {% if needs_code %}{{ field(form.access_code) }}{% endif %}
+    <div class="checkbox {{ 'has-error' if form.accept_terms.errors }}">
+      {{ form.accept_terms() }}
+      <label for="accept_terms">I agree to the <a href="{{ url_for('main.terms') }}" target="_blank" rel="noopener">Terms of Service</a>
+        and have read the <a href="{{ url_for('main.privacy') }}" target="_blank" rel="noopener">Privacy Notice</a>.</label>
+    </div>
+    {% for e in form.accept_terms.errors %}<small class="error">{{ e }}</small>{% endfor %}
+    <button class="btn btn-primary btn-block" type="submit">{{ 'Join workspace' if invite else 'Create account' }}</button>
+  </form>
+  <p class="muted">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+</div>
+{% endblock %}

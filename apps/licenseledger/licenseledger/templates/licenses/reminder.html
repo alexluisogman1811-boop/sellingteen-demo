@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, expiry %}
+{% block title %}Reminder for license #{{ lic.id }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="crumb"><a href="{{ url_for('main.license_detail', license_id=lic.id) }}">License #{{ lic.id }}</a> / Reminder</p>
+    <h1>Renewal reminder</h1>
+    <p class="muted">Copy this text into your own email client. LicenseLedger never sends email.</p>
+  </div>
+</div>
+
+<div class="grid-2 wide-left">
+  <section class="card">
+    <form method="get" class="inline-filter">
+      <label for="template_id">Template</label>
+      <select id="template_id" name="template_id" data-autosubmit>
+        {% for t in templates %}<option value="{{ t.id }}" {{ 'selected' if t.id == tpl.id }}>{{ t.name }}</option>{% endfor %}
+      </select>
+      <noscript><button class="btn btn-sm">Use</button></noscript>
+    </form>
+
+    <div class="field">
+      <div class="label-row"><label for="r-to">To</label><button class="btn btn-sm" type="button" data-copy="#r-to">Copy</button></div>
+      <input id="r-to" readonly value="{{ lic.customer_email }}">
+    </div>
+    <div class="field">
+      <div class="label-row"><label for="r-subject">Subject</label><button class="btn btn-sm" type="button" data-copy="#r-subject">Copy</button></div>
+      <input id="r-subject" readonly value="{{ subject }}">
+    </div>
+    <div class="field">
+      <div class="label-row"><label for="r-body">Message</label><button class="btn btn-sm btn-primary" type="button" data-copy="#r-body">Copy message</button></div>
+      <textarea id="r-body" rows="12" readonly>{{ body }}</textarea>
+    </div>
+  </section>
+  <section class="card">
+    <h2>License</h2>
+    <dl class="dl compact">
+      <dt>Customer</dt><dd>{{ lic.customer_name }}</dd>
+      <dt>Product</dt><dd>{{ lic.product_name }}</dd>
+      <dt>Status</dt><dd>{{ badge(lic.effective_status) }}</dd>
+      <dt>Expires</dt><dd>{{ expiry(lic) }}</dd>
+    </dl>
+    <p class="help">Templates never include the full license key — only its last 4 characters.
+      <a href="{{ url_for('main.templates') }}">Edit templates</a></p>
+  </section>
+</div>
+{% endblock %}

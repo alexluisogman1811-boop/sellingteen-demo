@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% from "_macros.html" import booking_summary, csrf %}
+{% block title %}Booking {{ booking.reference }}{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Your booking</h1>
+  {{ booking_summary(booking) }}
+  {% if booking.notes %}<p><span class="muted small">Your notes</span><br>{{ booking.notes }}</p>{% endif %}
+
+  {% if can_cancel %}
+  <form method="post" action="{{ url_for('public.manage_cancel', reference=booking.reference) }}" class="form danger-zone"
+        data-confirm="Cancel this booking? This can't be undone online.">
+    {{ csrf() }}
+    <h2>Cancel booking</h2>
+    <label for="reason">Reason <span class="muted">(optional)</span></label>
+    <input id="reason" name="reason" maxlength="300">
+    <button class="btn btn-danger" type="submit">Cancel booking</button>
+  </form>
+  {% elif booking.status in ('pending', 'confirmed') %}
+  <div class="notice">Online cancellation closes {{ settings.customer_cancel_hours }} hours before the appointment.</div>
+  {% endif %}
+
+  {% if booking.status in ('pending', 'confirmed') %}
+  <div class="notice">
+    <strong>Need a different time?</strong> Rescheduling is handled by our team. Please contact
+    {{ settings.business_name }}{% if settings.contact_phone %} on {{ settings.contact_phone }}{% endif %}{% if settings.contact_email %} or at {{ settings.contact_email }}{% endif %}
+    and quote your reference.
+  </div>
+  {% endif %}
+  <p class="actions"><button class="btn btn-ghost no-print" type="button" data-print>Print</button></p>
+</section>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Sign up{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <p class="brand brand-large">Proof<span>Of</span>Work</p>
+  <h1>Create your business account</h1>
+  <p class="muted">For cleaning, repair and maintenance businesses.{% if config.BILLING_ENABLED %} Your {{ config.TRIAL_DAYS }}-day free trial starts today, no card needed.{% endif %}</p>
+  <form method="post" action="{{ url_for('auth.signup') }}" class="stack">
+    {{ csrf_field() }}
+    <label class="field"><span class="field-label">Business name</span>
+      <input type="text" name="business_name" value="{{ values.business_name }}" required maxlength="200" autocomplete="organization" placeholder="e.g. Bright Clean Services">
+      <span class="hint">Shown at the top of the completion reports you share with customers.</span></label>
+    <label class="field"><span class="field-label">Your name</span>
+      <input type="text" name="name" value="{{ values.name }}" required maxlength="100" autocomplete="name">
+      <span class="hint">You'll be the manager. You can add your workers after signing up.</span></label>
+    <label class="field"><span class="field-label">Email</span>
+      <input type="email" name="email" value="{{ values.email }}" required maxlength="254" autocomplete="email"></label>
+    <label class="field"><span class="field-label">Password</span>
+      <input type="password" name="password" required minlength="10" maxlength="200" autocomplete="new-password">
+      <span class="hint">At least 10 characters.</span></label>
+    <label class="field"><span class="field-label">Confirm password</span>
+      <input type="password" name="confirm" required minlength="10" maxlength="200" autocomplete="new-password"></label>
+    <label class="check"><input type="checkbox" name="load_demo" value="1"> Add demo customers, templates and jobs to try it out (all labelled "Demo"; you can clear them later in Admin)</label>
+    <button class="btn btn-primary btn-block" type="submit">Create account</button>
+  </form>
+  <p class="muted small">By creating an account you agree to the <a href="{{ url_for('legal.terms') }}">Terms</a> and <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>.</p>
+  <p class="muted small">Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+</section>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% macro job_badge(status) -%}
+<span class="badge badge-job-{{ status }}">{{ JOB_STATUSES.get(status, status) }}</span>
+{%- endmacro %}
+
+{% macro report_badge(status) -%}
+<span class="badge badge-report-{{ status }}">Report: {{ REPORT_STATUSES.get(status, status) }}</span>
+{%- endmacro %}
+
+{% macro job_rows(jobs) -%}
+<ul class="job-list">
+  {% for job in jobs %}
+  <li class="job-row">
+    <a class="job-link" href="{{ url_for('jobs.detail', job_id=job.id) }}">
+      <span class="job-main">
+        <strong class="job-title">{{ job.title }}</strong>
+        <span class="muted">{{ job.customer_name }}{% if job.job_date %} · {{ job.job_date|date }}{% endif %}</span>
+      </span>
+      <span class="job-badges">{{ job_badge(job.status) }} {{ report_badge(job.report_status) }}</span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{%- endmacro %}

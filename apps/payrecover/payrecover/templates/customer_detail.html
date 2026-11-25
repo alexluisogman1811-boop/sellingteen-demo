@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import invoice_row %}
+{% block title %}{{ customer.name }}{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('routes.customers') }}">← Customers</a>
+<div class="section-head">
+  <div>
+    <h1>{{ customer.name }}</h1>
+    <p class="muted">
+      {% if customer.company %}{{ customer.company }} · {% endif %}
+      {% if customer.email %}<a href="mailto:{{ customer.email }}">{{ customer.email }}</a>{% endif %}
+      {% if customer.email and customer.phone %} · {% endif %}
+      {% if customer.phone %}<a href="tel:{{ customer.phone }}">{{ customer.phone }}</a>{% endif %}
+    </p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('routes.invoice_new', customer_id=customer.id) }}">+ New invoice</a>
+</div>
+
+<section class="stats stats-3">
+  <div class="stat"><div class="stat-label">Owes you</div><div class="stat-value">{{ stats.outstanding|money }}</div></div>
+  <div class="stat stat-danger"><div class="stat-label">Overdue</div><div class="stat-value">{{ stats.overdue|money }}</div></div>
+  <div class="stat stat-good"><div class="stat-label">Paid to date</div><div class="stat-value">{{ stats.recovered|money }}</div></div>
+</section>
+
+<section>
+  <h2>Invoices</h2>
+  {% if invoices %}
+  <div class="list card">{% for inv in invoices %}{{ invoice_row(inv, show_customer=False) }}{% endfor %}</div>
+  {% else %}
+  <p class="card muted">No invoices for {{ customer.name }} yet.</p>
+  {% endif %}
+</section>
+
+{% if activity %}
+<section>
+  <h2>History</h2>
+  <ul class="card activity">
+    {% for when, what in activity %}<li><span class="muted small">{{ when|nice_date }}</span> {{ what }}</li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Subscription{% endblock %}
+{% block content %}
+<section class="card narrow">
+  {% if access.state == 'free' %}
+    <h1>{{ 'Your Pro subscription has ended' if access.was_paid else 'Your free trial has ended' }}</h1>
+    <p class="muted">You're on the <strong>Free plan</strong>. Everything keeps working for up to {{ limit }} customers, and all your customers, invoices and follow-up history are saved. Upgrade to Pro for unlimited customers.</p>
+  {% elif access.state == 'paid' %}
+    <h1>You're on Pro</h1>
+    <p class="muted">Your account is active until {{ access.until.isoformat()|date }}. Thank you!</p>
+  {% else %}
+    <h1>Upgrade to InvoiceChaser Pro</h1>
+    <p class="muted">{% if access.days_left is defined %}You have {{ access.days_left }} day{{ '' if access.days_left == 1 else 's' }} left in your free trial, with unlimited customers.{% endif %} After the trial you keep the Free plan (up to {{ limit }} customers), or upgrade to Pro any time for unlimited customers.</p>
+  {% endif %}
+
+  {% if access.state != 'paid' %}
+  <p class="plan-summary"><strong>Free plan:</strong> $0, for up to {{ limit }} customers. <strong>Pro:</strong> {{ pro_price() }}, unlimited customers.</p>
+  <div class="plan">
+    <p class="plan-name"><strong>Free</strong> &middot; $0, for up to {{ limit }} customers</p>
+    <ul class="plan-list">
+      <li>Due soon / Overdue / Paid tracking on your dashboard</li>
+      <li>Professional follow-ups written from your real invoice details</li>
+      <li>Never locked out: your data always stays usable</li>
+    </ul>
+  </div>
+  <div class="plan">
+    <p class="plan-name"><strong>Pro</strong></p>
+    <p class="plan-price">{{ price }}</p>
+    <ul class="plan-list">
+      <li>Everything in Free</li>
+      <li>Unlimited customers and invoices</li>
+    </ul>
+    {% if payment_link %}
+      <a class="btn btn-primary btn-block" href="{{ payment_link }}" target="_blank" rel="noopener noreferrer">Upgrade to Pro for {{ pro_price() }}</a>
+      <p class="muted small">You pay on our payment provider's secure page. Use the same email as your account: <strong>{{ g.user.email }}</strong>. Your account is switched on within 24 hours of payment.</p>
+    {% else %}
+      <p class="notice">Online payment is opening soon.{% if support_email %} To upgrade now, email <strong>{{ support_email }}</strong> from <strong>{{ g.user.email }}</strong>.{% endif %}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <p class="muted small">Questions? {% if support_email %}Email {{ support_email }}.{% endif %} See our <a href="{{ url_for('legal.terms') }}">Terms</a> and <a href="{{ url_for('legal.refunds') }}">Refund policy</a>.</p>
+  <a class="btn" href="{{ url_for('dashboard.index') }}">Back to dashboard</a>
+</section>
+{% endblock %}

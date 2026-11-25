@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, priority_badge, who_badge, task_fields with context %}
+{% block title %}{{ tpl.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><p class="eyebrow"><a href="{{ url_for('owner.templates') }}">Templates</a> / {{ tpl.project_type }}</p><h1>{{ tpl.name }}</h1></div>
+  <form method="post" action="{{ url_for('owner.template_delete', template_id=tpl.id) }}" class="inline">
+    {{ csrf() }}<button class="btn btn-danger confirm" data-confirm="Delete this template? Existing onboardings keep their items." type="submit">Delete template</button>
+  </form>
+</div>
+<div class="cols cols-wide">
+  <div>
+    <section class="card">
+      <h2>Items <span class="count">{{ items|length }}</span></h2>
+      {% if items %}
+      <div class="table-wrap"><table class="table">
+        <thead><tr><th>Item</th><th>Owner</th><th>Priority</th><th>Due</th><th></th></tr></thead>
+        <tbody>
+        {% for i in items %}
+          <tr>
+            <td data-label="Item"><strong>{{ i.title }}</strong><div class="muted small">{{ KIND_LABELS[i.kind] }}{% if i.description %} · {{ i.description }}{% endif %}</div></td>
+            <td data-label="Owner">{{ who_badge(i.assignee) }}</td>
+            <td data-label="Priority">{{ priority_badge(i.priority) }}</td>
+            <td data-label="Due">Start + {{ i.due_offset_days }}d</td>
+            <td><form method="post" action="{{ url_for('owner.template_item_delete', template_id=tpl.id, item_id=i.id) }}" class="inline">
+              {{ csrf() }}<button class="btn btn-sm btn-link" type="submit">Remove</button></form></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% else %}<p class="muted">No items yet.</p>{% endif %}
+    </section>
+    <form method="post" action="{{ url_for('owner.template_item_add', template_id=tpl.id) }}" class="card form">
+      {{ csrf() }}
+      <h2>Add item</h2>
+      {{ task_fields({}, show_due=False) }}
+      <label>Due (days after start date) <input type="number" name="due_offset_days" min="0" max="365" value="7" required></label>
+      <button class="btn btn-primary" type="submit">Add item</button>
+    </form>
+  </div>
+  <div>
+    <form method="post" class="card form">
+      {{ csrf() }}
+      <h2>Details</h2>
+      <label>Name <input name="name" required maxlength="200" value="{{ tpl.name }}"></label>
+      <label>Project type <input name="project_type" required maxlength="80" value="{{ tpl.project_type }}"></label>
+      <label>Description <textarea name="description" rows="3" maxlength="1000">{{ tpl.description }}</textarea></label>
+      <button class="btn" type="submit">Save</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

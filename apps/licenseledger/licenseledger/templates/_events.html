@@ -1,0 +1,17 @@
+{% if events %}
+<ol class="timeline">
+  {% for e in events %}
+  <li class="ev ev-{{ e.action }}">
+    <div class="ev-head">
+      <span class="ev-action">{{ e.action | replace('_', ' ') | capitalize }}</span>
+      <span class="muted small">{{ e.entity_type }}{% if e.entity_id %} #{{ e.entity_id }}{% endif %}</span>
+      {% if e.license_id and not hide_license_link %}
+        <a class="small" href="{{ url_for('main.license_detail', license_id=e.license_id) }}">{{ e.customer_name }} · {{ e.product_name }}</a>
+      {% endif %}
+      <time class="muted small">{{ e.created_at }}</time>
+    </div>
+    {% if e.detail %}<div class="ev-detail">{{ e.detail }}</div>{% endif %}
+  </li>
+  {% endfor %}
+</ol>
+{% else %}<p class="empty">No activity recorded yet.</p>{% endif %}

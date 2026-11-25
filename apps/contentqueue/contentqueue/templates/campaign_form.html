@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Edit campaign{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="crumbs"><a href="{{ url_for('library.campaigns') }}">Campaigns</a> /</p><h1>Edit campaign</h1></div></div>
+<div class="narrow">
+  <form method="post" class="card stack" novalidate>
+    {{ csrf() }}
+    {% include "_campaign_fields.html" %}
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Save</button>
+      <a class="btn btn-ghost" href="{{ url_for('library.campaigns') }}">Cancel</a>
+    </div>
+  </form>
+  <form method="post" action="{{ url_for('library.delete_campaign', item_id=item.id) }}" class="danger-inline"
+        data-confirm="Delete this campaign? Its posts are kept but lose the campaign label.">
+    {{ csrf() }}<button class="btn btn-danger btn-sm" type="submit">Delete campaign</button>
+  </form>
+</div>
+{% endblock %}

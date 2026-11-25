@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, badge, type_pill, expiry, key_mask %}
+{% block title %}License #{{ lic.id }}{% endblock %}
+{% block content %}
+{% set terminal = lic.status in ('revoked', 'replaced') %}
+<div class="page-head">
+  <div>
+    <p class="crumb"><a href="{{ url_for('main.licenses') }}">Licenses</a> / #{{ lic.id }}</p>
+    <h1>{{ lic.product_name }} <span class="muted">for</span> {{ lic.customer_name }}</h1>
+    <p>{{ badge(lic.effective_status) }} {{ type_pill(lic.license_type) }}
+      {% if lic.effective_status == 'expired' and lic.status == 'active' %}<span class="muted small">Past its fixed-term end date.</span>{% endif %}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.license_reminder', license_id=lic.id) }}">Reminder text</a>
+    <a class="btn" href="{{ url_for('main.license_edit', license_id=lic.id) }}">Edit</a>
+  </div>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Details</h2>
+    <dl class="dl">
+      <dt>Customer</dt><dd><a href="{{ url_for('main.customer_detail', customer_id=lic.customer_id) }}">{{ lic.customer_name }}</a><br><span class="muted">{{ lic.customer_email }}</span>{% if lic.customer_company %}<br><span class="muted">{{ lic.customer_company }}</span>{% endif %}</dd>
+      <dt>Product</dt><dd>{{ lic.product_name }}{% if lic.product_sku %} <span class="muted">({{ lic.product_sku }})</span>{% endif %}</dd>
+      <dt>Order</dt><dd>{% if lic.order_id %}<a href="{{ url_for('main.order_detail', order_id=lic.order_id) }}">{{ lic.order_ref }}</a>
+        <br><span class="muted small">{{ ORDER_STATUSES[lic.order_status] }} · {{ PAYMENT_STATUSES[lic.payment_status] }}</span>{% else %}<span class="muted">None</span>{% endif %}</dd>
+      <dt>Delivery</dt><dd>{{ DELIVERY_STATUSES.get(lic.delivery_status) }}{% if lic.delivered_at %} · {{ lic.delivered_at }}{% endif %}</dd>
+      <dt>Issued</dt><dd>{{ lic.issue_date }}</dd>
+      <dt>Expires</dt><dd>{{ expiry(lic) }}</dd>
+      <dt>Key</dt><dd>{{ key_mask(lic) }}
+        <p class="help">Full keys are shown only once, when issued. Lost it? Use <em>Replace</em> to issue a new one.</p></dd>
+      {% if lic.status == 'revoked' %}
+      <dt>Revoked</dt><dd>{{ lic.revoked_at or '—' }}{% if lic.revocation_reason %}<br><span class="muted">{{ lic.revocation_reason }}</span>{% endif %}</dd>
+      {% endif %}
+      {% if lic.replaces_id %}<dt>Replaces</dt><dd><a href="{{ url_for('main.license_detail', license_id=lic.replaces_id) }}">License #{{ lic.replaces_id }}</a></dd>{% endif %}
+      {% if lic.replaced_by_id %}<dt>Replaced by</dt><dd><a href="{{ url_for('main.license_detail', license_id=lic.replaced_by_id) }}">License #{{ lic.replaced_by_id }}</a></dd>{% endif %}
+      <dt>Notes</dt><dd class="prewrap">{{ lic.notes or '—' }}</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Actions</h2>
+    {% if terminal %}
+      <p class="muted">This license is {{ lic.status }}; it can no longer be renewed or changed. Notes can still be added.</p>
+    {% else %}
+      {% if lic.license_type != 'lifetime' %}
+      <details class="action" open>
+        <summary>Renew</summary>
+        <form method="post" action="{{ url_for('main.license_renew', license_id=lic.id) }}" class="action-form">
+          {{ csrf() }}
+          <div class="row">
+            <div class="field"><label for="period">Extend by</label>
+              <select id="period" name="period">
+                <option value="30d">30 days</option><option value="1m">1 month</option>
+                <option value="3m">3 months</option><option value="6m">6 months</option>
+                <option value="12m" selected>1 year</option><option value="24m">2 years</option>
+              </select></div>
+            <div class="field"><label for="new_expiration">…or new end date</label>
+              <input id="new_expiration" name="new_expiration" type="date" min="{{ today }}"></div>
+          </div>
+          <p class="help">Extensions start from the current end date, or today if it has already passed.
+            Months and years follow the calendar (Jan 31 + 1 month = end of February).</p>
+          <div class="field"><label for="renew-note">Note</label><input id="renew-note" name="note" maxlength="500" placeholder="e.g. Paid via invoice #204"></div>
+          <button class="btn btn-primary btn-sm" type="submit">Record renewal</button>
+        </form>
+      </details>
+      {% endif %}
+
+      <details class="action">
+        <summary>Change status</summary>
+        <form method="post" action="{{ url_for('main.license_status', license_id=lic.id) }}" class="action-form">
+          {{ csrf() }}
+          <div class="row">
+            <div class="field"><label for="status">New status</label>
+              <select id="status" name="status">
+                {% for s in ('active', 'suspended') + (('expired',) if lic.license_type == 'manual' else ()) %}
+                  {% if s != lic.status %}<option value="{{ s }}">{{ STATUS_LABELS[s] }}</option>{% endif %}
+                {% endfor %}
+              </select></div>
+            <div class="field grow"><label for="status-reason">Reason</label><input id="status-reason" name="reason" maxlength="500"></div>
+          </div>
+          <button class="btn btn-sm" type="submit">Update status</button>
+        </form>
+      </details>
+
+      <details class="action">
+        <summary>Replace key</summary>
+        <form method="post" action="{{ url_for('main.license_replace', license_id=lic.id) }}" class="action-form"
+              data-confirm="Retire this key and issue a new one with the same terms?">
+          {{ csrf() }}
+          <div class="field"><label for="replace-reason">Reason <span class="req">*</span></label>
+            <input id="replace-reason" name="reason" required maxlength="500" placeholder="e.g. Customer lost key"></div>
+          <button class="btn btn-sm" type="submit">Issue replacement</button>
+        </form>
+      </details>
+
+      <details class="action">
+        <summary>Revoke</summary>
+        <form method="post" action="{{ url_for('main.license_revoke', license_id=lic.id) }}" class="action-form"
+              data-confirm="Revoke this license? This is permanent.">
+          {{ csrf() }}
+          <div class="field"><label for="revoke-reason">Reason <span class="req">*</span></label>
+            <input id="revoke-reason" name="reason" required maxlength="500" placeholder="e.g. Refund issued"></div>
+          <button class="btn btn-danger btn-sm" type="submit">Revoke license</button>
+        </form>
+      </details>
+    {% endif %}
+
+    <details class="action" {{ 'open' if terminal }}>
+      <summary>Add internal note</summary>
+      <form method="post" action="{{ url_for('main.license_note', license_id=lic.id) }}" class="action-form">
+        {{ csrf() }}
+        <div class="field"><label for="note" class="sr-only">Note</label>
+          <textarea id="note" name="note" rows="2" required maxlength="4000" placeholder="Visible only to you"></textarea></div>
+        <button class="btn btn-sm" type="submit">Add note</button>
+      </form>
+    </details>
+
+    <div class="danger-zone">
+      {% if has_history %}
+      <p class="help">This license has renewal, replacement or revocation history, so it can't be deleted.</p>
+      {% else %}
+      <form method="post" action="{{ url_for('main.license_delete', license_id=lic.id) }}"
+            data-confirm="Delete license #{{ lic.id }} permanently? Prefer Revoke to keep the record.">
+        {{ csrf() }}
+        <button class="btn btn-danger-ghost btn-sm" type="submit">Delete record</button>
+      </form>
+      {% endif %}
+    </div>
+  </section>
+</div>
+
+{% include "licenses/_delivery.html" %}
+
+<section class="card">
+  <h2>Renewal history</h2>
+  {% if chain|length > 1 %}
+  <p class="muted small">Includes renewals of earlier keys in this replacement chain:
+    {% for cid in chain %}<a href="{{ url_for('main.license_detail', license_id=cid) }}">#{{ cid }}</a>{{ ' → ' if not loop.last }}{% endfor %}</p>
+  {% endif %}
+  {% if renewals %}
+  <div class="table-wrap">
+  <table class="table stack">
+    <thead><tr><th>Date</th><th>License</th><th>Previous end</th><th>New end</th><th>Period</th><th>Was</th><th>Note</th></tr></thead>
+    <tbody>
+    {% for r in renewals %}
+      <tr>
+        <td data-label="Date">{{ r.created_at }}</td>
+        <td data-label="License">#{{ r.license_id }}</td>
+        <td data-label="Previous end">{{ r.previous_expiration or '—' }}</td>
+        <td data-label="New end"><strong>{{ r.new_expiration }}</strong></td>
+        <td data-label="Period">{{ r.period }}</td>
+        <td data-label="Was">{{ STATUS_LABELS.get(r.previous_status, r.previous_status or '—') }}</td>
+        <td data-label="Note">{{ r.note or '—' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}<p class="empty">No renewals recorded.</p>{% endif %}
+</section>
+
+<section class="card">
+  <h2>Audit history</h2>
+  {% set hide_license_link = True %}
+  {% include "_events.html" %}
+</section>
+{% endblock %}

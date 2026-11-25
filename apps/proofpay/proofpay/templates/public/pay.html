@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Pay invoice · {{ job.business.name }}{% endblock %}
+{% block head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block body_class %}report-body{% endblock %}
+{% block nav %}{% endblock %}
+{% block main_class %}report-wrap{% endblock %}
+{% block content %}
+<article class="report">
+  <header class="report-head">
+    <div class="report-bizname">{{ job.business.name }}</div>
+    {% if job.business.is_demo %}<span class="badge st-demo">DEMO</span>{% endif %}
+  </header>
+  <section class="report-hero">
+    <p class="eyebrow">Invoice</p>
+    <h1>{{ job.title }}</h1>
+  </section>
+  <section class="report-invoice {{ 'is-paid' if job.is_paid else '' }}">
+    <div class="inv-row"><span>Amount</span><span class="inv-total">{{ job.price_cents|money }}</span></div>
+    <div class="inv-row"><span>Status</span>
+      {% if job.is_paid %}<span class="badge st-paid big-badge">PAID</span>
+      {% elif job.price_cents > 0 %}<span class="badge st-due big-badge">PAYMENT DUE</span>
+      {% else %}<span class="badge st-draft big-badge">NO CHARGE</span>{% endif %}
+    </div>
+  </section>
+
+  {% if job.is_paid %}
+    <section class="report-section"><p>This invoice has already been paid. Thank you!</p></section>
+  {% elif checkout %}
+    <section class="report-section pay-box">
+      <h2>How to pay</h2>
+      <p>{{ checkout.message }}</p>
+      {% if job.business.payment_instructions %}
+        <div class="pay-instructions pre">{{ job.business.payment_instructions }}</div>
+      {% endif %}
+      <p class="small">Questions? Contact {{ job.business.name }}
+        {% if job.business.phone %}at <a href="tel:{{ job.business.phone|replace(' ', '') }}">{{ job.business.phone }}</a>{% endif %}
+        {% if job.business.email %}{{ 'or' if job.business.phone else 'at' }} <a href="mailto:{{ job.business.email }}">{{ job.business.email }}</a>{% endif %}.</p>
+      <p class="muted small">This page will show "Paid" once {{ job.business.name }} confirms your payment.</p>
+    </section>
+  {% endif %}
+  <p class="center"><a href="{{ url_for('public.job_page', token=token) }}">&larr; Back to job report</a></p>
+</article>
+{% endblock %}
+{% block footer %}{% endblock %}

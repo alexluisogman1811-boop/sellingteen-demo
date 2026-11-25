@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Forgot your password?{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="card mt-lg">
+  <h1>Forgot your password?</h1>
+  <p>SignedExtra doesn't send emails, so there's no automatic reset email.</p>
+  <h2>Office staff and foremen</h2>
+  <p>Ask your company's Owner. On the <strong>Team</strong> page they can create a one-time password-reset link
+    for you. It works once, for 24 hours. They send it to you themselves (text or email).</p>
+  <h2>Owners</h2>
+  <p>{% if support_email %}Email <strong>{{ support_email }}</strong> <strong>from your Owner email address</strong>{% else %}Contact SignedExtra support from your Owner email address{% endif %}
+    with your company name. We check the request comes from the Owner's email, then reply to that address
+    with a one-time reset link that works for 24 hours. We never ask for your password.</p>
+  <p><a class="btn btn-secondary" href="{{ url_for('auth.login') }}">Back to log in</a></p>
+</div>
+{% endblock %}

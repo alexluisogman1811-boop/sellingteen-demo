@@ -1,0 +1,86 @@
+{% macro input(name, label, form, errors, type="text", required=false, help="", inputmode="", min="", step="", maxlength="", max="") -%}
+<div class="field{% if errors.get(name) %} has-error{% endif %}">
+  <label for="f-{{ name }}">{{ label }}{% if required %} <span class="req" aria-hidden="true">*</span>{% endif %}</label>
+  <input id="f-{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ form.get(name, '') }}"
+    {%- if required %} required{% endif %}
+    {%- if inputmode %} inputmode="{{ inputmode }}"{% endif %}
+    {%- if min != '' %} min="{{ min }}"{% endif %}
+    {%- if max %} max="{{ max }}"{% endif %}
+    {%- if step %} step="{{ step }}"{% endif %}
+    {%- if maxlength %} maxlength="{{ maxlength }}"{% endif %}
+    {%- if errors.get(name) %} aria-invalid="true" aria-describedby="e-{{ name }}"{% endif %}>
+  {% if help %}<p class="help">{{ help }}</p>{% endif %}
+  {% if errors.get(name) %}<p class="error" id="e-{{ name }}">{{ errors[name] }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro textarea(name, label, form, errors, required=false, help="", maxlength="") -%}
+<div class="field{% if errors.get(name) %} has-error{% endif %}">
+  <label for="f-{{ name }}">{{ label }}{% if required %} <span class="req" aria-hidden="true">*</span>{% endif %}</label>
+  <textarea id="f-{{ name }}" name="{{ name }}" rows="3"{% if required %} required{% endif %}{% if maxlength %} maxlength="{{ maxlength }}"{% endif %}{% if errors.get(name) %} aria-invalid="true" aria-describedby="e-{{ name }}"{% endif %}>{{ form.get(name, '') }}</textarea>
+  {% if help %}<p class="help">{{ help }}</p>{% endif %}
+  {% if errors.get(name) %}<p class="error" id="e-{{ name }}">{{ errors[name] }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro select(name, label, form, errors, options, required=false, blank="", help="") -%}
+{# options: list of (value, text) pairs #}
+<div class="field{% if errors.get(name) %} has-error{% endif %}">
+  <label for="f-{{ name }}">{{ label }}{% if required %} <span class="req" aria-hidden="true">*</span>{% endif %}</label>
+  <select id="f-{{ name }}" name="{{ name }}"{% if required %} required{% endif %}{% if errors.get(name) %} aria-invalid="true" aria-describedby="e-{{ name }}"{% endif %}>
+    {% if blank %}<option value="">{{ blank }}</option>{% endif %}
+    {% for value, text in options %}
+      <option value="{{ value }}"{% if form.get(name, '')|string == value|string %} selected{% endif %}>{{ text }}</option>
+    {% endfor %}
+  </select>
+  {% if help %}<p class="help">{{ help }}</p>{% endif %}
+  {% if errors.get(name) %}<p class="error" id="e-{{ name }}">{{ errors[name] }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro status_badge(status) -%}
+<span class="badge badge-{{ status }}"><span aria-hidden="true">{{ {'ok': '●', 'low': '▲', 'out': '✕'}[status] }}</span> {{ STATUS_LABELS[status] }}</span>
+{%- endmacro %}
+
+{% macro movement_badge(kind) -%}
+<span class="badge badge-mv-{{ kind }}">{{ MOVEMENT_LABELS[kind] }}</span>
+{%- endmacro %}
+
+{% macro signed(n) -%}
+<span class="qty-change {{ 'pos' if n > 0 else 'neg' if n < 0 else '' }}">{{ '+' if n > 0 }}{{ n }}</span>
+{%- endmacro %}
+
+{% macro pagination(page, pages) -%}
+{% if pages > 1 %}
+<nav class="pagination" aria-label="Pages">
+  {% if page > 1 %}<a class="btn btn-small" href="{{ page_url(page - 1) }}">← Previous</a>{% endif %}
+  <span>Page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a class="btn btn-small" href="{{ page_url(page + 1) }}">Next →</a>{% endif %}
+</nav>
+{% endif %}
+{%- endmacro %}
+
+{% macro movement_table(movements, show_product=true, compact=false) -%}
+{% if movements %}
+<table class="table responsive">
+  <thead><tr>
+    <th>Date</th>{% if show_product %}<th>Product</th>{% endif %}<th>Type</th>
+    <th class="num">Change</th>{% if not compact %}<th class="num">Before → After</th>{% endif %}<th>Reason / notes</th>
+  </tr></thead>
+  <tbody>
+  {% for m in movements %}
+    <tr>
+      <td data-label="Date">{{ m.movement_date }}{% if not compact %}<div class="muted small">#{{ m.id }} · recorded {{ m.created_at }} UTC</div>{% endif %}</td>
+      {% if show_product %}<td data-label="Product"><a href="{{ url_for('main.product_detail', product_id=m.product_id) }}">{{ m.sku }}</a>{% if not compact %}<div class="muted small">{{ m.product_name }}</div>{% endif %}</td>{% endif %}
+      <td data-label="Type">{{ movement_badge(m.movement_type) }}{% if m.source != 'manual' %} <span class="muted small">{{ m.source }}</span>{% endif %}</td>
+      <td data-label="Change" class="num">{{ signed(m.quantity_change) }}</td>
+      {% if not compact %}<td data-label="Before → After" class="num">{{ m.quantity_before }} → {{ m.quantity_after }}</td>{% endif %}
+      <td data-label="Reason">{{ m.reason }}{% if m.notes %}<div class="muted small">{{ m.notes }}</div>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No stock movements yet.</p>
+{% endif %}
+{%- endmacro %}

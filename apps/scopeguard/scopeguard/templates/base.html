@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>{% block title %}Dashboard{% endblock %} · ScopeGuard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+{% block header %}
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="{{ url_for('main.dashboard') if g.user else url_for('public.index') }}">Scope<span>Guard</span></a>
+    {% if g.user %}
+    <nav class="nav" aria-label="Main">
+      <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('main.clients') }}">Clients</a>
+      <a href="{{ url_for('main.project_new') }}">New project</a>
+      <a href="{{ url_for('main.templates') }}">Templates</a>
+      <a href="{{ url_for('main.settings') }}">Account</a>
+      <form method="post" action="{{ url_for('auth.logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit">Sign out</button>
+      </form>
+    </nav>
+    {% elif request.endpoint not in ('auth.login', 'auth.signup') %}
+    <nav class="nav nav-public" aria-label="Account">
+      {% if config.BILLING_ENABLED %}<a href="{{ url_for('public.index') }}#pricing">Pricing</a>{% endif %}
+      <a href="{{ url_for('auth.login') }}">Log in</a>
+      <a class="btn primary small" href="{{ url_for('auth.signup') }}">Sign up</a>
+    </nav>
+    {% endif %}
+  </div>
+</header>
+{% if demo_mode %}<div class="demo-banner">Demo mode: sample records are labelled and are not real agreements or approvals.</div>{% endif %}
+{% if g.user and g.access and g.access.state == 'trial' and request.endpoint != 'billing.subscribe' %}
+<div class="trial-bar" role="note">
+  <div class="trial-bar-inner">
+    <span><strong>Free trial:</strong> {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.</span>
+    <a class="trial-bar-link" href="{{ url_for('billing.subscribe') }}">Subscribe</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+<main class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}<div class="flash {{ category }}" role="status">{{ message }}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="site">
+  <p>ScopeGuard helps document what was agreed. It does not provide legal advice and does not guarantee that any agreement or approval is legally enforceable.</p>
+  <div class="site-footer-inner">
+    <span>ScopeGuard · by sellingteen</span>
+    <nav aria-label="Legal">
+      <a href="{{ url_for('legal.terms') }}">Terms</a>
+      <a href="{{ url_for('legal.privacy') }}">Privacy</a>
+      <a href="{{ url_for('legal.refunds') }}">Refunds</a>
+      {% if g.user and config.BILLING_ENABLED and not g.user.is_demo %}<a href="{{ url_for('billing.subscribe') }}">Subscription</a>{% endif %}
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

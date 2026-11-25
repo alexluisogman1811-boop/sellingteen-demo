@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Templates{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Message templates</h1>
+    <p class="muted">Your own wording for review requests. Pick one when writing a customer's message.</p>
+  </div>
+  <a class="btn" href="{{ url_for('message_templates.create_template') }}">+ New template</a>
+</div>
+
+{% if templates %}
+<div class="template-list">
+  {% for t in templates %}
+  <section class="card">
+    <div class="section-head">
+      <h2>{{ t.name }}</h2>
+      <div class="actions">
+        <a class="btn btn-secondary btn-sm" href="{{ url_for('message_templates.edit_template', template_id=t.id) }}">Edit</a>
+        <form method="post" action="{{ url_for('message_templates.delete_template', template_id=t.id) }}" class="inline"
+              data-confirm="Delete the template “{{ t.name }}”?">
+          {{ csrf() }}
+          <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+        </form>
+      </div>
+    </div>
+    <p class="template-body">{{ t.body }}</p>
+  </section>
+  {% endfor %}
+</div>
+{% else %}
+<section class="card empty">
+  <p>No templates yet. Save your own wording here, then pick it when writing a customer's message.</p>
+  <a class="btn" href="{{ url_for('message_templates.create_template') }}">Create a template</a>
+</section>
+{% endif %}
+{% endblock %}

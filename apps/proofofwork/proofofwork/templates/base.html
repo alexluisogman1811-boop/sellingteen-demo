@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% if g.user %}<meta name="robots" content="noindex, nofollow">{% endif %}
+  <title>{% block title %}ProofOfWork{% endblock %} · ProofOfWork</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+{% if g.user %}
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="{{ url_for('main.dashboard') }}">Proof<span>Of</span>Work</a>
+    {% if g.user.role == 'manager' %}<a class="btn btn-small btn-primary" href="{{ url_for('main.job_new') }}">+ Job</a>{% endif %}
+  </div>
+  <nav class="nav" aria-label="Main">
+    <a href="{{ url_for('main.dashboard') }}" class="{{ 'active' if request.endpoint in ('main.dashboard', 'main.index') }}">Dashboard</a>
+    <a href="{{ url_for('main.jobs') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('main.job') }}">Jobs</a>
+    <a href="{{ url_for('main.customers') }}" class="{{ 'active' if request.endpoint and (request.endpoint.startswith('main.customer') or request.endpoint.startswith('main.property')) }}">Customers</a>
+    <a href="{{ url_for('main.templates') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('main.template') }}">Templates</a>
+    {% if g.user.role == 'manager' %}
+    <a href="{{ url_for('auth.users') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('auth.user') }}">Team</a>
+    <a href="{{ url_for('main.admin') }}" class="{{ 'active' if request.endpoint and request.endpoint.startswith('main.admin') }}">Admin</a>
+    {% endif %}
+    <a href="{{ url_for('auth.change_password') }}">Account</a>
+    <form method="post" action="{{ url_for('auth.logout') }}" class="inline">{{ csrf_field() }}<button type="submit" class="linklike">Sign out</button></form>
+  </nav>
+</header>
+{% if g.user.role == 'manager' and g.access and g.access.state == 'trial' and request.endpoint != 'billing.subscribe' %}
+<div class="trial-bar" role="note">
+  <div class="trial-bar-inner">
+    <span><strong>Free trial:</strong> {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.</span>
+    <a class="trial-bar-link" href="{{ url_for('billing.subscribe') }}">Subscribe</a>
+  </div>
+</div>
+{% endif %}
+{% else %}
+<header class="topbar topbar-public">
+  <div class="topbar-inner">
+    <a class="brand" href="{{ url_for('main.index') }}">Proof<span>Of</span>Work</a>
+    {% if request.endpoint not in ('auth.login', 'auth.signup') %}
+    <nav class="nav-public" aria-label="Account">
+      <a href="{{ url_for('main.index') }}#pricing">Pricing</a>
+      <a href="{{ url_for('auth.login') }}">Sign in</a>
+      <a class="btn btn-small btn-primary" href="{{ url_for('auth.signup') }}">Sign up</a>
+    </nav>
+    {% endif %}
+  </div>
+</header>
+{% endif %}
+<main class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flashes" role="status">
+      {% for category, message in messages %}<div class="flash flash-{{ category }}">{{ message }}</div>{% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <span>ProofOfWork · by sellingteen</span>
+    <nav aria-label="Legal">
+      <a href="{{ url_for('legal.terms') }}">Terms</a>
+      <a href="{{ url_for('legal.privacy') }}">Privacy</a>
+      <a href="{{ url_for('legal.refunds') }}">Refunds</a>
+      {% if g.user and g.user.role == 'manager' and config.BILLING_ENABLED %}<a href="{{ url_for('billing.subscribe') }}">Subscription</a>{% endif %}
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

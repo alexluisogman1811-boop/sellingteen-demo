@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, csrf, ticket_no %}
+{% block title %}{{ ticket_no(ticket) }}{% endblock %}
+{% block content %}
+<div class="spread">
+  <div>
+    <p class="small muted"><a href="{{ url_for('core.job_detail', job_id=job.id) }}">{{ job.name }}</a> · {{ job.customer_name }}</p>
+    <h1>{{ ticket_no(ticket) }} {{ badge(ticket.status) }}</h1>
+    <p class="small muted">Work date {{ ticket.work_date }} · version {{ ticket.version }}{% if ticket.locked_at %} · locked {{ ticket.locked_at|dt }}{% endif %}</p>
+  </div>
+  <div class="row no-print">
+    {% if editable %}<a class="btn btn-secondary" href="{{ url_for('tickets.edit_ticket', ticket_id=ticket.id) }}">Edit</a>{% endif %}
+    <a class="btn btn-secondary" href="{{ url_for('tickets.print_ticket', ticket_id=ticket.id) }}">Print / PDF</a>
+  </div>
+</div>
+
+{% if new_link %}
+<div class="card linkbox">
+  <h2>Signature link (shown once)</h2>
+  <p class="small">Send it to the GC's representative. It expires in 7 days and stops working if the ticket changes.
+    It keeps working even if your trial or subscription ends.</p>
+  {% if config.PRODUCTION and not public_base_configured() %}<p class="flash flash-error">The public web address (PUBLIC_BASE_URL) isn't set, so this link is incomplete. Ask your administrator.</p>{% endif %}
+  <input type="text" readonly value="{{ new_link }}" id="sign-link" aria-label="Signature link">
+  <div class="row mt">
+    <button class="btn btn-primary" type="button" data-share="#sign-link" data-share-title="Please review and sign extra-work ticket {{ ticket_no(ticket) }}">Share…</button>
+    <button class="btn btn-secondary" type="button" data-copy="#sign-link">Copy link</button>
+  </div>
+</div>
+{% endif %}
+
+{% if ticket.status == 'void' %}<div class="flash flash-error">Voided: {{ ticket.void_reason }}</div>{% endif %}
+
+{% if editable %}
+<div class="card no-print">
+  <h2>Get it signed</h2>
+  <p class="small muted">Hand your phone to the superintendent, or send them a link.</p>
+  <div class="row">
+    <a class="btn btn-ok" href="{{ url_for('tickets.sign_on_device', ticket_id=ticket.id) }}">Sign on this device</a>
+    <form method="post" action="{{ url_for('tickets.sign_link', ticket_id=ticket.id) }}">
+      {{ csrf() }}<button class="btn btn-primary" type="submit">Create signature link</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% if can_notice %}
+<details class="card no-print" {{ "open" if ticket.status in ('declined', 'awaiting_signature') }}>
+  <summary>GC refused, declined or didn't respond? Prepare a written notice</summary>
+  <form method="post" action="{{ url_for('tickets.create_notice', ticket_id=ticket.id) }}" class="mt" data-confirm="Preparing a notice locks this ticket. Continue?">
+    {{ csrf() }}
+    <div class="field">
+      <label for="f-reason">What happened?</label>
+      <select id="f-reason" name="reason">
+        {% for key, text in notice_reasons.items() %}<option value="{{ key }}" {{ "selected" if (ticket.status == 'declined' and key == 'declined') or (ticket.status == 'awaiting_signature' and key == 'no_response') }}>{{ text }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-note">Note (optional)</label>
+      <input id="f-note" type="text" name="note" maxlength="500" placeholder="For example: superintendent said to take it up with the PM">
+    </div>
+    {% if recipients %}
+    <p class="small">Will be addressed to: {{ recipients|join(", ") }}</p>
+    {% else %}
+    <p class="small error-text">No GC contact is set to receive notices. {% if is_manager() %}<a href="{{ url_for('core.customer_detail', customer_id=job.customer_id) }}">Add one</a>{% else %}Ask your office to add one{% endif %}, or deliver the notice by hand.</p>
+    {% endif %}
+    <button class="btn btn-danger" type="submit">Prepare notice</button>
+  </form>
+</details>
+{% endif %}
+
+<div class="card">
+  <h2>Work performed</h2>
+  <p>{{ ticket.description }}</p>
+  <p class="small muted">Requested by <strong>{{ ticket.requested_by_name }}</strong>{% if ticket.requested_by_role %} ({{ ticket.requested_by_role }}){% endif %}</p>
+
+  {% if is_manager() and price_editable %}
+  <form method="post" action="{{ url_for('tickets.ticket_pricing', ticket_id=ticket.id) }}">
+    {{ csrf() }}
+  {% endif %}
+  <table class="table stack">
+    <thead><tr><th>Type</th><th>Description</th><th class="num">Qty</th>{% if can_see_prices() %}<th class="num">Unit price</th><th class="num">Amount</th>{% endif %}</tr></thead>
+    <tbody>
+    {% for l in lines %}
+    <tr>
+      <td data-label="Type">{{ l.labor_label if l.kind == 'labor' else l.kind|capitalize }}</td>
+      <td data-label="Description">{{ l.description }}</td>
+      <td data-label="Qty" class="num">{{ l.qty_x100|qty }} {{ l.unit }}</td>
+      {% if can_see_prices() %}
+      <td data-label="Unit price" class="num">
+        {% if is_manager() and price_editable %}
+        <input type="text" name="rate_{{ l.id }}" inputmode="decimal" value="{{ '%.2f'|format(l.rate_cents / 100) if l.rate_cents is not none else '' }}" placeholder="not priced" aria-label="Unit price for {{ l.description }}">
+        {% else %}{{ l.rate_cents|money if l.rate_cents is not none else "not priced" }}{% endif %}
+      </td>
+      <td data-label="Amount" class="num">{{ l.amount_cents|money }}</td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if can_see_prices() %}
+  <table class="table mt">
+    <tr><td>Labor</td><td class="num">{{ ticket.labor_cents|money }}</td></tr>
+    <tr><td>Materials &amp; equipment</td><td class="num">{{ ticket.material_cents|money }}</td></tr>
+    <tr><td>Markup ({{ ticket.markup_bp|qty }}% on materials &amp; equipment)</td><td class="num">{{ ticket.markup_cents|money }}</td></tr>
+    <tr><td><strong>Total</strong></td><td class="num"><strong>{{ ticket.total_cents|money }}</strong></td></tr>
+  </table>
+  {% if unpriced %}<p class="flash flash-info small mt">Some lines aren't priced yet. They must be priced before this ticket can be invoiced.</p>{% endif %}
+  {% endif %}
+  {% if is_manager() and price_editable %}
+    <div class="row mt">
+      <label for="f-markup" class="small">Markup %</label>
+      <input id="f-markup" type="text" name="markup_pct" inputmode="decimal" value="{{ ticket.markup_bp|qty }}" class="w-sm">
+      <button class="btn btn-secondary btn-sm" type="submit">Save pricing</button>
+    </div>
+    <p class="small muted">Pricing changes are logged. They don't change the signed work content.</p>
+  </form>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Photos ({{ photos|length }})</h2>
+  {% if photos %}
+  <div class="photos">
+    {% for p in photos %}
+    <figure>
+      <a href="{{ url_for('tickets.photo', photo_id=p.id) }}"><img src="{{ url_for('tickets.photo', photo_id=p.id) }}" alt="Ticket photo {{ loop.index }}" loading="lazy"></a>
+      {% if editable %}
+      <form method="post" action="{{ url_for('tickets.delete_photo', ticket_id=ticket.id, photo_id=p.id) }}" data-confirm="Remove this photo?">
+        {{ csrf() }}<button class="btn btn-secondary btn-sm" type="submit" aria-label="Remove photo">✕</button>
+      </form>
+      {% endif %}
+    </figure>
+    {% endfor %}
+  </div>
+  {% else %}<p class="muted small">No photos yet. Photos make it much harder to dispute the work.</p>{% endif %}
+  {% if editable and photos|length < max_photos %}
+  <form method="post" action="{{ url_for('tickets.upload_photo', ticket_id=ticket.id) }}" enctype="multipart/form-data" class="mt no-print" data-resize-images>
+    {{ csrf() }}
+    <label for="f-photos" class="btn btn-secondary">📷 Add photos</label>
+    <input id="f-photos" type="file" name="photos" accept="image/jpeg,image/png,image/webp" capture="environment" multiple class="visually-hidden" data-autosubmit>
+    <p class="small muted" data-upload-status></p>
+  </form>
+  {% endif %}
+</div>
+
+{% if signatures %}
+<div class="card">
+  <h2>Signatures</h2>
+  {% for s in signatures %}
+  <div class="mt">
+    <p><strong>{{ "Signed" if s.outcome == 'signed' else "Declined" }}</strong> by {{ s.signer_name }}{% if s.signer_title %} ({{ s.signer_title }}){% endif %}
+      · {{ s.created_at|dt }} · {{ "on contractor's device" if s.method == 'on_device' else "via link" }}</p>
+    {% if s.outcome == 'signed' %}<img class="signature-img" src="{{ url_for('tickets.signature_image', ticket_id=ticket.id, sig_id=s.id) }}" alt="Signature of {{ s.signer_name }}">{% endif %}
+    {% if s.decline_reason %}<p>Reason: {{ s.decline_reason }}</p>{% endif %}
+    <p class="small muted">Version {{ s.version }} · fingerprint <span class="mono">{{ s.content_hash }}</span>{% if s.signer_contact %} · contact {{ s.signer_contact }}{% endif %} · IP {{ s.ip_address }}</p>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if notices %}
+<div class="card">
+  <h2>Written notices</h2>
+  <ul class="list">
+    {% for n in notices %}
+    <li><a class="item" href="{{ url_for('tickets.notice_detail', ticket_id=ticket.id, notice_id=n.id) }}">
+      <span>{{ n.subject }}<br><span class="small muted">Prepared {{ n.created_at|dt }}</span></span>
+      <span class="badge badge-{{ 'sent' if n.status == 'sent' else 'notice_pending' }}">{{ "Sent " ~ (n.sent_at|dt) if n.status == 'sent' else "Not sent yet" }}</span>
+    </a></li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if links %}
+<details class="card">
+  <summary>Signature links ({{ links|length }})</summary>
+  <ul class="timeline mt">
+    {% for l in links %}
+    <li>Created {{ l.created_at|dt }} for version {{ l.version }} ·
+      {% if l.used_at %}answered {{ l.used_at|dt }}{% elif l.revoked_at %}replaced {{ l.revoked_at|dt }}{% else %}expires {{ l.expires_at|dt }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}
+
+<details class="card">
+  <summary>History ({{ events|length }} events)</summary>
+  <ul class="timeline mt">
+    {% for e in events %}<li><strong>{{ e.action }}</strong> · {{ e.actor }} · {{ e.created_at|dt }}</li>{% endfor %}
+  </ul>
+  <p class="small muted">Content fingerprint (SHA-256): <span class="mono">{{ ticket.content_hash }}</span></p>
+</details>
+
+{% if is_manager() and can_void %}
+<details class="card no-print">
+  <summary>Void this ticket</summary>
+  <form method="post" action="{{ url_for('tickets.void_ticket', ticket_id=ticket.id) }}" class="mt" data-confirm="Void this ticket? This can't be undone.">
+    {{ csrf() }}
+    <div class="field"><label for="f-void">Reason</label><input id="f-void" type="text" name="reason" required maxlength="500"></div>
+    <button class="btn btn-danger btn-sm" type="submit">Void ticket</button>
+  </form>
+</details>
+{% endif %}
+{% endblock %}

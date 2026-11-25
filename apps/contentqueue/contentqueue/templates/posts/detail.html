@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, status_badge, platform_badge %}
+{% block title %}{{ post.title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="crumbs"><a href="{{ url_for('posts.list_posts') }}">Posts</a> /</p>
+    <h1>{{ post.title }}</h1>
+    <div class="meta">
+      {{ platform_badge(post.platform) }} {{ status_badge(post.status) }}
+      {% if is_overdue(post) %}<span class="badge badge-overdue">Overdue</span>{% endif %}
+      {% if post.campaign_name %}<a class="tag color-{{ post.campaign_color }}" href="{{ url_for('posts.list_posts', campaign_id=post.campaign_id, status='all') }}">{{ post.campaign_name }}</a>{% endif %}
+      {% if post.category_name %}<a class="tag tag-muted" href="{{ url_for('posts.list_posts', category_id=post.category_id, status='all') }}">{{ post.category_name }}</a>{% endif %}
+    </div>
+  </div>
+  <div class="head-actions">
+    <a class="btn btn-primary" href="{{ url_for('posts.edit', post_id=post.id) }}">Edit</a>
+  </div>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-main">
+    <section class="card">
+      <div class="card-head">
+        <h2>Caption</h2>
+        <div class="copy-group">
+          <button class="btn btn-sm" type="button" data-copy="caption-text">Copy caption</button>
+          <button class="btn btn-sm" type="button" data-copy="hashtag-text" {{ 'disabled' if not post.hashtags }}>Copy hashtags</button>
+          <button class="btn btn-sm btn-primary" type="button" data-copy="caption-text,hashtag-text">Copy both</button>
+        </div>
+      </div>
+      {% if post.caption %}
+        <div class="caption-box" id="caption-text">{{ post.caption }}</div>
+      {% else %}
+        <div class="caption-box muted" id="caption-text"></div><p class="muted">No caption yet.</p>
+      {% endif %}
+      <p class="help counter-static">
+        {{ post.caption|length }} characters{% if limit %} · {{ post.platform|platform_label }} limit {{ limit }}{% if post.caption|length > limit %} — <strong class="text-danger">over the limit</strong>{% endif %}{% endif %}
+      </p>
+      <h3>Hashtags</h3>
+      <div class="hashtag-box" id="hashtag-text">{{ post.hashtags }}</div>
+      {% if not post.hashtags %}<p class="muted">No hashtags.</p>{% endif %}
+    </section>
+
+    {% if post.image_filename %}
+      <section class="card">
+        <h2>Image</h2>
+        {% if upload_exists(post.image_filename) %}
+          <img class="post-image" src="{{ url_for('main.uploaded_file', filename=post.image_filename) }}" alt="Image for {{ post.title }}">
+          <p class="help"><a href="{{ url_for('main.uploaded_file', filename=post.image_filename) }}" download>Download image</a></p>
+        {% else %}
+          <p class="flash flash-warning">The image file for this post is missing from <code>instance/uploads/</code>
+            (it may have been moved or deleted outside the app). Edit the post to upload it again or remove it.</p>
+        {% endif %}
+      </section>
+    {% endif %}
+
+    {% if post.notes %}
+      <section class="card">
+        <h2>Internal notes</h2>
+        <div class="caption-box">{{ post.notes }}</div>
+      </section>
+    {% endif %}
+  </div>
+
+  <aside class="detail-side">
+    <section class="card">
+      <h2>Plan</h2>
+      <p class="help">Planned dates live in ContentQueue only. Nothing is scheduled or posted on {{ post.platform|platform_label }} by this app.</p>
+      <dl class="facts">
+        <dt>Planned</dt>
+        <dd>{% if post.planned_date %}{{ post.planned_date|nice_date }}{% if post.planned_time %} at {{ post.planned_time }}{% endif %}{% else %}<span class="muted">Not set</span>{% endif %}</dd>
+        {% if post.published_at %}<dt>Published</dt><dd>Confirmed by you on {{ post.published_at }}</dd>{% endif %}
+        {% if post.published_url %}<dt>Live link</dt><dd><a href="{{ post.published_url }}" target="_blank" rel="noopener noreferrer nofollow">{{ post.published_url|truncate(40) }}</a></dd>{% endif %}
+        <dt>Created</dt><dd>{{ post.created_at }}</dd>
+      </dl>
+    </section>
+
+    <section class="card">
+      <h2>Workflow</h2>
+      <div class="status-actions">
+        {% for s in transitions if s != 'published' %}
+          <form method="post" action="{{ url_for('posts.change_status', post_id=post.id) }}">
+            {{ csrf() }}<input type="hidden" name="status" value="{{ s }}">
+            <button class="btn btn-sm" type="submit"
+              {% if s == 'scheduled' and not post.planned_date %}disabled title="Set a planned date first"{% endif %}>
+              {% if s == 'archived' %}Archive{% elif s == 'draft' and post.status == 'archived' %}Restore to draft{% else %}Move to {{ s|status_label|lower }}{% endif %}
+            </button>
+          </form>
+        {% endfor %}
+      </div>
+      {% if 'published' in transitions %}
+        <form id="mark-published" class="confirm-publish" method="post" action="{{ url_for('posts.change_status', post_id=post.id) }}">
+          {{ csrf() }}<input type="hidden" name="status" value="published">
+          <label class="checkbox">
+            <input type="checkbox" name="confirm_published" value="yes" required>
+            This post is live on {{ post.platform|platform_label }} — I posted it myself or it went out through {{ post.platform|platform_label }}’s own scheduler.
+          </label>
+          <button class="btn btn-success" type="submit">Mark as published</button>
+          <p class="help">ContentQueue doesn’t publish or check anything on {{ post.platform|platform_label }} — this only records what you confirm.</p>
+        </form>
+      {% elif post.status == 'archived' and post.published_at %}
+        <form method="post" action="{{ url_for('posts.change_status', post_id=post.id) }}">
+          {{ csrf() }}<input type="hidden" name="status" value="published">
+          <button class="btn btn-sm" type="submit">Restore as published</button>
+          <p class="help">You marked this published on {{ post.published_at }}; restoring keeps that record.</p>
+        </form>
+      {% elif post.status in ('draft', 'review') %}
+        <p class="help">Schedule the post first; you can mark it published once it’s scheduled.</p>
+      {% endif %}
+    </section>
+
+    {% if post.status not in ('published', 'archived') %}
+    <section class="card">
+      <h2>Move to a new date</h2>
+      <form class="inline-form" method="post" action="{{ url_for('posts.move', post_id=post.id) }}">
+        {{ csrf() }}
+        <label>Date <input type="date" name="new_date" required value="{{ post.planned_date or '' }}"></label>
+        <label>Time <input type="time" name="new_time" value="{{ post.planned_time or '' }}"></label>
+        <button class="btn btn-sm" type="submit">Move</button>
+      </form>
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <h2>Duplicate</h2>
+      <p class="help">Creates a new draft with the same caption, hashtags, image and labels.</p>
+      <form class="inline-form" method="post" action="{{ url_for('posts.duplicate', post_id=post.id) }}">
+        {{ csrf() }}<input type="hidden" name="form_nonce" value="{{ form_nonce }}">
+        <label>New date <input type="date" name="new_date"></label>
+        <label>Time <input type="time" name="new_time"></label>
+        <button class="btn btn-sm" type="submit">Duplicate</button>
+      </form>
+    </section>
+
+    <section class="card danger-zone">
+      <form method="post" action="{{ url_for('posts.delete', post_id=post.id) }}" data-confirm="Delete this post permanently? This can’t be undone.">
+        {{ csrf() }}
+        <button class="btn btn-danger btn-sm" type="submit">Delete post</button>
+      </form>
+    </section>
+  </aside>
+</div>
+{% endblock %}

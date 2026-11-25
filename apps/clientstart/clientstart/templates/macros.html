@@ -1,0 +1,68 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro status_badge(status) %}<span class="badge st-{{ status }}">{{ STATUS_LABELS[status] }}</span>{% endmacro %}
+
+{% macro priority_badge(p) %}<span class="badge pr-{{ p }}">{{ p|capitalize }}</span>{% endmacro %}
+
+{% macro who_badge(a) %}<span class="badge who-{{ a }}">{{ 'Client' if a == 'client' else 'Agency' }}</span>{% endmacro %}
+
+{% macro progress_bar(p, label=True) %}
+<div class="progress" role="progressbar" aria-valuenow="{{ p.percent }}" aria-valuemin="0" aria-valuemax="100" aria-label="Progress">
+  {# Round to 5% steps for the CSS width classes, but never hide real progress (1-4% shows as 5%). #}
+  {% set step = (p.percent // 5) * 5 %}
+  <div class="progress-fill w-{{ 5 if (p.percent > 0 and step == 0) else step }}"></div>
+</div>
+{% if label %}<div class="progress-label">{{ p.percent }}% · {{ p.done }}/{{ p.total }} done{% if p.submitted %} · {{ p.submitted }} awaiting review{% endif %}</div>{% endif %}
+{% endmacro %}
+
+{# Owner pages and the client portal show only their own message categories, so agency
+   messages (which can name other clients) never appear inside a portal page. #}
+{% macro flashes(portal=False) %}
+{% set cats = ['portal-success', 'portal-error'] if portal else ['success', 'error', 'info', 'message'] %}
+{% with messages = get_flashed_messages(with_categories=true, category_filter=cats) %}
+  {% if messages %}<div class="flashes">
+    {% for cat, msg in messages %}<div class="flash flash-{{ cat|replace('portal-', '') }}" role="status">{{ msg }}</div>{% endfor %}
+  </div>{% endif %}
+{% endwith %}
+{% endmacro %}
+
+{% macro task_kind_select(selected) %}
+<select name="kind" id="kind">
+  {% for k, label in KIND_LABELS.items() %}<option value="{{ k }}" {{ 'selected' if selected == k }}>{{ label }}</option>{% endfor %}
+</select>
+{% endmacro %}
+
+{% macro task_fields(t, show_due=True) %}
+<div class="grid-2">
+  <label>Title <input name="title" required maxlength="200" value="{{ t.title or '' }}"></label>
+  <label>Type {{ task_kind_select(t.kind or 'task') }}</label>
+  <label>Assigned to
+    <select name="assignee">
+      <option value="client" {{ 'selected' if (t.assignee or 'client') == 'client' }}>Client</option>
+      <option value="owner" {{ 'selected' if t.assignee == 'owner' }}>Agency (owner)</option>
+    </select>
+  </label>
+  <label>Priority
+    <select name="priority">
+      {% for p in ['low', 'medium', 'high'] %}<option value="{{ p }}" {{ 'selected' if (t.priority or 'medium') == p }}>{{ p|capitalize }}</option>{% endfor %}
+    </select>
+  </label>
+  {% if show_due %}<label>Due date <input type="date" name="due_date" value="{{ t.due_date or '' }}"></label>{% endif %}
+</div>
+<label>Instructions for the client <textarea name="description" rows="2" maxlength="4000">{{ t.description or '' }}</textarea></label>
+{% endmacro %}
+
+{# Footer on every page (owner pages, log in, client portal, errors). #}
+{% macro site_footer(owner=False) %}
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <span>ClientStart · by sellingteen</span>
+    <nav aria-label="Legal">
+      <a href="{{ url_for('legal.terms') }}">Terms</a>
+      <a href="{{ url_for('legal.privacy') }}">Privacy</a>
+      <a href="{{ url_for('legal.refunds') }}">Refunds</a>
+      {% if owner and is_owner() and config.BILLING_ENABLED %}<a href="{{ url_for('billing.subscribe') }}">Subscription</a>{% endif %}
+    </nav>
+  </div>
+</footer>
+{% endmacro %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, demo_badge, follow_badge %}
+{% block title %}Leads{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Leads <span class="muted small">{{ pagination.total }} found</span></h1>
+  <div class="actions">
+    {% if is_admin %}
+    <a class="btn" href="{{ url_for('leads.import_csv') }}">Import CSV</a>
+    <a class="btn" href="{{ url_for('leads.export', **filter_args) }}">Export CSV</a>
+    {% endif %}
+    <a class="btn btn-primary" href="{{ url_for('leads.create') }}">+ New lead</a>
+  </div>
+</div>
+
+<form class="filters card" method="get" action="{{ url_for('leads.index') }}" role="search">
+  <div class="field grow">
+    <label for="q">Search</label>
+    <input type="search" id="q" name="q" value="{{ filters.q }}" maxlength="100" placeholder="Name, phone, email, address, city, job…">
+  </div>
+  <div class="field">
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <option value="">All</option>
+      <option value="open" {{ 'selected' if filters.status == 'open' }}>Open (not won/lost)</option>
+      {% for key, label in statuses %}<option value="{{ key }}" {{ 'selected' if filters.status == key }}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="source">Source</label>
+    <select id="source" name="source">
+      <option value="">All</option>
+      {% for key, label in sources %}<option value="{{ key }}" {{ 'selected' if filters.source == key }}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="follow_up">Follow-up</label>
+    <select id="follow_up" name="follow_up">
+      <option value="">Any</option>
+      <option value="overdue" {{ 'selected' if filters.follow_up == 'overdue' }}>Overdue</option>
+      <option value="today" {{ 'selected' if filters.follow_up == 'today' }}>Due today</option>
+      <option value="week" {{ 'selected' if filters.follow_up == 'week' }}>Next 7 days</option>
+      <option value="none" {{ 'selected' if filters.follow_up == 'none' }}>Not scheduled</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="assigned">Assigned</label>
+    <select id="assigned" name="assigned">
+      <option value="">Anyone</option>
+      <option value="me" {{ 'selected' if filters.assigned == 'me' }}>Me</option>
+      <option value="none" {{ 'selected' if filters.assigned == 'none' }}>Unassigned</option>
+      {% for u in members %}<option value="{{ u.id }}" {{ 'selected' if filters.assigned == u.id|string }}>{{ u.full_name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="demo">Demo data</label>
+    <select id="demo" name="demo">
+      <option value="">Show</option>
+      <option value="hide" {{ 'selected' if filters.demo == 'hide' }}>Hide</option>
+      <option value="only" {{ 'selected' if filters.demo == 'only' }}>Only demo</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="sort">Sort</label>
+    <select id="sort" name="sort">
+      {% for s in sorts %}<option value="{{ s }}" {{ 'selected' if filters.sort == s }}>{{ s.replace('_', ' ')|capitalize }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field field-actions">
+    <button class="btn btn-primary" type="submit">Apply</button>
+    <a class="btn btn-ghost" href="{{ url_for('leads.index') }}">Reset</a>
+  </div>
+</form>
+
+{% if leads %}
+<div class="table-wrap card">
+<table class="table leads-table">
+  <thead><tr><th>Customer</th><th>Status</th><th>Next follow-up</th><th class="num">Est. value</th><th>Source</th><th>Last contact</th><th>Assigned</th></tr></thead>
+  <tbody>
+  {% for lead in leads %}
+  <tr>
+    <td data-label="Customer">
+      <a class="strong" href="{{ url_for('leads.detail', lead_id=lead.id) }}">{{ lead.full_name }}</a> {{ demo_badge(lead) }}
+      <div class="muted small">{{ lead.phone }}{% if lead.city %} · {{ lead.city }}{% if lead.state %}, {{ lead.state }}{% endif %}{% endif %}</div>
+    </td>
+    <td data-label="Status">{{ status_badge(lead) }}</td>
+    <td data-label="Next follow-up">{{ follow_badge(lead, today) }}</td>
+    <td data-label="Est. value" class="num">{{ lead.estimated_value|money }}</td>
+    <td data-label="Source">{{ lead.source_label }}</td>
+    <td data-label="Last contact">{{ lead.last_contact_date|nice_date }}</td>
+    <td data-label="Assigned">{{ lead.assigned_to.full_name if lead.assigned_to else '—' }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if pagination.pages > 1 %}
+<nav class="pager" aria-label="Pagination">
+  {% if pagination.has_prev %}<a class="btn btn-small" href="{{ url_for('leads.index', page=pagination.prev_num, **filter_args) }}">← Prev</a>{% endif %}
+  <span class="muted">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}<a class="btn btn-small" href="{{ url_for('leads.index', page=pagination.next_num, **filter_args) }}">Next →</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="card empty"><p>No leads match these filters.</p></div>
+{% endif %}
+{% endblock %}

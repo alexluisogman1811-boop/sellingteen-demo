@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Team{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Team</h1></div>
+
+{% if reset_link %}
+<section class="card card-highlight">
+  <h2>Password reset link for {{ reset_for }}</h2>
+  <p>Send this link to them yourself (text or say it on the phone). It works <strong>once</strong>, expires in 24 hours, and won't be shown again. LeadRescue doesn't send it.</p>
+  <input class="copy-field" type="text" readonly value="{{ reset_link }}" data-select-on-focus aria-label="Password reset link">
+</section>
+{% endif %}
+
+{% if new_link %}
+<section class="card card-highlight">
+  <h2>New invitation link</h2>
+  <p>Send this link to your teammate yourself (text or email). It works once and expires in 7 days. It won't be shown again.</p>
+  <input class="copy-field" type="text" readonly value="{{ new_link }}" data-select-on-focus aria-label="Invitation link">
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Members</h2>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Name</th><th>Email</th><th>Role</th>{% if is_owner %}<th>Manage</th>{% endif %}</tr></thead>
+    <tbody>
+    {% for m in memberships %}
+    <tr>
+      <td data-label="Name">{{ m.user.full_name }}{% if m.user_id == current_user.id %} <span class="muted">(you)</span>{% endif %}</td>
+      <td data-label="Email">{{ m.user.email }}</td>
+      <td data-label="Role"><span class="badge role-{{ m.role }}">{{ m.role }}</span></td>
+      {% if is_owner %}
+      <td data-label="Manage">
+        {% if m.role != 'owner' %}
+        <form method="post" action="{{ url_for('workspace.change_role', membership_id=m.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <select name="role" aria-label="Role for {{ m.user.full_name }}">
+            <option value="member" {{ 'selected' if m.role == 'member' }}>Member</option>
+            <option value="admin" {{ 'selected' if m.role == 'admin' }}>Admin</option>
+          </select>
+          <button class="btn btn-small" type="submit">Save</button>
+        </form>
+        {% if m.user_id != current_user.id %}
+        <form method="post" action="{{ url_for('passwords.create_member_reset', membership_id=m.id) }}" class="inline" data-confirm="Create a one-time password reset link for {{ m.user.full_name }}?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-small" type="submit">Password reset link</button>
+        </form>
+        {% endif %}
+        <form method="post" action="{{ url_for('workspace.remove_member', membership_id=m.id) }}" class="inline" data-confirm="Remove {{ m.user.full_name }} from this workspace?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-small btn-danger" type="submit">Remove</button>
+        </form>
+        {% endif %}
+      </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Roles</h2>
+  <ul class="small">
+    <li><strong>Owner</strong>: everything, including team management and renaming the business.</li>
+    <li><strong>Admin</strong>: everything with leads, including deleting, importing and exporting, and creating invite links.</li>
+    <li><strong>Member</strong>: view, add and edit leads, and log activity. Can't delete, import or export.</li>
+  </ul>
+</section>
+
+{% if is_admin %}
+<section class="card">
+  <h2>Invite a teammate</h2>
+  <form method="post" action="{{ url_for('workspace.create_invite') }}" class="inline-form">
+    {{ invite_form.hidden_tag() }}
+    {{ invite_form.role.label() }} {{ invite_form.role() }}
+    <button class="btn btn-primary" type="submit">Create invite link</button>
+  </form>
+  {% if invites %}
+  <h3>Pending invitations</h3>
+  <div class="table-scroll"><table class="table compact">
+    <thead><tr><th>Role</th><th>Created</th><th>Expires</th><th></th></tr></thead>
+    <tbody>
+    {% for inv in invites %}
+    <tr><td>{{ inv.role }}</td><td>{{ inv.created_at|localfmt('%b %d') }}</td><td>{{ inv.expires_at|localfmt('%b %d') }}</td>
+      <td><form method="post" action="{{ url_for('workspace.revoke_invite', invite_id=inv.id) }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-small btn-ghost" type="submit">Revoke</button></form></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

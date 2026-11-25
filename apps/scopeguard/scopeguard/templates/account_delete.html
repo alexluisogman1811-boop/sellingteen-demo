@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, errors as show_errors %}
+{% block title %}Delete account{% endblock %}
+{% block content %}
+<div class="narrow">
+  <h1>Delete your account</h1>
+  {{ show_errors(errors) }}
+  <div class="card">
+    <p class="notice warn">This deletes your account and <strong>everything</strong> in it straight away: clients, projects, scope versions, change requests, revision requests, review links, decision records, history and message templates. Review links you sent stop working. No copy is kept, and this cannot be undone.</p>
+    <p>Want a copy first? <a href="{{ url_for('main.export_zip') }}">Download all your data (ZIP of CSV files)</a>.</p>
+    <form method="post" action="{{ url_for('main.account_delete') }}" class="stack">
+      {{ csrf() }}
+      <div class="field"><label for="confirm">Type DELETE (or your email) to confirm</label>
+        <input id="confirm" name="confirm" type="text" required autocomplete="off"></div>
+      <div class="field"><label for="password">Your password</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password"></div>
+      <div><button class="btn danger" type="submit">Delete my account for good</button></div>
+    </form>
+  </div>
+  <p><a href="{{ url_for('main.settings') }}">Cancel and go back</a></p>
+</div>
+{% endblock %}

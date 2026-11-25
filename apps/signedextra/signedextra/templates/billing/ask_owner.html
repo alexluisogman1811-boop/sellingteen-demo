@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Subscription needed{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<section class="card">
+  {% if access.state == 'ended' %}
+    <h1>Ask your owner to subscribe</h1>
+    <p>{{ g.company.name }}'s {{ 'subscription' if access.was_paid else 'free trial' }} has ended.
+      Your tickets, photos and signatures are saved. <strong>{{ owner_name }}</strong> (the account Owner)
+      can switch SignedExtra back on from the Subscribe page.</p>
+    <p class="muted small">Signature links already sent to GCs keep working in the meantime.</p>
+  {% else %}
+    <h1>Your company's account is active</h1>
+    <p class="muted">Nothing to do here.</p>
+    <a class="btn btn-secondary" href="{{ url_for('core.dashboard') }}">Back to dashboard</a>
+  {% endif %}
+  <p class="muted small mt">You can still <a href="{{ url_for('account.change_password') }}">change your password</a> or log out.</p>
+</section>
+{% endblock %}

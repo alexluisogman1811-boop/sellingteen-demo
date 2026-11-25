@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, badge, record, diff_view, decision_status, cr_sections, baseline_view %}
+{% block title %}{{ p.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ p.name }}{% if p.is_demo %} {{ badge('info', 'Sample') }}{% endif %}</h1>
+    <div class="meta">
+      <a href="{{ url_for('main.client_detail', client_id=p.client_id) }}">{{ p.client_name }}</a>{% if p.client_company %} · {{ p.client_company }}{% endif %}
+      · {{ badge(p.status) }}
+      {% if p.deadline %}· deadline {{ p.deadline }}{% endif %}
+      · {{ p.revision_allowance }} revision(s) per deliverable
+      {% if p.hourly_rate %}· {{ p.currency }} {{ '%.2f'|format(p.hourly_rate) }}/h{% endif %}
+    </div>
+    {% if p.description %}<p class="muted">{{ p.description }}</p>{% endif %}
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.project_edit', project_id=p.id) }}">Edit terms</a>
+    <a class="btn" href="{{ url_for('main.compose', project_id=p.id) }}">Write message</a>
+    <a class="btn" href="{{ url_for('main.summary', project_id=p.id) }}">Printable summary</a>
+    <a class="btn" href="{{ url_for('main.history', project_id=p.id) }}">History</a>
+    <form method="post" action="{{ url_for('main.project_status', project_id=p.id) }}" class="inline">
+      {{ csrf() }}
+      <label class="muted" for="status">Status</label>
+      <select id="status" name="status">
+        {% for st in ('active', 'on_hold', 'completed') %}<option value="{{ st }}" {% if p.status == st %}selected{% endif %}>{{ st|replace('_', ' ')|capitalize }}</option>{% endfor %}
+      </select>
+      <button class="btn small" type="submit">Set</button>
+    </form>
+  </div>
+</div>
+
+<nav class="subnav" aria-label="Project sections">
+  <a href="#scope">Scope</a><a href="#versions">Versions ({{ versions|length }})</a>
+  <a href="#changes">Change requests ({{ changes|length }})</a><a href="#revisions">Revisions ({{ revisions|length }})</a>
+  <a href="#share">Client review</a><a href="#approvals">Approvals ({{ approvals|length }})</a>
+  <a href="#exports">Export</a>
+</nav>
+
+{# ------------------------------------------------------------- scope #}
+<section id="scope">
+  <div class="card">
+    <div class="section-head">
+      <h2>Working scope (draft)</h2>
+      <div>
+        {% if latest %}Latest published: <a href="{{ url_for('main.version_detail', project_id=p.id, version_no=latest.version_no) }}">v{{ latest.version_no }}</a> {{ decision_status(latest_dec) }}
+        {% else %}{{ badge('warn', 'Not yet published') }}{% endif %}
+      </div>
+    </div>
+    {% if latest %}
+    <p class="agreement {{ 'ok' if approved_v and approved_v.id == latest.id else 'warn' }}">
+      {% if approved_v %}<strong>Client-approved scope: v{{ approved_v.version_no }}</strong>, {{ DECISION_LABELS[approved_dec.decision]|lower }} by {{ approved_dec.approver_name }} on {{ approved_dec.created_at|ts }} ({{ METHOD_SHORT[approved_dec.method] }}).
+        {% if approved_v.id != latest.id %}<br>Version {{ latest.version_no }} is newer and has <strong>not</strong> been approved; v{{ approved_v.version_no }} remains the last approved agreement.{% endif %}
+      {% else %}<strong>No scope version has been approved by the client yet.</strong>{% endif %}
+    </p>
+    {% endif %}
+    {% if draft_differs %}
+      <div class="notice warn">
+        {% if latest %}<strong>The draft has changes not yet in a published version.</strong> The client still sees v{{ latest.version_no }}.
+          {{ diff_view(draft_diff) }}
+        {% else %}<strong>Nothing is published yet.</strong> Add deliverables, exclusions and milestones, then publish version 1 to share it.{% endif %}
+      </div>
+      <form method="post" action="{{ url_for('main.version_publish', project_id=p.id) }}" class="inline">
+        {{ csrf() }}
+        <div class="field"><label for="change_note">What changed? (saved with the version)</label>
+          <input id="change_note" name="change_note" type="text" maxlength="1000" placeholder="{{ 'Initial agreed scope' if not latest else 'e.g. Added newsletter block after call on 12 May' }}"></div>
+        <button class="btn primary" type="submit">Publish as version {{ (latest.version_no if latest else 0) + 1 }}</button>
+      </form>
+    {% else %}
+      <p class="muted">The draft matches published version {{ latest.version_no }}.</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>Deliverables</h2>
+    <div class="table-wrap">
+    <table class="stack-sm">
+      <thead><tr><th>Deliverable</th><th>Due</th><th>Revisions used</th><th></th></tr></thead>
+      <tbody>
+      {% for d in deliverables %}{% set u = usage[d.id] %}
+        <tr>
+          <td><strong>{{ d.title }}</strong>{% if d.description %}<div class="muted"><pre class="wrap">{{ d.description }}</pre></div>{% endif %}</td>
+          <td>{{ d.due_date or '—' }}</td>
+          <td class="{{ 'over' if u.over }}">{{ u.used }} / {{ u.allowance }}{% if u.over %} (over allowance){% endif %}</td>
+          <td class="actions">
+            <a class="btn small" href="{{ url_for('main.deliverable_edit', project_id=p.id, item_id=d.id) }}">Edit</a>
+            <form method="post" action="{{ url_for('main.item_archive', project_id=p.id, kind='deliverables', item_id=d.id) }}" data-confirm="Remove this deliverable from the draft? Published versions and its revision history are kept.">
+              {{ csrf() }}<button class="btn small danger" type="submit">Remove</button></form>
+          </td>
+        </tr>
+      {% else %}<tr><td colspan="4" class="empty">No deliverables yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <form method="post" action="{{ url_for('main.deliverable_add', project_id=p.id) }}" class="stack mt">
+      {{ csrf() }}
+      <div class="row">
+        <div class="field"><label for="d_title">New deliverable</label><input id="d_title" name="title" type="text" required maxlength="200"></div>
+        <div class="field"><label for="d_due">Due date</label><input id="d_due" name="due_date" type="date"></div>
+        <div class="field"><label for="d_rev">Revision allowance</label><input id="d_rev" name="revision_allowance" type="number" min="0" max="100" placeholder="{{ p.revision_allowance }} (default)"></div>
+      </div>
+      <div class="field"><label for="d_desc">Details</label><textarea id="d_desc" name="description" maxlength="3000" placeholder="What exactly is included, format, quantity…"></textarea></div>
+      <div><button class="btn" type="submit">Add deliverable</button></div>
+    </form>
+    {% if archived_deliverables %}
+    <details class="mt"><summary class="muted">Removed deliverables ({{ archived_deliverables|length }})</summary>
+      <ul class="plain">{% for d in archived_deliverables %}<li><span>{{ d.title }}</span>
+        <form method="post" action="{{ url_for('main.item_archive', project_id=p.id, kind='deliverables', item_id=d.id) }}">{{ csrf() }}<input type="hidden" name="restore" value="1"><button class="btn small" type="submit">Restore</button></form></li>{% endfor %}</ul>
+    </details>
+    {% endif %}
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>Exclusions (not included)</h2>
+      <ul class="plain">
+      {% for e in exclusions %}<li><span>{{ e.text }}</span>
+        <form method="post" action="{{ url_for('main.item_archive', project_id=p.id, kind='exclusions', item_id=e.id) }}">{{ csrf() }}<button class="btn small danger" type="submit">Remove</button></form></li>
+      {% else %}<li class="empty">No exclusions. Listing what is not included prevents most scope disputes.</li>{% endfor %}
+      </ul>
+      <form method="post" action="{{ url_for('main.exclusion_add', project_id=p.id) }}" class="inline mt">
+        {{ csrf() }}
+        <div class="field"><label for="x_text">Add exclusion</label><input id="x_text" name="text" type="text" required maxlength="500" placeholder="e.g. Copywriting"></div>
+        <button class="btn" type="submit">Add</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Milestones</h2>
+      <ul class="plain">
+      {% for m in milestones %}<li><span>{% if m.done %}✓ {% endif %}{{ m.title }} <small>{{ m.due_date or '' }}</small></span>
+        <span class="actions">
+          <form method="post" action="{{ url_for('main.milestone_toggle', project_id=p.id, item_id=m.id) }}">{{ csrf() }}<button class="btn small" type="submit">{{ 'Reopen' if m.done else 'Done' }}</button></form>
+          <form method="post" action="{{ url_for('main.item_archive', project_id=p.id, kind='milestones', item_id=m.id) }}">{{ csrf() }}<button class="btn small danger" type="submit">Remove</button></form>
+        </span></li>
+      {% else %}<li class="empty">No milestones yet.</li>{% endfor %}
+      </ul>
+      <form method="post" action="{{ url_for('main.milestone_add', project_id=p.id) }}" class="inline mt">
+        {{ csrf() }}
+        <div class="field"><label for="m_title">Add milestone</label><input id="m_title" name="title" type="text" required maxlength="200"></div>
+        <div class="field"><label for="m_due">Date</label><input id="m_due" name="due_date" type="date"></div>
+        <button class="btn" type="submit">Add</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+{# ------------------------------------------------------------- versions #}
+<section class="card mt" id="versions">
+  <h2>Scope versions</h2>
+  <p class="muted">Each published version is a frozen, timestamped snapshot. Versions are never edited or deleted.</p>
+  <div class="table-wrap">
+  <table class="stack-sm">
+    <thead><tr><th>Version</th><th>Published</th><th>Note</th><th>Client decision</th></tr></thead>
+    <tbody>
+    {% for v in versions %}
+      <tr><td><a href="{{ url_for('main.version_detail', project_id=p.id, version_no=v.version_no) }}">v{{ v.version_no }}</a></td>
+        <td>{{ v.created_at|ts }}</td><td>{{ v.change_note or '—' }}</td><td>{{ decision_status(version_decisions[v.id]) }}</td></tr>
+    {% else %}<tr><td colspan="4" class="empty">No versions published yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+{# ------------------------------------------------------------- original vs approved #}
+{{ baseline_view(baseline, p, owner=True) }}
+
+{# ------------------------------------------------------------- change requests #}
+<section class="card" id="changes">
+  <div class="section-head">
+    <h2>Change requests</h2>
+    <a class="btn primary" href="{{ url_for('main.change_new', project_id=p.id) }}">New change request</a>
+  </div>
+  {{ cr_sections(crs, p) }}
+</section>
+
+{# ------------------------------------------------------------- revisions #}
+<section class="card" id="revisions">
+  <h2>Revision requests</h2>
+  {% if deliverables %}
+  <form method="post" action="{{ url_for('main.revision_add', project_id=p.id) }}" class="stack">
+    {{ csrf() }}
+    <div class="row">
+      <div class="field"><label for="r_del">Deliverable</label>
+        <select id="r_del" name="deliverable_id" required>
+          {% for d in deliverables %}{% set u = usage[d.id] %}<option value="{{ d.id }}">{{ d.title }} ({{ u.used }}/{{ u.allowance }} used)</option>{% endfor %}
+        </select></div>
+      <div class="field"><label for="r_by">Requested by</label><input id="r_by" name="requested_by" type="text" maxlength="120" value="{{ p.client_name }}"></div>
+    </div>
+    <div class="field"><label for="r_desc">What was requested</label><textarea id="r_desc" name="description" required maxlength="3000"></textarea></div>
+    <div><button class="btn" type="submit">Log revision request</button></div>
+  </form>
+  {% else %}<p class="empty">Add a deliverable before logging revisions.</p>{% endif %}
+  <div class="table-wrap mt">
+  <table class="stack-sm">
+    <thead><tr><th>Deliverable</th><th>Request</th><th>By</th><th>Logged</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for r in revisions %}
+      <tr><td>{{ r.deliverable }}</td><td><pre class="wrap">{{ r.description }}</pre></td><td>{{ r.requested_by or '—' }}</td><td>{{ r.created_at|ts }}</td>
+        <td><form method="post" action="{{ url_for('main.revision_done', project_id=p.id, rev_id=r.id) }}">{{ csrf() }}{{ badge(r.status) }}
+          <button class="btn small" type="submit">{{ 'Reopen' if r.status == 'done' else 'Mark done' }}</button></form></td></tr>
+    {% else %}<tr><td colspan="5" class="empty">No revision requests logged.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% for d in deliverables if usage[d.id].over %}{% if loop.first %}
+    <div class="notice warn mt">Some deliverables are over their agreed revision allowance. Further rounds can be handled as a
+      <a href="{{ url_for('main.change_new', project_id=p.id, title='Additional revision rounds') }}">change request</a>.</div>
+  {% endif %}{% endfor %}
+</section>
+
+{# ------------------------------------------------------------- client review links #}
+<section class="card" id="share">
+  <h2>Client review links</h2>
+  <p class="muted">Each link is issued to one named person and opens only this project. With an approval link, that person can approve the scope or ask for changes, and approve or reject submitted change requests. They confirm by typing their name, and every decision is recorded under that name. A view-only link can't record decisions. Links are shown once; only a hash is stored.</p>
+  {% if latest %}
+  <form method="post" action="{{ url_for('main.link_create', project_id=p.id) }}" class="inline">
+    {{ csrf() }}
+    <div class="field"><label for="l_recipient">Person this link is for</label><input id="l_recipient" name="recipient_name" type="text" required maxlength="120" value="{{ p.client_name }}"></div>
+    <div class="field"><label for="l_email">Their email (optional)</label><input id="l_email" name="recipient_email" type="email" maxlength="254" value="{{ p.client_email or '' }}"></div>
+    <label class="check"><input type="checkbox" name="can_decide" value="1" checked> Authorized to approve or reject</label>
+    <div class="field"><label for="l_label">Label (optional)</label><input id="l_label" name="label" type="text" maxlength="80" placeholder="e.g. Sent to Maya by email"></div>
+    <div class="field"><label for="l_days">Valid for (days)</label><input id="l_days" name="days" type="number" min="1" max="180" value="14" required></div>
+    <button class="btn primary" type="submit">Create review link</button>
+  </form>
+  {% else %}<p class="empty">Publish a scope version first.</p>{% endif %}
+  {% if links %}
+  <div class="table-wrap mt">
+  <table class="stack-sm">
+    <thead><tr><th>Link</th><th>For</th><th>Created</th><th>Expires</th><th>Last opened</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for l in links %}
+      <tr><td>#{{ l.id }} {{ l.label or '' }}</td><td>{{ l.recipient_name or p.client_name }}{% if l.recipient_email %}<br><small>{{ l.recipient_email }}</small>{% endif %}<br>{{ badge('approved', 'Can approve') if l.can_decide else badge('info', 'View only') }}</td><td>{{ l.created_at|ts }}</td><td>{{ l.expires_at|ts }}</td><td>{{ (l.last_used_at|ts) or 'Never' }}</td>
+        <td>{% if l.revoked_at %}{{ badge('revoked') }}{% elif l.expires_at <= now %}{{ badge('expired') }}{% else %}
+          <form method="post" action="{{ url_for('main.link_revoke', project_id=p.id, link_id=l.id) }}" data-confirm="Revoke this link? The client will lose access through it.">{{ csrf() }}{{ badge('active') }} <button class="btn small danger" type="submit">Revoke</button></form>{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</section>
+
+{# ------------------------------------------------------------- approvals #}
+<section class="card" id="approvals">
+  <h2>Approval &amp; decision records</h2>
+  <p class="muted">Append-only. Each record states who decided, when, and how it was captured. A typed name is an acknowledgement, not a verified signature.</p>
+  {% for a in approvals %}{{ record(a, show_subject=True) }}{% else %}<p class="empty">No decisions recorded yet.</p>{% endfor %}
+</section>
+
+<section class="card" id="exports">
+  <h2>Export</h2>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.summary', project_id=p.id) }}">Printable summary</a>
+    <a class="btn" href="{{ url_for('main.export_json', project_id=p.id) }}">Full record (JSON)</a>
+    {% for kind in ('scope_versions', 'change_requests', 'revision_requests', 'approvals', 'history') %}
+      <a class="btn" href="{{ url_for('main.export_csv', project_id=p.id, kind=kind) }}">{{ kind|replace('_', ' ')|capitalize }} (CSV)</a>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

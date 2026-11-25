@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pill, due with context %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>{{ g.user.company_name or 'Dashboard' }}</h1>
+<p class="muted">{{ sub_count }} subcontractor{{ '' if sub_count == 1 else 's' }} · {{ doc_count }} document{{ '' if doc_count == 1 else 's' }}. Counts are per subcontractor and document type.</p>
+
+<div class="tiles">
+  {% for key in ['valid', 'expiring', 'expired', 'missing', 'review'] %}
+  <a class="tile {{ key }}{% if selected == key %} active{% endif %}" href="{{ url_for('main.dashboard', status=key) }}">
+    <span class="num">{{ counts[key] }}</span><span>{{ LABELS[key] }}</span>
+  </a>
+  {% endfor %}
+</div>
+
+{% if reminders %}
+<div class="card">
+  <h2>Reminders</h2>
+  <ul class="plain">
+  {% for r in reminders[:5] %}
+    <li><a href="{{ url_for('main.document_detail', doc_id=r.document_id) }}">{{ r.subcontractor_name }}: {{ r.doc_type }}</a> expires {{ r.expiration_date }}</li>
+  {% endfor %}
+  </ul>
+  <a href="{{ url_for('main.reminders') }}">All reminders →</a>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>{% if selected %}{{ LABELS[selected] }}{% else %}Needs attention{% endif %}
+    {% if selected %}<a class="small" href="{{ url_for('main.dashboard') }}">clear filter</a>{% endif %}</h2>
+  {% if sub_count == 0 %}
+    <p>Start by <a href="{{ url_for('main.subcontractors') }}">adding a subcontractor</a>.</p>
+  {% elif not slots %}
+    <p class="muted">Nothing here.</p>
+  {% else %}
+  <table class="responsive">
+    <thead><tr><th>Subcontractor</th><th>Document</th><th>Status</th><th>Expires</th></tr></thead>
+    <tbody>
+    {% for s in slots %}
+      <tr>
+        <td data-label="Subcontractor"><a href="{{ url_for('main.subcontractor_detail', sub_id=s.subcontractor.id) }}">{{ s.subcontractor.name }}</a></td>
+        <td data-label="Document">{% if s.document %}<a href="{{ url_for('main.document_detail', doc_id=s.document.id) }}">{{ s.doc_type }}</a>{% else %}{{ s.doc_type }}{% endif %}</td>
+        <td data-label="Status">{{ pill(s.status) }}</td>
+        <td data-label="Expires">{% if s.document and s.document.expiration_date %}{{ s.document.expiration_date }} <span class="muted">({{ due(s.days_left) }})</span>{% elif s.document and s.document.no_expiration %}Does not expire{% else %}–{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

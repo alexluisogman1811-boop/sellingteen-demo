@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Account<div class="card">
+  <h2>Delete my account</h2>
+  <p>Delete your account and all of its data for good. You will be asked to type DELETE and your password.</p>
+  <a class="btn danger" href="{{ url_for('main.account_delete') }}">Delete my account</a>
+</div>
+{% endblock %}
+{% block content %}
+<h1>Account</h1>
+<div class="card">
+  <h2>Your details</h2>
+  <form method="post" action="{{ url_for('main.account_update') }}" class="stack">
+    {{ csrf() }}
+    <div class="row">
+      <div class="field"><label for="name">Your name or business name (used in messages and summaries)</label>
+        <input id="name" name="name" type="text" required maxlength="100" value="{{ g.user.name }}"></div>
+      <div class="field"><label for="email">Email (you log in with this)</label>
+        <input id="email" name="email" type="email" required maxlength="254" value="{{ g.user.email }}"></div>
+    </div>
+    <div><button class="btn primary" type="submit">Save</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Change password</h2>
+  <form method="post" action="{{ url_for('main.password_change') }}" class="stack">
+    {{ csrf() }}
+    <div class="row">
+      <div class="field"><label for="current_password">Current password</label><input id="current_password" name="current_password" type="password" required autocomplete="current-password"></div>
+      <div class="field"><label for="new_password">New password</label><input id="new_password" name="new_password" type="password" required minlength="10" autocomplete="new-password"></div>
+      <div class="field"><label for="confirm_password">Repeat new password</label><input id="confirm_password" name="confirm_password" type="password" required autocomplete="new-password"></div>
+    </div>
+    <div><button class="btn" type="submit">Change password</button></div>
+  </form>
+</div>
+
+{% if config.BILLING_ENABLED and g.access %}
+<div class="card">
+  <h2>Subscription</h2>
+  <p>{% if g.access.state == 'trial' %}Free trial: {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.
+     {% elif g.access.state == 'paid' %}Subscribed until {{ g.access.until }}.
+     {% elif g.access.state == 'ended' %}Your {{ 'subscription' if g.access.was_paid else 'free trial' }} has ended.{% endif %}</p>
+  <a class="btn" href="{{ url_for('billing.subscribe') }}">Subscription details</a>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Export everything</h2>
+  <p>Download all of your clients, projects, scope versions, change requests, revisions, decisions and history. This works even after your free trial ends.</p>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.export_zip') }}">Download all my data (ZIP of CSV files)</a>
+    <a class="btn" href="{{ url_for('main.export_all') }}">Download full export (JSON)</a>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Demo data</h2>
+  <p>Load a few labelled sample clients and projects into your account to explore ScopeGuard. Sample decisions are marked “Sample demo data. Not a real approval.”</p>
+  <div class="actions">
+    <form method="post" action="{{ url_for('main.demo_load') }}">{{ csrf() }}<button class="btn" type="submit" {% if demo_projects %}disabled{% endif %}>Load sample data</button></form>
+    <form method="post" action="{{ url_for('main.demo_remove') }}" data-confirm="Remove all sample projects and clients? Your own records are not affected.">{{ csrf() }}<button class="btn" type="submit" {% if not demo_projects %}disabled{% endif %}>Remove sample data ({{ demo_projects }})</button></form>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Reset your data</h2>
+  <p>Currently stored in your account: {{ counts.clients }} clients, {{ counts.projects }} projects, {{ counts.scope_versions }} scope versions, {{ counts.approvals }} decision records.</p>
+  <p class="notice warn">Reset removes every client, project and record in <strong>your</strong> account, including decision history. A backup copy of the database is saved on the server first. Your login is kept, and no other account is affected.</p>
+  <form method="post" action="{{ url_for('main.reset') }}" class="inline" data-confirm="Really reset all of your data? A backup will be saved first.">
+    {{ csrf() }}
+    <div class="field"><label for="confirm_text">Type RESET to confirm</label><input id="confirm_text" name="confirm_text" type="text" required autocomplete="off"></div>
+    <div class="field"><label for="reset_password">Your password</label><input id="reset_password" name="password" type="password" required autocomplete="current-password"></div>
+    <button class="btn danger" type="submit">Back up and reset</button>
+  </form>
+</div>
+<div class="card">
+  <h2>Delete my account</h2>
+  <p>Delete your account and all of its data for good. You will be asked to type DELETE and your password.</p>
+  <a class="btn danger" href="{{ url_for('main.account_delete') }}">Delete my account</a>
+</div>
+{% endblock %}

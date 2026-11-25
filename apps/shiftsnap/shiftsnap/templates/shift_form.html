@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error %}
+{% block title %}{{ 'Edit shift' if shift else 'Add shift' }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ 'Edit shift' if shift else 'Add shift' }}</h1></div>
+
+{% if errors %}<div class="flash flash-error" role="alert">The shift was not saved. Please fix the highlighted fields.</div>{% endif %}
+
+{% if overlaps %}
+<div class="flash flash-error">
+  <strong>Overlapping shift{{ 's' if overlaps|length > 1 }} for this employee:</strong>
+  <ul>{% for o in overlaps %}
+    <li>{{ o.date|dshort }} {{ o.start_time }}–{{ o.end_time }}{{ ' (+1 day)' if o.overnight }} · {{ o.role }}
+      — <a href="{{ url_for('main.shift_edit', shift_id=o.id) }}">open</a></li>
+  {% endfor %}</ul>
+</div>
+{% endif %}
+
+{% if warnings %}
+<div class="flash flash-warning" role="alert">
+  <strong>Check before saving:</strong>
+  <ul>{% for w in warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+  Tick “Save anyway” below and submit again if this is intended.
+</div>
+{% endif %}
+
+<form method="post" class="card form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  <div class="form-grid">
+    <label>Employee
+      <select name="employee_id" id="employee-select" class="{{ 'invalid' if errors.employee_id }}">
+        <option value="">— Unfilled (assign later) —</option>
+        {% for e in employees %}
+        <option value="{{ e.id }}" data-role="{{ e.role }}" {{ 'selected' if values.get('employee_id', '')|string == e.id|string }}>
+          {{ e.name }}{{ ' — ' ~ e.role if e.role }}{{ ' (inactive)' if not e.active }}</option>
+        {% endfor %}
+      </select>
+      {{ field_error(errors, 'employee_id') }}
+      {% if not employees %}<span class="muted small">No active employees yet — <a href="{{ url_for('main.employee_new') }}">add one</a>, or save this as an unfilled shift.</span>{% endif %}
+    </label>
+    <label><span>Role <span class="req">*</span></span>
+      <input name="role" id="role-input" value="{{ values.get('role', '') }}" maxlength="50" list="roles"
+             placeholder="Defaults to the employee's role" class="{{ 'invalid' if errors.role }}">
+      {{ field_error(errors, 'role') }}
+    </label>
+    <label><span>Date <span class="req">*</span></span>
+      <input type="date" name="shift_date" value="{{ values.get('shift_date', '') }}" required
+             class="{{ 'invalid' if errors.shift_date }}">
+      {{ field_error(errors, 'shift_date') }}
+    </label>
+    <div class="time-pair">
+      <label><span>Start <span class="req">*</span></span>
+        <input type="time" name="start_time" value="{{ values.get('start_time', '') }}" required
+               class="{{ 'invalid' if errors.start_time }}">
+        {{ field_error(errors, 'start_time') }}
+      </label>
+      <label><span>End <span class="req">*</span></span>
+        <input type="time" name="end_time" value="{{ values.get('end_time', '') }}" required
+               class="{{ 'invalid' if errors.end_time }}">
+        {{ field_error(errors, 'end_time') }}
+      </label>
+    </div>
+  </div>
+  <label class="check">
+    <input type="checkbox" name="ends_next_day" value="1" {{ 'checked' if values.get('ends_next_day') == '1' }}>
+    Ends next day (overnight shift, e.g. 22:00 → 06:00)
+  </label>
+  <p class="muted small hint">A shift ending at 00:00 runs until midnight and doesn't need this box.</p>
+  <label>Notes
+    <textarea name="notes" rows="2" maxlength="500">{{ values.get('notes', '') }}</textarea>
+    {{ field_error(errors, 'notes') }}
+  </label>
+  <datalist id="roles">{% for r in roles %}<option value="{{ r }}">{% endfor %}</datalist>
+
+  {% if warnings %}
+  <label class="check confirm-box">
+    <input type="checkbox" name="confirm_warnings" value="1"> Save anyway — I've checked the warning above
+  </label>
+  {% endif %}
+
+  <div class="form-actions">
+    <button class="btn" type="submit">{{ 'Save shift' if shift else 'Add shift' }}</button>
+    <a class="btn btn-ghost" href="{{ next or url_for('main.schedule') }}">Cancel</a>
+  </div>
+</form>
+
+{% if shift %}
+<form method="post" action="{{ url_for('main.shift_delete', shift_id=shift.id) }}" class="danger-zone"
+      data-confirm="Delete this shift? This cannot be undone.">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  <button class="btn btn-danger" type="submit">Delete shift</button>
+</form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,30 @@
+{% from "macros.html" import field_error %}
+<div class="field">
+  <label for="c-name">Name <span class="req">*</span></label>
+  <input id="c-name" name="name" value="{{ form.name or '' }}" maxlength="80" required>
+  {{ field_error(errors, 'name') }}
+</div>
+<div class="field">
+  <label for="c-desc">Description</label>
+  <textarea id="c-desc" name="description" rows="3">{{ form.description or '' }}</textarea>
+  {{ field_error(errors, 'description') }}
+</div>
+<div class="field">
+  <label for="c-color">Colour</label>
+  <select id="c-color" name="color">
+    {% for col in COLORS %}<option value="{{ col }}" {{ 'selected' if (form.color or 'blue') == col }}>{{ col|capitalize }}</option>{% endfor %}
+  </select>
+  {{ field_error(errors, 'color') }}
+</div>
+<div class="field-row">
+  <div class="field">
+    <label for="c-start">Start date</label>
+    <input id="c-start" type="date" name="start_date" value="{{ form.start_date or '' }}">
+    {{ field_error(errors, 'start_date') }}
+  </div>
+  <div class="field">
+    <label for="c-end">End date</label>
+    <input id="c-end" type="date" name="end_date" value="{{ form.end_date or '' }}">
+    {{ field_error(errors, 'end_date') }}
+  </div>
+</div>

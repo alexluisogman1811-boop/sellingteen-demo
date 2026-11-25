@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Edit idea{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="crumbs"><a href="{{ url_for('library.ideas') }}">Ideas</a> /</p><h1>Edit idea</h1></div></div>
+<div class="narrow">
+  <form method="post" class="card stack" novalidate>
+    {{ csrf() }}
+    {% include "_idea_fields.html" %}
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Save</button>
+      <a class="btn btn-ghost" href="{{ url_for('library.ideas') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

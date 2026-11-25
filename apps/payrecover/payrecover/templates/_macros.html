@@ -1,0 +1,31 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro badge(inv) -%}
+  {%- set labels = {'draft': 'Draft', 'sent': 'Sent', 'due_soon': 'Due soon', 'overdue': 'Overdue', 'paid': 'Paid'} -%}
+  <span class="badge badge-{{ inv.state }}">{{ labels[inv.state] }}</span>
+{%- endmacro %}
+
+{% macro when(inv) -%}
+  {%- if inv.state == 'paid' -%}Paid {{ inv.paid_on|nice_date }}
+  {%- elif inv.state == 'overdue' -%}<strong class="text-danger">{{ inv.days_overdue|days }} overdue</strong>
+  {%- elif inv.state == 'draft' -%}Not sent yet · due {{ inv.due_date|nice_date }}
+  {%- elif inv.days_until_due == 0 -%}Due today
+  {%- elif inv.days_until_due == 1 -%}Due tomorrow
+  {%- else -%}Due in {{ inv.days_until_due|days }} · {{ inv.due_date|nice_date }}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro invoice_row(inv, show_customer=True) %}
+<a class="row" href="{{ url_for('routes.invoice_detail', invoice_id=inv.id) }}">
+  <div class="row-main">
+    <div class="row-title">{% if show_customer %}{{ inv.customer_name }}{% else %}{{ inv.number }}{% endif %}</div>
+    <div class="row-sub">{% if show_customer %}{{ inv.number }} · {% endif %}{{ when(inv) }}{% if inv.followup_due %} · <span class="text-accent">Follow-up recommended</span>{% endif %}</div>
+  </div>
+  <div class="row-side">
+    <div class="row-amount">{{ inv.amount_cents|money }}</div>
+    {{ badge(inv) }}
+  </div>
+</a>
+{% endmacro %}
+
+{% macro field_error(errors, name) %}{% if errors.get(name) %}<p class="field-error" id="{{ name }}-error">{{ errors[name] }}</p>{% endif %}{% endmacro %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import license_table, delete_button %}
+{% block title %}{{ customer.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="crumb"><a href="{{ url_for('main.customers') }}">Customers</a></p>
+    <h1>{{ customer.name }}</h1>
+    <p class="muted">{{ customer.email }}{% if customer.company %} · {{ customer.company }}{% endif %}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.order_form', customer_id=customer.id) }}">+ Order</a>
+    <a class="btn btn-primary" href="{{ url_for('main.license_new', customer_id=customer.id) }}">+ License</a>
+    <a class="btn" href="{{ url_for('main.customer_form', customer_id=customer.id) }}">Edit</a>
+    {{ delete_button(url_for('main.customer_delete', customer_id=customer.id), 'customer') }}
+  </div>
+</div>
+{% if customer.notes %}<section class="card"><h2>Notes</h2><p class="prewrap">{{ customer.notes }}</p></section>{% endif %}
+<section class="card">
+  <h2>Licenses</h2>
+  {{ license_table(licenses, show_customer=False, empty="No licenses for this customer.") }}
+</section>
+<section class="card">
+  <h2>Orders</h2>
+  {% if orders %}
+  <ul class="list">
+    {% for o in orders %}
+    <li><div><a href="{{ url_for('main.order_detail', order_id=o.id) }}"><strong>{{ o.order_ref }}</strong></a>
+      <span class="muted"> · {{ o.order_date }}{% if o.amount %} · {{ o.amount }}{% endif %}</span></div>
+      <span class="muted small">{{ o.license_count }} license(s)</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="empty">No orders.</p>{% endif %}
+</section>
+{% endblock %}

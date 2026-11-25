@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ContentQueue{% endblock %} · ContentQueue</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body{% if clear_draft %} data-clear-draft="{{ clear_draft }}"{% endif %}>
+  {% set ep = request.endpoint or '' %}
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('main.dashboard') }}">
+      <span class="brand-mark" aria-hidden="true">CQ</span> ContentQueue
+    </a>
+    {% if g.account %}
+    <button class="btn btn-sm nav-toggle" type="button" aria-expanded="false" aria-controls="mainnav">Menu</button>
+    <nav id="mainnav" class="mainnav" aria-label="Main">
+      <a href="{{ url_for('main.dashboard') }}" class="{{ 'active' if ep == 'main.dashboard' }}">Dashboard</a>
+      <a href="{{ url_for('main.calendar_view') }}" class="{{ 'active' if ep.startswith('main.calendar') }}">Calendar</a>
+      <a href="{{ url_for('posts.list_posts') }}" class="{{ 'active' if ep.startswith('posts.') }}">Posts</a>
+      <a href="{{ url_for('library.campaigns') }}" class="{{ 'active' if 'campaign' in ep }}">Campaigns</a>
+      <a href="{{ url_for('library.categories') }}" class="{{ 'active' if 'categor' in ep }}">Categories</a>
+      <a href="{{ url_for('library.templates') }}" class="{{ 'active' if 'template' in ep }}">Templates</a>
+      <a href="{{ url_for('library.ideas') }}" class="{{ 'active' if 'idea' in ep }}">Ideas</a>
+      <a href="{{ url_for('data.index') }}" class="{{ 'active' if ep.startswith('data.') }}">Data</a>
+      <a href="{{ url_for('auth.account') }}" class="{{ 'active' if ep.startswith('auth.') }}">Account</a>
+      <a href="{{ url_for('posts.new_post') }}" class="btn btn-primary btn-sm nav-cta">+ New post</a>
+      <form method="post" action="{{ url_for('auth.logout') }}" class="nav-logout">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm btn-ghost" type="submit">Log out</button>
+      </form>
+    </nav>
+    {% elif ep not in ('auth.login', 'auth.signup') %}
+    <nav class="mainnav mainnav-public" aria-label="Account">
+      <a href="{{ url_for('main.dashboard') }}#pricing">Pricing</a>
+      <a href="{{ url_for('auth.login') }}">Log in</a>
+      <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-sm nav-cta">Start free trial</a>
+    </nav>
+    {% endif %}
+  </header>
+
+  {% if g.account and g.access and g.access.state == 'trial' and ep != 'billing.subscribe' %}
+  <div class="trial-bar" role="note">
+    <div class="trial-bar-inner">
+      <span><strong>Free trial:</strong> {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.</span>
+      <a class="trial-bar-link" href="{{ url_for('billing.subscribe') }}">Subscribe</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flashes" role="status">
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <p class="footer-notice">
+      ContentQueue is a planning tool. It <strong>never posts</strong> to Instagram, TikTok, Facebook, LinkedIn or any
+      other platform and never asks for your social media passwords. <strong>“Scheduled” means planned inside
+      ContentQueue only</strong> — you publish on each platform yourself and mark posts as published here.
+    </p>
+    <div class="footer-row">
+      <span>ContentQueue · by sellingteen</span>
+      <nav aria-label="Legal" class="footer-links">
+        <a href="{{ url_for('legal.terms') }}">Terms</a>
+        <a href="{{ url_for('legal.privacy') }}">Privacy</a>
+        <a href="{{ url_for('legal.refunds') }}">Refunds</a>
+        {% if g.account and config.BILLING_ENABLED and not g.account.is_demo %}<a href="{{ url_for('billing.subscribe') }}">Subscription</a>{% endif %}
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

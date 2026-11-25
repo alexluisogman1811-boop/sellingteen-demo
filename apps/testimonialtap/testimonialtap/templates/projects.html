@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import demo_badge %}
+{% block title %}Projects{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Projects</h1>
+  <a class="btn btn-primary" href="{{ url_for('admin.project_new') }}">+ New project</a>
+</div>
+{% if projects %}
+<div class="cards">
+  {% for p in projects %}
+  <article class="card project-card">
+    <h2><a href="{{ url_for('admin.project_detail', project_id=p.id) }}">{{ p.name }}</a> {{ demo_badge(p) }}</h2>
+    {% if p.client_name %}<p class="muted">Client: {{ p.client_name }}</p>{% endif %}
+    <p class="small">
+      <strong>{{ p.total }}</strong> total ·
+      <strong>{{ p.pending }}</strong> pending ·
+      <strong>{{ p.publishable }}</strong> public ·
+      submissions {{ 'open' if p.accepting else 'closed' }}
+    </p>
+    <a class="btn btn-small" href="{{ url_for('admin.project_detail', project_id=p.id) }}">Links &amp; embed</a>
+    <a class="btn btn-small" href="{{ url_for('admin.testimonials', project=p.id) }}">Testimonials</a>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<section class="card empty"><p>No projects yet. <a href="{{ url_for('admin.project_new') }}">Create one</a> to get a submission link.</p></section>
+{% endif %}
+{% endblock %}

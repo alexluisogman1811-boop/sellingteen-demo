@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_macros.html" import booking_summary %}
+{% block title %}Booking {{ booking.reference }}{% endblock %}
+{% block content %}
+<section class="card narrow confirmation" aria-labelledby="confirm-h">
+  <div class="check" aria-hidden="true">✓</div>
+  <h1 id="confirm-h">
+    {% if booking.status == 'confirmed' %}You're booked
+    {% elif booking.status == 'pending' %}Booking received, awaiting confirmation
+    {% else %}This booking is {{ booking.status }}{% endif %}
+  </h1>
+  <p class="lead">
+    {{ booking.service_name }} on <strong>{{ booking.start_utc|local('%A %d %B %Y') }}</strong>
+    at <strong>{{ booking.start_utc|local('%H:%M %Z') }}</strong>
+  </p>
+
+  <div class="ref-box">
+    <span class="small muted" id="ref-label">Your booking reference</span>
+    <strong class="ref big" id="booking-ref" aria-describedby="ref-label">{{ booking.reference }}</strong>
+    <button class="btn btn-small btn-ghost no-print" type="button" data-copy="#booking-ref" hidden>Copy reference</button>
+    <span class="small muted">References never use the letters O or I, or the digits 0 or 1.</span>
+  </div>
+
+  {{ booking_summary(booking) }}
+
+  <div class="notice next-steps">
+    <strong>What happens next</strong>
+    <ul>
+      {% if booking.status == 'pending' %}
+      <li>Your time is reserved for you. {{ settings.business_name }} will review and confirm it. This page does not update by itself, so check the status any time under <a href="{{ url_for('public.manage_lookup') }}">My booking</a>.</li>
+      {% elif booking.status == 'confirmed' %}
+      <li>Your appointment is confirmed. There's nothing else you need to do.</li>
+      {% endif %}
+      <li><strong>No email, SMS or calendar invite has been sent.</strong> Save your reference: take a screenshot, print this page, or copy it.</li>
+      <li>To view or cancel, go to <a href="{{ url_for('public.manage_lookup') }}">My booking</a> and enter your reference and the email you used.</li>
+    </ul>
+  </div>
+
+  <p class="actions no-print">
+    <button class="btn" type="button" data-print>Print or save as PDF</button>
+    <a class="btn btn-ghost" href="{{ url_for('public.manage_booking', reference=booking.reference) }}">Manage booking</a>
+    <a class="btn btn-ghost" href="{{ url_for('public.index') }}">Book another</a>
+  </p>
+</section>
+{% endblock %}

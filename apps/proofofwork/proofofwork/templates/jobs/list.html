@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "macros.html" import job_list with context %}
+{% block title %}Jobs{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Jobs</h1>
+  <div class="actions">
+    {% if g.user.role == 'manager' %}
+    <a class="btn" href="{{ url_for('main.jobs_export', **export_args) }}">Export CSV</a>
+    <a class="btn btn-primary" href="{{ url_for('main.job_new') }}">+ Job</a>
+    {% endif %}
+  </div>
+</div>
+
+<details class="panel filters" {% if filters %}open{% endif %}>
+  <summary>Search &amp; filter{% if filters %} <span class="tag">{{ filters|length }} active</span>{% endif %}</summary>
+  <form method="get" action="{{ url_for('main.jobs') }}" class="filter-grid">
+    <label class="field"><span class="field-label">Search</span>
+      <input type="search" name="q" value="{{ filters.q or '' }}" maxlength="100" placeholder="Title, customer, property, address, worker"></label>
+    <label class="field"><span class="field-label">Status</span>
+      <select name="status">
+        <option value="">Any status</option>
+        {% for key, label in statuses.items() %}<option value="{{ key }}" {% if filters.status == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select></label>
+    <label class="field"><span class="field-label">Customer</span>
+      <select name="customer_id">
+        <option value="">Any customer</option>
+        {% for c in customers %}<option value="{{ c.id }}" {% if filters.customer_id == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select></label>
+    <label class="field"><span class="field-label">Property</span>
+      <select name="property_id">
+        <option value="">Any property</option>
+        {% for p in properties %}<option value="{{ p.id }}" {% if filters.property_id == p.id %}selected{% endif %}>{{ p.customer_name }} – {{ p.name }}</option>{% endfor %}
+      </select></label>
+    <label class="field"><span class="field-label">From date</span>
+      <input type="date" name="date_from" value="{{ filters.date_from or '' }}"></label>
+    <label class="field"><span class="field-label">To date</span>
+      <input type="date" name="date_to" value="{{ filters.date_to or '' }}"></label>
+    <div class="actions filter-actions">
+      <button class="btn btn-primary" type="submit">Apply</button>
+      <a class="btn" href="{{ url_for('main.jobs') }}">Clear</a>
+    </div>
+  </form>
+</details>
+
+<p class="muted small">{{ total }} job{{ '' if total == 1 else 's' }} found</p>
+{{ job_list(jobs, "No jobs match these filters.") }}
+
+{% if pages > 1 %}
+<nav class="pager" aria-label="Pages">
+  {% if page > 1 %}<a class="btn btn-small" href="{{ url_for('main.jobs', page=page - 1, **export_args) }}">← Newer</a>{% endif %}
+  <span class="muted small">Page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a class="btn btn-small" href="{{ url_for('main.jobs', page=page + 1, **export_args) }}">Older →</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

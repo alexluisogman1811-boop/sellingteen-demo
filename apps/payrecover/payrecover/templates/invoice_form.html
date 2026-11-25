@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field_error %}
+{% block title %}New invoice{% endblock %}
+{% block content %}
+<div class="narrow">
+  <a class="back" href="{{ url_for('routes.invoices') }}">← Invoices</a>
+  <h1>New invoice</h1>
+  <p class="muted">Record an invoice you've sent (or are about to send) so PayRecover can track it.</p>
+  <form method="post" class="card form" novalidate>
+    {{ csrf() }}
+    <label>Customer
+      <select name="customer_id" required>
+        <option value="">Choose a customer…</option>
+        {% for c in customers %}
+        <option value="{{ c.id }}" {{ 'selected' if data.customer_id|string == c.id|string }}>{{ c.name }}{% if c.company %} ({{ c.company }}){% endif %}</option>
+        {% endfor %}
+      </select>
+    </label>
+    {{ field_error(errors, 'customer_id') }}
+    <p class="hint"><a href="{{ url_for('routes.customer_new') }}">+ Add a new customer</a></p>
+
+    <div class="grid-2">
+      <div>
+        <label>Invoice number <input name="number" value="{{ data.number }}" required maxlength="40" autocomplete="off"></label>
+        {{ field_error(errors, 'number') }}
+      </div>
+      <div>
+        <label>Amount ($) <input name="amount" value="{{ data.amount }}" required inputmode="decimal" placeholder="0.00" autocomplete="off"></label>
+        {{ field_error(errors, 'amount') }}
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <label>Issue date <input type="date" name="issue_date" id="issue_date" value="{{ data.issue_date }}" required></label>
+        {{ field_error(errors, 'issue_date') }}
+      </div>
+      <div>
+        <label>Due date <input type="date" name="due_date" id="due_date" value="{{ data.due_date }}" required></label>
+        {{ field_error(errors, 'due_date') }}
+        <div class="quick" data-due-shortcuts>
+          <span class="muted small">Due in:</span>
+          <button type="button" class="chip" data-days="0">On receipt</button>
+          <button type="button" class="chip" data-days="7">7 days</button>
+          <button type="button" class="chip" data-days="14">14 days</button>
+          <button type="button" class="chip" data-days="30">30 days</button>
+        </div>
+      </div>
+    </div>
+
+    <label>Status
+      <select name="status">
+        <option value="sent" {{ 'selected' if data.status == 'sent' }}>Sent to customer</option>
+        <option value="draft" {{ 'selected' if data.status == 'draft' }}>Draft (not sent yet)</option>
+        <option value="paid" {{ 'selected' if data.status == 'paid' }}>Already paid</option>
+      </select>
+    </label>
+    {{ field_error(errors, 'status') }}
+    <p class="hint">“Due soon” and “Overdue” are set automatically from the due date. Follow-ups are only recommended for sent invoices.</p>
+
+    <label>Notes <span class="muted">(optional, private)</span>
+      <textarea name="notes" rows="3" maxlength="1000" placeholder="e.g. Kitchen sink repair">{{ data.notes }}</textarea>
+    </label>
+    {{ field_error(errors, 'notes') }}
+
+    <button class="btn btn-primary btn-block" type="submit">Save invoice</button>
+  </form>
+</div>
+{% endblock %}

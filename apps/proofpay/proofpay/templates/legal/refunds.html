@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Refund Policy · ProofPay{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Refund Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+  <p>This policy covers your ProofPay Pro subscription ({{ price }}). ProofPay doesn't handle payments between you and your customers, so it can't refund those; please settle them directly with each other.</p>
+
+  <h2>Try it free first</h2>
+  <p>Every new account gets a {{ trial_days }}-day free trial of Pro, so you can decide before paying anything. The Free plan ({{ free_jobs }} active jobs, basic job reports) costs nothing.</p>
+
+  <h2>14-day money-back guarantee</h2>
+  <p>If you're not happy with your first paid month, ask for a refund within 14 days of that payment and you'll get your money back in full. No questions asked.</p>
+
+  <h2>Cancelling</h2>
+  <p>You can cancel at any time. Your subscription stops renewing, you keep Pro until the end of the month you paid for, and then your account moves to the Free plan with your jobs kept. We don't refund the rest of a month after the first 14 days, except where the law requires it.</p>
+
+  <h2>How to ask</h2>
+  <p>{% if support_email %}Email {{ support_email }} from your account email{% else %}Contact us{% endif %} with the subject "Refund". Refunds go back to the original payment method through our payment provider, usually within 5–10 business days.</p>
+</article>
+{% endblock %}

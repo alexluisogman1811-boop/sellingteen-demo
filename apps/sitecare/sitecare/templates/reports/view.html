@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Report {{ r.month_key }} - {{ r.website.domain }}{% endblock %}
+{% block content %}
+{% set args = {'website_id': r.website.id, 'month': r.month_key} %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('main.reports_index') }}">Reports</a> · {{ r.website.client_name }}</p>
+    <h1>{{ r.website.name }} · {{ r.period_label }}</h1>
+    <p class="muted">{{ r.website.domain }}</p>
+  </div>
+  <form class="month-switch" method="get" action="{{ url_for('main.report_view') }}">
+    <input type="hidden" name="website_id" value="{{ r.website.id }}">
+    <label class="sr-only" for="f-month">Month</label>
+    <input id="f-month" type="month" name="month" value="{{ r.month_key }}" pattern="\d{4}-\d{2}">
+    <button class="btn" type="submit">Go</button>
+  </form>
+</div>
+
+<div class="actions report-actions">
+  <a class="btn btn-primary" href="{{ url_for('main.report_print', **args) }}" target="_blank" rel="noopener">Printable report</a>
+  <a class="btn" href="{{ url_for('main.report_print', download='1', **args) }}">Download HTML</a>
+  <a class="btn" href="{{ url_for('main.report_csv_download', **args) }}">Download CSV</a>
+  <a class="btn" href="{{ url_for('main.client_report', client_id=r.website.client_id, website_id=r.website.id, start=r.start.isoformat(), end=r.end.isoformat()) }}">Save / share&hellip;</a>
+  <button class="btn" type="button" data-copy-target="#summary-text">Copy summary</button>
+  <span class="copy-status muted small" role="status" aria-live="polite"></span>
+</div>
+
+<section class="stats stats-4" aria-label="Report totals">
+  <div class="stat stat-ok"><span class="stat-value">{{ r.counts.completed }}</span><span class="stat-label">Completed (manual records)</span></div>
+  <div class="stat{% if r.counts.overdue %} stat-danger{% endif %}"><span class="stat-value">{{ r.counts.overdue }}</span><span class="stat-label">Overdue, not recorded</span></div>
+  <div class="stat{% if r.counts.issues_open %} stat-warn{% endif %}"><span class="stat-value">{{ r.counts.issues }}</span><span class="stat-label">Issues ({{ r.counts.issues_open }} open at period end)</span></div>
+  <div class="stat"><span class="stat-value">{{ r.counts.verified }}</span><span class="stat-label">Verified automatically</span></div>
+</section>
+
+<section class="card">
+  <div class="card-head"><h2>Summary</h2></div>
+  <label class="sr-only" for="summary-text">Report summary text</label>
+  <textarea id="summary-text" class="summary" rows="12" readonly>{{ r.summary }}</textarea>
+</section>
+
+<section class="card report-body">
+  {% include "reports/_body.html" %}
+</section>
+<p class="notice">{{ r.notice }}</p>
+{% endblock %}

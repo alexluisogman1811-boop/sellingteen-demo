@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Set a new password – JobProof AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<div class="card auth-card">
+  <h1>Set a new password</h1>
+  {% if invalid %}
+  <p>This link has expired or was already used. <a href="{{ url_for('auth.forgot_password') }}">Ask for a new link</a>.</p>
+  {% else %}
+  <form method="post" action="{{ url_for('auth.reset_password', token=token) }}" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="password">New password <span class="hint">(at least 8 characters)</span></label>
+    <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" required autofocus>
+    <label for="confirm_password">Repeat new password</label>
+    <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
+    <button type="submit" class="btn btn-block">Save new password</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

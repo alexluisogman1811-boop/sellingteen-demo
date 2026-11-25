@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div class="page-title">
+    <h1>{{ g.business.name }}</h1>
+    <p class="muted">Ask every happy customer for a review, and track who said yes.</p>
+  </div>
+  <a class="btn" href="{{ url_for('customers.create_customer') }}">+ Add customer</a>
+</div>
+
+<section class="stats" aria-label="Summary">
+  <a class="stat" href="{{ url_for('customers.list_customers') }}">
+    <span class="stat-value">{{ stats.total }}</span><span class="stat-label">Total customers</span>
+    <span class="stat-hint">Finished jobs you've added</span>
+  </a>
+  <a class="stat stat-todo" href="{{ url_for('customers.list_customers', status='not_contacted') }}">
+    <span class="stat-value">{{ stats.not_contacted }}</span><span class="stat-label">Not contacted</span>
+    <span class="stat-hint">Still need a review request</span>
+  </a>
+  <a class="stat" href="{{ url_for('customers.list_customers', status='contacted') }}">
+    <span class="stat-value">{{ stats.contacted }}</span><span class="stat-label">Contacted</span>
+    <span class="stat-hint">Asked, waiting for a review</span>
+  </a>
+  <a class="stat stat-accent" href="{{ url_for('customers.list_customers', status='review_received') }}">
+    <span class="stat-value">{{ stats.reviews }}</span><span class="stat-label">Reviews received</span>
+    <span class="stat-hint">Customers who left a review</span>
+  </a>
+</section>
+
+{% if not g.business.review_link %}
+<div class="flash flash-info">Add your Google review link in <a href="{{ url_for('auth.settings') }}">Account</a> so it's included in every message.</div>
+{% endif %}
+
+{% if stats.total == 0 %}
+<section class="card">
+  <h2>Get your first review in 3 steps</h2>
+  <ol class="steps">
+    <li><strong>Add a customer</strong> after you finish a job.</li>
+    <li><strong>Write a message</strong>: ReviewBoost drafts a personal review request for you.</li>
+    <li><strong>Copy and send it</strong> from your phone, then mark the customer as contacted.</li>
+  </ol>
+  <a class="btn" href="{{ url_for('customers.create_customer') }}">Add your first customer</a>
+</section>
+{% else %}
+<section class="card">
+  <div class="section-head">
+    <h2>Not asked yet</h2>
+    {% if to_contact %}<a class="small" href="{{ url_for('customers.list_customers', status='not_contacted') }}">See all</a>{% endif %}
+  </div>
+  {% if to_contact %}
+  <p class="muted small">These customers haven't been asked for a review yet.</p>
+  <ul class="rows">
+    {% for c in to_contact %}
+    <li class="row">
+      <a class="row-main" href="{{ url_for('customers.detail', customer_id=c.id) }}">
+        <strong>{{ c.name }}</strong>
+        <span class="muted small">{{ c.service }} · {{ c.job_date|nice_date }}</span>
+      </a>
+      <a class="btn btn-secondary btn-sm" href="{{ url_for('customers.detail', customer_id=c.id) }}#message">{{ 'Send request' if c.message else 'Write message' }}</a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">You've asked everyone for a review. Add a customer after your next job.</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

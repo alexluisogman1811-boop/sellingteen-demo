@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Forgot password{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <h1>Forgot your password?</h1>
+  <p class="muted">Enter the email you sign in with. If an account exists, we will email you a link to choose a new password. The link works for 1 hour.</p>
+  <form method="post" action="{{ url_for('auth.forgot_password') }}" class="stack">
+    {{ csrf_field() }}
+    <label class="field"><span class="field-label">Email</span>
+      <input type="email" name="email" required maxlength="254" autocomplete="username" autofocus></label>
+    <button class="btn btn-primary btn-block" type="submit">Send reset link</button>
+  </form>
+  <p class="muted small"><a href="{{ url_for('auth.login') }}">Back to sign in</a></p>
+</section>
+{% endblock %}

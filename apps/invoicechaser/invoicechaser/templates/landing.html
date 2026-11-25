@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Stop chasing late payments{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">For freelancers and small businesses</p>
+    <h1 class="hero-title">Know who owes you, and send the reminder in one click.</h1>
+    <p class="lead">InvoiceChaser keeps track of every invoice you've sent, tells you the moment one is overdue,
+      and writes a polite, professional follow-up using your real invoice details. You stay in control: you
+      review the message and send it from your own email or phone.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary btn-large" href="{{ url_for('auth.signup') }}">Create your free account</a>
+      <a class="btn btn-ghost btn-large" href="{{ url_for('auth.login') }}">Log in</a>
+    </div>
+    <p class="small muted">No credit card. Takes under a minute to record your first invoice.</p>
+    {% if config.BILLING_ENABLED %}<p class="small muted"><strong>Free for up to {{ config.FREE_CUSTOMER_LIMIT }} clients.</strong> Pro: unlimited clients for {{ config.PRICE_TEXT }}. Every account starts with a {{ config.TRIAL_DAYS }}-day free trial of Pro.</p>{% endif %}
+  </div>
+  <div class="hero-card card" aria-hidden="true">
+    <p class="small muted">Example dashboard</p>
+    <div class="mini-stat stat-overdue"><span>Overdue</span><strong>2 invoices</strong></div>
+    <div class="mini-stat stat-due_soon"><span>Due this week</span><strong>1 invoice</strong></div>
+    <div class="mini-row"><span><strong>INV-0012</strong><br><span class="muted small">9 days overdue</span></span><span class="badge badge-overdue">Overdue</span></div>
+    <div class="mini-row"><span><strong>INV-0015</strong><br><span class="muted small">Due tomorrow</span></span><span class="badge badge-due_soon">Due soon</span></div>
+  </div>
+</section>
+
+<section class="steps">
+  <h2>How it works</h2>
+  <ol class="step-list">
+    <li><strong>Add your invoices.</strong> Customer, amount and due date. That's all we need.</li>
+    <li><strong>See what's late.</strong> Every invoice is labelled <span class="badge badge-due_soon">Due soon</span>, <span class="badge badge-overdue">Overdue</span> or <span class="badge badge-paid">Paid</span>, based on today's date.</li>
+    <li><strong>Send a follow-up.</strong> Pick the situation, from a friendly heads-up to a final polite reminder, then copy it or open it in your email app.</li>
+    <li><strong>Mark it paid.</strong> Your dashboard updates instantly so you always know what's outstanding.</li>
+  </ol>
+</section>
+
+<section class="trust card">
+  <h2>Messages you can trust</h2>
+  <p>Every amount, date, name and invoice number in a follow-up comes straight from your records. Messages never add
+    discounts, fees, legal threats or payment details you didn't enter, and nothing is sent without you.</p>
+</section>
+{% endblock %}

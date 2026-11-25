@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Suppliers{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Suppliers <span class="muted">({{ suppliers|length }})</span></h1>
+  <div class="actions"><a class="btn btn-primary" href="{{ url_for('main.supplier_form') }}">+ New supplier</a></div>
+</div>
+{% if suppliers %}
+<table class="table responsive">
+  <thead><tr><th>Name</th><th>Contact</th><th>Email</th><th>Phone</th><th class="num">Active products</th><th></th></tr></thead>
+  <tbody>
+  {% for s in suppliers %}
+    <tr>
+      <td data-label="Name"><strong>{{ s.name }}</strong>{% if s.is_demo %} <span class="badge badge-demo">Demo</span>{% endif %}</td>
+      <td data-label="Contact">{{ s.contact_name or '—' }}</td>
+      <td data-label="Email">{% if s.email %}<a href="mailto:{{ s.email }}">{{ s.email }}</a>{% else %}—{% endif %}</td>
+      <td data-label="Phone">{{ s.phone or '—' }}</td>
+      <td data-label="Active products" class="num"><a href="{{ url_for('main.product_list', supplier=s.id) }}">{{ s.product_count }}</a></td>
+      <td class="row-actions">
+        <a class="btn btn-small" href="{{ url_for('main.supplier_form', supplier_id=s.id) }}">Edit</a>
+        <form method="post" action="{{ url_for('main.supplier_delete', supplier_id=s.id) }}" data-confirm="Delete supplier {{ s.name }}?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-small btn-danger" type="submit">Delete</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No suppliers yet. Suppliers are optional; you can assign one to each product.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, empty, invoice_row %}
+{% block title %}{{ customer.name }}{% endblock %}
+{% block content %}
+<p class="small"><a href="{{ url_for('customers.index') }}">← All customers</a></p>
+<div class="page-head">
+  <div>
+    <h1>{{ customer.name }}</h1>
+    <p class="muted">
+      {{ customer.contact_name or 'No contact person' }}
+      {% if customer.email %} · <a href="mailto:{{ customer.email }}">{{ customer.email }}</a>{% endif %}
+      {% if customer.phone %} · {{ customer.phone }}{% endif %}
+    </p>
+  </div>
+  <div class="actions">
+    <a class="btn btn-primary" href="{{ url_for('invoices.new', customer_id=customer.id) }}">+ New invoice</a>
+    <a class="btn btn-ghost" href="{{ url_for('customers.edit', customer_id=customer.id) }}">Edit</a>
+    {% if not invoices %}
+    <form method="post" action="{{ url_for('customers.delete', customer_id=customer.id) }}" class="inline" data-confirm="Delete {{ customer.name }}? This can't be undone.">
+      {{ csrf() }}<button class="btn btn-danger-ghost" type="submit">Delete</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if invoices %}
+<section class="stats stats-3" aria-label="Customer summary">
+  <div class="stat stat-overdue"><span class="stat-label">Overdue</span><span class="stat-value">{{ totals.overdue | money_for_user }}</span></div>
+  <div class="stat"><span class="stat-label">Outstanding</span><span class="stat-value">{{ totals.outstanding | money_for_user }}</span></div>
+  <div class="stat stat-paid"><span class="stat-label">Paid to date</span><span class="stat-value">{{ totals.paid | money_for_user }}</span></div>
+</section>
+<section class="card">
+  <h2>Invoices</h2>
+  <ul class="rows">{% for inv in invoices %}{{ invoice_row(inv, show_customer=False) }}{% endfor %}</ul>
+  <p class="hint">To delete this customer, first delete their invoices.</p>
+</section>
+{% else %}
+  {{ empty("No invoices for this customer yet", "Record an invoice you've sent them and we'll track when it's due.", url_for('invoices.new', customer_id=customer.id), "Add an invoice") }}
+{% endif %}
+{% endblock %}

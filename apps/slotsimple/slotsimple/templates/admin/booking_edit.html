@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field_error, status_badge %}
+{% block title %}Edit {{ booking.reference }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('admin.booking_detail', booking_id=booking.id) }}">← Back to appointment</a></p>
+<section class="card narrow">
+  <h1>Edit appointment details</h1>
+  <p class="muted"><code>{{ booking.reference }}</code> · {{ booking.service_name }} · {{ booking.start_utc|local('%a %d %b %Y, %H:%M') }} {{ status_badge(booking.status) }}</p>
+  <p class="hint">To change the date or time, use <a href="{{ url_for('admin.booking_reschedule', booking_id=booking.id) }}">Reschedule</a>, which re-checks availability.</p>
+  <form method="post" class="form" novalidate>
+    {% if errors %}
+    <div class="error-summary" role="alert" tabindex="-1">
+      <strong>Please fix the following:</strong>
+      <ul>{% for key, message in errors.items() %}<li>{{ message }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+    {{ csrf() }}
+    <label for="name">Customer name</label>
+    <input id="name" name="name" maxlength="100" required value="{{ form.name }}" {% if errors.name %}aria-invalid="true"{% endif %}>
+    {{ field_error(errors, 'name') }}
+    <label for="email">Customer email</label>
+    <input id="email" name="email" type="email" maxlength="254" required inputmode="email" autocapitalize="off" value="{{ form.email }}" {% if errors.email %}aria-invalid="true"{% endif %}>
+    {{ field_error(errors, 'email') }}
+    <label for="notes">Notes</label>
+    <textarea id="notes" name="notes" rows="4" maxlength="1000">{{ form.notes }}</textarea>
+    {{ field_error(errors, 'notes') }}
+    <button class="btn btn-primary" type="submit">Save details</button>
+  </form>
+</section>
+{% endblock %}

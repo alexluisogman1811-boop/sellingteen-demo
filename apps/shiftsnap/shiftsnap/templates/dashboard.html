@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import shift_card with context %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% set here = url_for('main.dashboard') %}
+<div class="page-head">
+  <h1>{{ d.today|dlong }}</h1>
+  <a class="btn" href="{{ url_for('main.shift_new', date=d.today.isoformat(), next=here) }}">+ Add shift</a>
+</div>
+
+{% if d.employee_count == 0 and d.week_shift_count == 0 and not d.unfilled %}
+<section class="empty card">
+  <h2>Welcome to ShiftSnap</h2>
+  <p>Nothing scheduled yet. Start by adding the people who work for you, then build this week's schedule.</p>
+  <p>
+    <a class="btn" href="{{ url_for('main.employee_new') }}">Add your first employee</a>
+    <a class="btn btn-ghost" href="{{ url_for('main.data_page') }}">Or explore with sample data</a>
+  </p>
+</section>
+{% endif %}
+
+<section class="stats">
+  <div class="stat"><span class="stat-num">{{ d.today_shifts|length + d.carry_over|length }}</span><span class="stat-label">shifts today</span></div>
+  <div class="stat"><span class="stat-num">{{ d.week_hours|hours }}</span><span class="stat-label">scheduled this week ({{ d.week_shift_count }} shift{{ "" if d.week_shift_count == 1 else "s" }}:
+    {{ d.assigned_hours|hours }} assigned, {{ d.unfilled_hours|hours }} unfilled)</span></div>
+  <div class="stat {{ 'stat-alert' if d.unfilled }}"><span class="stat-num">{{ d.unfilled|length }}</span><span class="stat-label">unfilled upcoming shifts</span></div>
+  <div class="stat"><span class="stat-num">{{ d.employee_count }}</span><span class="stat-label">active employees</span></div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Today</h2>
+    {% if d.carry_over %}
+      <p class="muted small">Continuing from last night:</p>
+      {% for s in d.carry_over %}{{ shift_card(s, here) }}{% endfor %}
+    {% endif %}
+    {% for s in d.today_shifts %}{{ shift_card(s, here) }}{% else %}
+      {% if not d.carry_over %}<p class="empty-inline">No shifts today. <a href="{{ url_for('main.shift_new', date=d.today.isoformat(), next=here) }}">Add one</a>.</p>{% endif %}
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>Unfilled shifts</h2>
+    {% for s in d.unfilled %}{{ shift_card(s, here, show_date=true) }}{% else %}
+      <p class="empty-inline">All upcoming shifts have someone assigned. 🎉</p>
+    {% endfor %}
+  </section>
+</div>
+
+<section class="card">
+  <h2>Upcoming (next 7 days)</h2>
+  {% if d.upcoming %}
+  <div class="shift-list">{% for s in d.upcoming %}{{ shift_card(s, here, show_date=true) }}{% endfor %}</div>
+  {% if d.upcoming_total > d.upcoming|length %}
+  <p class="muted small">Showing the first {{ d.upcoming|length }} of {{ d.upcoming_total }} shifts.
+    <a href="{{ url_for('main.schedule') }}">See them all on the schedule</a>.</p>
+  {% endif %}
+  {% else %}
+  <p class="empty-inline">No shifts in the next 7 days. <a href="{{ url_for('main.schedule') }}">Open the schedule</a> to plan ahead.</p>
+  {% endif %}
+</section>
+{% endblock %}

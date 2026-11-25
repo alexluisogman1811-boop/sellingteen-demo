@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Never let a roof estimate go cold{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="brand hero-brand"><span class="brand-mark">LR</span> LeadRescue</div>
+  <h1>Never let a roof estimate go cold.</h1>
+  <p class="lead-text">A simple follow-up list for small roofing contractors who track leads in a notebook, a spreadsheet or their head, and don't want a full CRM.</p>
+  <div class="actions">
+    <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Join the free pilot</a>
+    <a class="btn" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+</section>
+
+<section class="grid-3">
+  <div class="card">
+    <h2>1. Add your leads</h2>
+    <p>Type them in or import your spreadsheet. Name, phone, job, estimate value, and when to call back.</p>
+  </div>
+  <div class="card">
+    <h2>2. Open today's list</h2>
+    <p>Every morning, see who's overdue, who's due today and who has no next step. Tap a number to call.</p>
+  </div>
+  <div class="card">
+    <h2>3. Follow up and log it</h2>
+    <p>One tap logs the call and books the next follow-up. Get a suggested text you can edit and send yourself.</p>
+  </div>
+</section>
+
+<section class="card pilot-box">
+  <h2>About the pilot</h2>
+  <ul>
+    <li><strong>Free during the pilot.</strong> No card is needed and there's nothing to cancel.</li>
+    <li><strong>Your data stays yours.</strong> Export it or delete it any time. Each business only sees its own leads.</li>
+    <li><strong>LeadRescue never messages your customers.</strong> It reminds <em>you</em>, and you decide what to send.</li>
+    <li>We're working with a small number of roofing companies and will ask for 15 minutes of feedback each week.</li>
+  </ul>
+  <p class="muted small">Read the <a href="{{ url_for('main.privacy') }}">Privacy Notice</a> and <a href="{{ url_for('main.terms') }}">Terms</a> before you sign up.</p>
+</section>
+{% endblock %}

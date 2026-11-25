@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, demo_badge, permission_badge %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Dashboard</h1>
+  <a class="btn btn-primary" href="{{ url_for('admin.project_new') }}">+ New project</a>
+</div>
+
+{% if not has_profile %}
+<div class="flash flash-warning" role="note">
+  <strong>Set up your business profile</strong> so clients know who is asking for their feedback and who they're giving permission to.
+  <a href="{{ url_for('admin.profile') }}">Add your business name →</a>
+</div>
+{% endif %}
+
+{% if has_demo %}
+<div class="demo-banner" role="note">
+  <strong>Demo data is loaded.</strong> Items marked <span class="badge badge-demo">DEMO</span> are sample
+  placeholders, not real testimonials.
+  <div class="demo-actions">
+    <form method="post" action="{{ url_for('admin.demo_load') }}" class="inline" data-confirm="Reset demo data? All DEMO items, including anything submitted to demo projects, will be replaced.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-small" type="submit">Reset demo data</button>
+    </form>
+    <form method="post" action="{{ url_for('admin.demo_clear') }}" class="inline" data-confirm="Remove all demo data? Your own projects are not affected.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-small" type="submit">Remove demo data</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<section class="stats" aria-label="Summary">
+  <a class="stat" href="{{ url_for('admin.testimonials') }}"><span class="stat-n">{{ stats.total }}</span><span class="stat-l">Total testimonials</span></a>
+  <a class="stat stat-pending" href="{{ url_for('admin.testimonials', status='pending') }}"><span class="stat-n">{{ stats.pending }}</span><span class="stat-l">Pending review</span></a>
+  <a class="stat stat-approved" href="{{ url_for('admin.testimonials', status='approved') }}"><span class="stat-n">{{ stats.approved }}</span><span class="stat-l">Approved</span></a>
+  <a class="stat stat-live" href="{{ url_for('admin.testimonials', status='publishable') }}"><span class="stat-n">{{ stats.publishable }}</span><span class="stat-l">Public (approved + permission)</span></a>
+  <a class="stat stat-needs" href="{{ url_for('admin.testimonials', status='approved', permission='no') }}"><span class="stat-n">{{ stats.needs_permission }}</span><span class="stat-l">Approved, needs permission</span></a>
+</section>
+
+{% if not projects %}
+<section class="card empty">
+  <h2>Get started</h2>
+  <p>Create a project for each client or campaign. You'll get a unique, hard-to-guess submission link to send to your client,
+    and a public page that only shows testimonials you approve <em>and</em> have permission to publish.</p>
+  <p>
+    <a class="btn btn-primary" href="{{ url_for('admin.project_new') }}">Create your first project</a>
+  </p>
+  <form method="post" action="{{ url_for('admin.demo_load') }}" class="inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn" type="submit">Or load clearly-labelled demo data</button>
+  </form>
+</section>
+{% endif %}
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Waiting for review</h2>
+    {% if pending %}
+      <ul class="list">
+      {% for t in pending %}
+        <li>
+          <a href="{{ url_for('admin.testimonial_detail', tid=t.id) }}"><strong>{{ t.customer_name }}</strong></a>
+          {{ demo_badge(t) }} {{ permission_badge(t) }}
+          <div class="muted small">{{ t.project_name }} · {{ t.submitted_at|date }}</div>
+          <p class="excerpt">{{ t.feedback|truncate(140) }}</p>
+          <div class="quick-actions">
+            {% for s, label in [('approved', 'Approve'), ('rejected', 'Reject')] %}
+            <form method="post" action="{{ url_for('admin.testimonial_status', tid=t.id) }}" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="status" value="{{ s }}">
+              <input type="hidden" name="next" value="{{ url_for('admin.dashboard') }}">
+              <button class="btn btn-small {{ 'btn-primary' if s == 'approved' }}" type="submit">{{ label }}</button>
+            </form>
+            {% endfor %}
+            <a class="btn btn-small" href="{{ url_for('admin.testimonial_detail', tid=t.id) }}">Review</a>
+          </div>
+          {% if not t.permission_granted %}<p class="muted small">No publication permission yet. Approving keeps it private until permission is recorded.</p>{% endif %}
+        </li>
+      {% endfor %}
+      </ul>
+      <a href="{{ url_for('admin.testimonials', status='pending') }}">See all pending →</a>
+    {% else %}
+      <p class="muted">Nothing waiting. New submissions appear here.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Recent activity</h2>
+    {% if activity %}
+      <ul class="activity">
+      {% for a in activity %}
+        <li>
+          <span class="act-kind act-{{ a.kind }}">{{ a.kind|replace('_', ' ') }}</span>
+          {% if a.testimonial_id %}<a href="{{ url_for('admin.testimonial_detail', tid=a.testimonial_id) }}">{{ a.message }}</a>{% else %}{{ a.message }}{% endif %}
+          {% if a.is_demo %}<span class="badge badge-demo">DEMO</span>{% endif %}
+          <div class="muted small">{{ a.created_at|date(true) }}</div>
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No activity yet.</p>
+    {% endif %}
+  </section>
+</div>
+
+{% if projects %}
+<section class="card">
+  <div class="page-head"><h2>Projects</h2><a href="{{ url_for('admin.projects') }}">All projects →</a></div>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Project</th><th>Total</th><th>Pending</th><th>Public</th><th>Link</th></tr></thead>
+    <tbody>
+    {% for p in projects[:8] %}
+      <tr>
+        <td data-label="Project"><a href="{{ url_for('admin.project_detail', project_id=p.id) }}">{{ p.name }}</a> {{ demo_badge(p) }}</td>
+        <td data-label="Total">{{ p.total }}</td>
+        <td data-label="Pending">{{ p.pending }}</td>
+        <td data-label="Public">{{ p.publishable }}</td>
+        <td data-label="Link">{{ 'Open' if p.accepting else 'Closed' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endif %}
+
+{% if not has_demo and projects %}
+<form method="post" action="{{ url_for('admin.demo_load') }}" class="inline muted small">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  Want to explore? <button class="linklike" type="submit">Load clearly-labelled demo data</button> (removable at any time).
+</form>
+{% endif %}
+{% endblock %}

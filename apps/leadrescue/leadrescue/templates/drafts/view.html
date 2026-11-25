@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, demo_badge %}
+{% block title %}Message draft · {{ lead.full_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="muted small" href="{{ url_for('leads.detail', lead_id=lead.id) }}">← {{ lead.full_name }}</a>
+    <h1>{{ draft.channel_label }} to {{ lead.full_name }} {{ demo_badge(lead) }}</h1>
+    <span class="badge draft-status draft-{{ draft.status }}">
+      {% if draft.status == 'draft' %}DRAFT · not approved · not sent
+      {% elif draft.status == 'approved' %}APPROVED · not sent yet
+      {% elif draft.status == 'sent' %}SENT by hand {{ draft.sent_at|localfmt('%b %d, %Y') }}
+      {% else %}DISCARDED{% endif %}
+    </span>
+  </div>
+</div>
+
+<div class="draft-notice">
+  <strong>This is a suggested draft.</strong> LeadRescue never sends messages. Check every detail, edit anything that isn't right, and only send it yourself once the owner has approved it.
+  It was written from the facts listed on this page only. It never includes prices, dates, appointments, guarantees or policies, so add those yourself if you need them.
+</div>
+
+<div class="grid-2 detail-grid">
+  <div>
+    <section class="card">
+      <h2>Message</h2>
+      {% if editable %}
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        {% if draft.channel == 'email' %}{{ field(form.subject) }}{% endif %}
+        <div class="field {{ 'has-error' if form.body.errors }}">
+          {{ form.body.label() }}
+          {{ form.body(rows=8, class_='draft-body') }}
+          {% for e in form.body.errors %}<small class="error">{{ e }}</small>{% endfor %}
+          <small class="hint">{{ draft.body|length }} characters{% if draft.channel == 'text' %} · texts over 160 characters are sent as several parts{% endif %}</small>
+        </div>
+        <button class="btn" type="submit">Save edits</button>
+        {% if draft.status == 'approved' %}<small class="hint">Saving changes will send it back for approval.</small>{% endif %}
+      </form>
+      {% else %}
+      {% if draft.subject %}<p><strong>Subject:</strong> {{ draft.subject }}</p>{% endif %}
+      <p class="prewrap draft-final">{{ draft.body }}</p>
+      {% endif %}
+    </section>
+
+    {% if draft.status == 'draft' %}
+    <section class="card">
+      <h2>Owner approval</h2>
+      {% if is_owner %}
+      <form method="post" action="{{ url_for('drafts.approve', lead_id=lead.id, draft_id=draft.id) }}" novalidate>
+        {{ approve_form.hidden_tag() }}
+        <div class="checkbox">{{ approve_form.reviewed() }} {{ approve_form.reviewed.label() }}</div>
+        <button class="btn btn-primary" type="submit">Approve message</button>
+      </form>
+      {% else %}
+      <p class="muted">Only the business owner can approve messages. Ask them to review this draft.</p>
+      {% endif %}
+    </section>
+    {% elif draft.status == 'approved' %}
+    <section class="card card-highlight">
+      <h2>Ready to send yourself</h2>
+      <p class="small">Approved by {{ draft.approved_by.full_name if draft.approved_by else 'owner' }} on {{ draft.approved_at|localfmt('%b %d, %Y') }}.
+        Copy it into your phone or email app and send it to {{ lead.phone if draft.channel == 'text' else lead.email }}.</p>
+      <textarea class="copy-field" readonly rows="5" id="approved-text" aria-label="Approved message">{% if draft.subject %}Subject: {{ draft.subject }}
+
+{% endif %}{{ draft.body }}</textarea>
+      <div class="actions">
+        <button class="btn" type="button" data-copy-target="approved-text">Copy message</button>
+        <form method="post" action="{{ url_for('drafts.mark_sent', lead_id=lead.id, draft_id=draft.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-primary" type="submit">I sent it, so mark it as sent</button>
+        </form>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if draft.status in ('draft', 'approved') %}
+    <form method="post" action="{{ url_for('drafts.discard', lead_id=lead.id, draft_id=draft.id) }}" class="inline" data-confirm="Discard this draft?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-ghost btn-small" type="submit">Discard draft</button>
+    </form>
+    {% endif %}
+  </div>
+
+  <div>
+    {% if review_notes %}
+    <section class="card review-card">
+      <h2>Check before approving</h2>
+      <ul>{% for n in review_notes %}<li>{{ n }}</li>{% endfor %}</ul>
+    </section>
+    {% endif %}
+    {% if draft.warning_list %}
+    <section class="card review-card">
+      <h2>Notes from the draft writer</h2>
+      <ul>{% for w in draft.warning_list %}<li>{{ w }}</li>{% endfor %}</ul>
+    </section>
+    {% endif %}
+    <section class="card">
+      <h2>Facts the draft can use</h2>
+      <dl class="dl">{% for label, value in facts %}<dt>{{ label }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>
+      <p class="muted small">Never used: notes, estimated value, follow-up dates, address. Written by: {{ 'free template writer' if draft.provider == 'template' else draft.provider }}.</p>
+    </section>
+  </div>
+</div>
+{% endblock %}

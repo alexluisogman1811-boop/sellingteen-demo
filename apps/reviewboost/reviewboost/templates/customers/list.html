@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Customers{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Customers</h1>
+  <a class="btn" href="{{ url_for('customers.create_customer') }}">+ Add customer</a>
+</div>
+
+<form class="filters" method="get" role="search">
+  <input type="search" name="q" value="{{ q }}" maxlength="100" placeholder="Search name, phone, email or job" aria-label="Search customers">
+  <select name="status" aria-label="Show customers by status">
+    <option value="">All statuses</option>
+    {% for key, label in STATUS_LABELS.items() %}
+    <option value="{{ key }}" {{ 'selected' if status == key }}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-secondary" type="submit">Search</button>
+  {% if q or status %}<a class="small" href="{{ url_for('customers.list_customers') }}">Show all</a>{% endif %}
+</form>
+
+<section class="card">
+  {% if customers %}
+  <p class="muted small">{{ customers|length }} customer{{ '' if customers|length == 1 else 's' }}{% if q or status %} found{% endif %}</p>
+  <ul class="rows">
+    {% for c in customers %}
+    <li class="row">
+      <a class="row-main" href="{{ url_for('customers.detail', customer_id=c.id) }}">
+        <strong>{{ c.name }}</strong>
+        <span class="muted small">{{ c.service }} · {{ c.job_date|nice_date }} · {{ c.phone }}</span>
+      </a>
+      {{ status_badge(c.status) }}
+    </li>
+    {% endfor %}
+  </ul>
+  {% elif q or status %}
+  <div class="empty">
+    <p>No customers match{% if q %} “{{ q }}”{% endif %}{% if status %} with status “{{ STATUS_LABELS[status] }}”{% endif %}.</p>
+    <a class="btn btn-secondary" href="{{ url_for('customers.list_customers') }}">Show all customers</a>
+  </div>
+  {% else %}
+  <div class="empty">
+    <p>No customers yet. Add a customer after you finish a job, then write them a review request.</p>
+    <a class="btn" href="{{ url_for('customers.create_customer') }}">Add your first customer</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

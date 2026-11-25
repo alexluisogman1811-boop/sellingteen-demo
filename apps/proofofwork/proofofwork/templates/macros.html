@@ -1,0 +1,46 @@
+{% macro status_badge(status) -%}
+<span class="badge badge-{{ status }}">{{ STATUS_LABELS[status] }}</span>
+{%- endmacro %}
+
+{% macro job_card(j) -%}
+<a class="job-card" href="{{ url_for('main.job_detail', job_id=j.id) }}">
+  <div class="job-card-top">
+    <strong>{{ j.title }}</strong>
+    {{ status_badge(j.status) }}
+  </div>
+  <div class="muted">{{ j.customer_name }} · {{ j.property_name }}</div>
+  <div class="muted small">
+    {{ j.appointment_date|nice_date }}{% if j.start_time %} · {{ j.start_time }}{% if j.end_time %}–{{ j.end_time }}{% endif %}{% endif %}{% if j.assigned_worker %} · {{ j.assigned_worker }}{% endif %}
+  </div>
+  {% if j.items_total %}
+  <div class="job-card-progress">
+    <progress value="{{ j.items_done }}" max="{{ j.items_total }}"></progress>
+    <span class="small">{{ j.items_done }}/{{ j.items_total }} done{% if j.items_incomplete %} · <span class="text-warn">{{ j.items_incomplete }} not completed</span>{% endif %}</span>
+  </div>
+  {% endif %}
+</a>
+{%- endmacro %}
+
+{% macro job_list(jobs, empty) -%}
+{% if jobs %}
+<div class="card-list">{% for j in jobs %}{{ job_card(j) }}{% endfor %}</div>
+{% else %}
+<p class="empty">{{ empty }}</p>
+{% endif %}
+{%- endmacro %}
+
+{% macro field(name, label, value='', type='text', required=false, hint='', maxlength=200, attrs='') -%}
+<label class="field">
+  <span class="field-label">{{ label }}{% if required %} <span class="req" aria-hidden="true">*</span>{% endif %}</span>
+  <input type="{{ type }}" name="{{ name }}" value="{{ value if value is not none else '' }}" {% if required %}required{% endif %} {% if type in ('text', 'email', 'tel', 'search') %}maxlength="{{ maxlength }}"{% endif %}>
+  {% if hint %}<span class="hint">{{ hint }}</span>{% endif %}
+</label>
+{%- endmacro %}
+
+{% macro textarea(name, label, value='', rows=3, hint='', maxlength=5000, required=false) -%}
+<label class="field">
+  <span class="field-label">{{ label }}{% if required %} <span class="req" aria-hidden="true">*</span>{% endif %}</span>
+  <textarea name="{{ name }}" rows="{{ rows }}" maxlength="{{ maxlength }}" {% if required %}required{% endif %}>{{ value if value is not none else '' }}</textarea>
+  {% if hint %}<span class="hint">{{ hint }}</span>{% endif %}
+</label>
+{%- endmacro %}

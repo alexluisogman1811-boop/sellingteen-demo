@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Settings & data{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Settings & data</h1></div>
+
+<section class="card">
+  <h2>Your data</h2>
+  <p class="muted small">Stored locally in a SQLite database; evidence files are stored in the app's instance folder.</p>
+  <div class="stats stats-6">
+    {% for label, key in [('Clients', 'clients'), ('Websites', 'websites'), ('Recurring tasks', 'tasks'), ('Scheduled items', 'occurrences'), ('Evidence files', 'attachments'), ('Issues', 'issues')] %}
+      <div class="stat"><span class="stat-value">{{ counts[key] }}</span><span class="stat-label">{{ label }}</span></div>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Demo data</h2>
+    <p>Loads 3 sample clients, 5 websites, recurring tasks, two months of history and some issues. Every demo record is labelled <strong>[Demo]</strong> and is sample data, not a real check.</p>
+    <form method="post" action="{{ url_for('main.settings_demo') }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if counts.clients %}
+      <label class="check"><input type="checkbox" name="replace" value="yes"> Replace my current data (deletes it)</label>
+      {% endif %}
+      <button class="btn btn-primary" type="submit">Load demo data</button>
+    </form>
+  </section>
+  <section class="card danger-zone">
+    <h2>Reset everything</h2>
+    <p>Permanently deletes all clients, websites, tasks, history, issues and evidence files.</p>
+    <form method="post" action="{{ url_for('main.settings_reset') }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="f-confirm">Type <strong>RESET</strong> to confirm</label>
+      <input id="f-confirm" name="confirm" autocomplete="off" autocapitalize="characters">
+      <button class="btn btn-danger" type="submit">Delete all data</button>
+    </form>
+  </section>
+</div>
+
+<section class="card">
+  <h2>How results are recorded</h2>
+  <ul>
+    <li><strong>Everything is manual.</strong> A task is only marked completed when you record it, with the date, result and notes you enter.</li>
+    <li>SiteCare Desk does <strong>not</strong> run backups, uptime monitoring, performance tests or security scans, and never assumes they succeeded.</li>
+    <li>Evidence files (screenshots, PDFs, logs) are optional proof you attach yourself.</li>
+    <li>Credentials are never collected. Notes that look like passwords, API keys or tokens are rejected.</li>
+  </ul>
+</section>
+{% endblock %}

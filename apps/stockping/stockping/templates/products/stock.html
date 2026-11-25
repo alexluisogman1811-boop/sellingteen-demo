@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_macros.html" import input, textarea %}
+{% set titles = {'in': 'Stock in', 'out': 'Stock out', 'adjustment': 'Stock adjustment'} %}
+{% block title %}{{ titles[movement_kind] }} · {{ product.sku }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="muted small"><a href="{{ url_for('main.product_detail', product_id=product.id) }}">← {{ product.sku }}</a></p>
+    <h1>{{ titles[movement_kind] }}</h1>
+    <p>{{ product.name }} · <strong>{{ product.quantity }}</strong> on hand · reorder at {{ product.reorder_threshold }}</p>
+  </div>
+</div>
+
+{% if errors.get('_form') %}<div class="flash flash-error" role="alert">{{ errors._form }}</div>{% endif %}
+
+<form method="post" class="card form" novalidate data-stock-form
+      data-kind="{{ movement_kind }}" data-current="{{ product.quantity }}" data-threshold="{{ product.reorder_threshold }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="request_id" value="{{ form.get('request_id', '') }}">
+  {% if movement_kind == 'adjustment' %}
+    <p class="note">An adjustment sets the on-hand quantity to the number you physically counted.
+      The difference (positive or negative) is recorded in the history with your reason.
+      Use it to correct counting errors, damage or shrinkage. Stock can never go below zero.</p>
+    <div class="form-grid">
+      {{ input("counted_quantity", "Counted quantity (new on-hand total)", form, errors, required=true, type="number", min=0, step=1, inputmode="numeric") }}
+      {{ input("movement_date", "Count date", form, errors, required=true, type="date", max=today) }}
+    </div>
+    {{ input("reason", "Reason for adjustment", form, errors, required=true, maxlength=200, help="Required, e.g. 'Cycle count: 2 units missing'") }}
+  {% else %}
+    <div class="form-grid">
+      {{ input("quantity", "Quantity", form, errors, required=true, type="number", min=1, step=1, inputmode="numeric",
+               help=("Up to " ~ product.quantity ~ " available.") if movement_kind == 'out' else "") }}
+      {{ input("movement_date", "Date", form, errors, required=true, type="date", max=today) }}
+      <div class="field{% if errors.get('reason') %} has-error{% endif %}">
+        <label for="f-reason">Reason <span class="req" aria-hidden="true">*</span></label>
+        <select id="f-reason" name="reason" required>
+          <option value="">Choose…</option>
+          {% for r in reasons %}<option value="{{ r }}"{% if form.get('reason') == r %} selected{% endif %}>{{ r }}</option>{% endfor %}
+        </select>
+        {% if errors.get('reason') %}<p class="error">{{ errors.reason }}</p>{% endif %}
+      </div>
+    </div>
+  {% endif %}
+  {{ textarea("notes", "Notes" ~ ("" if movement_kind == 'adjustment' else " (required when reason is 'Other')"), form, errors, maxlength=1000) }}
+  <p class="after-preview" data-after-preview aria-live="polite"></p>
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Record {{ titles[movement_kind]|lower }}</button>
+    <a class="btn" href="{{ url_for('main.product_detail', product_id=product.id) }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

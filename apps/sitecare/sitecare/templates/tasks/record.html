@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Record: {{ occ.title }}{% endblock %}
+{% block content %}
+{% set action_labels = {'recorded': 'Recorded', 'corrected': 'Corrected', 'skipped': 'Skipped', 'reopened': 'Reopened', 'evidence_removed': 'Evidence removed'} %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('main.website_detail', website_id=occ.website_id) }}">{{ occ.website_name }}</a> · {{ occ.domain }}</p>
+    <h1>{{ occ.title }}</h1>
+    <p class="meta-line">{{ CATEGORIES.get(occ.category) }} · due {{ occ.due_date|nice_date }} {{ m.occ_status(occ, today) }}</p>
+  </div>
+</div>
+
+{% if occ.status == 'completed' %}
+<p class="flash flash-info">Recorded {{ occ.recorded_at|nice_date }}{% if occ.recorded_by %} by {{ occ.recorded_by }}{% endif %} · {{ VERIFICATION[verification_key(occ)] }}. You can correct the record below (the change is kept in its history) or reopen it.</p>
+{% elif occ.status == 'skipped' %}
+<p class="flash flash-info">Skipped{% if occ.recorded_by %} by {{ occ.recorded_by }}{% endif %}{% if occ.notes %}: {{ occ.notes }}{% endif %}</p>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" class="card form" novalidate data-once>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h2>{{ 'Correct record' if occ.status == 'completed' else 'Record completed work' }}</h2>
+  <p class="notice small"><strong>This is a manual record.</strong> SiteCare Desk can't check the website itself, so reports will show this as
+    &ldquo;{{ VERIFICATION.manual }}&rdquo;. Record only what you actually did and saw. For backups, say where you saw the backup and its date
+    (e.g. &ldquo;restore point dated 14 Oct listed in host panel&rdquo;) and attach a screenshot if you can.</p>
+  {% if errors %}<p class="form-alert" role="alert">Please fix the highlighted fields.</p>{% endif %}
+
+  <fieldset class="radio-cards{% if errors.get('result') %} has-error{% endif %}">
+    <legend>Result you observed <span class="req" aria-hidden="true">*</span></legend>
+    {% for key, label in RESULTS.items() %}
+      <label class="radio-card radio-{{ key }}">
+        <input type="radio" name="result" value="{{ key }}" {% if values.get('result') == key %}checked{% endif %} required>
+        <span>{{ label }}</span>
+      </label>
+    {% endfor %}
+    {{ m.field_error(errors, 'result') }}
+  </fieldset>
+
+  <div class="form-grid">
+    {{ m.input('completed_on', 'Date completed', values, errors, type='date', required=True,
+               hint='Between ' ~ (earliest|nice_date) ~ ' and today.',
+               attrs='min="' ~ earliest.isoformat() ~ '" max="' ~ today.isoformat() ~ '"') }}
+    {{ m.input('recorded_by', 'Recorded by', values, errors, required=True,
+               hint='Who did the work. Shown on client reports.', attrs='maxlength="80" autocomplete="name"') }}
+    {{ m.textarea('notes', 'Notes', values, errors, rows=5, maxlength=4000, hint='What you checked and saw. Required for Issues found, Failed and Not applicable.') }}
+    <div class="field field-wide{% if errors.get('evidence') %} has-error{% endif %}">
+      <label for="f-evidence">Evidence (optional)</label>
+      {% if remaining > 0 %}
+      <input id="f-evidence" name="evidence" type="file" multiple
+             accept=".png,.jpg,.jpeg,.gif,.webp,.pdf,.txt,.log,.csv">
+      <p class="hint">Screenshots, PDFs or logs. Up to {{ remaining }} more file{{ '' if remaining == 1 else 's' }}, 5 MB each. Identical files are only stored once.</p>
+      {% else %}<p class="hint">This record has the maximum number of files. Remove one to add another.</p>{% endif %}
+      {{ m.field_error(errors, 'evidence') }}
+    </div>
+  </div>
+  <div class="form-actions sticky-actions">
+    <button class="btn btn-primary" type="submit">{{ 'Save correction' if occ.status == 'completed' else 'Save manual record' }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.website_detail', website_id=occ.website_id) }}">Cancel</a>
+  </div>
+</form>
+
+{% if attachments %}
+<section class="card">
+  <h2>Evidence files</h2>
+  <p class="muted small">Stored as uploaded. SiteCare Desk does not inspect their contents.</p>
+  <ul class="file-list">
+    {% for a in attachments %}
+      <li>
+        <a href="{{ url_for('main.attachment_download', att_id=a.id) }}">{{ a.original_name }}</a>
+        <span class="muted small">{{ a.size_bytes|filesize }} · {{ a.uploaded_at|nice_date }}</span>
+        {{ m.post_button(url_for('main.attachment_delete', att_id=a.id), 'Remove', 'btn btn-sm btn-danger-ghost', 'Remove this evidence file?') }}
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<div class="grid-2">
+  {% if occ.status == 'pending' %}
+  <section class="card">
+    <h2>Skip this occurrence</h2>
+    <p class="muted small">Use when the work wasn't needed this time. Skipped items and the reason appear in reports.</p>
+    <form method="post" action="{{ url_for('main.occurrence_skip', occ_id=occ.id) }}" class="stack" data-once>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="f-reason">Reason <span class="req" aria-hidden="true">*</span></label>
+      <input id="f-reason" name="reason" maxlength="500" required placeholder="e.g. Client paused updates during sale">
+      <label for="f-skip-by">Recorded by <span class="req" aria-hidden="true">*</span></label>
+      <input id="f-skip-by" name="recorded_by" maxlength="80" required value="{{ values.get('recorded_by') or '' }}">
+      <button type="submit" class="btn">Skip</button>
+    </form>
+  </section>
+  {% else %}
+  <section class="card">
+    <h2>Reopen</h2>
+    <p class="muted small">Sets this back to pending (e.g. recorded by mistake). The earlier record stays in the history below.</p>
+    {{ m.post_button(url_for('main.occurrence_reopen', occ_id=occ.id), 'Reopen as pending', 'btn', 'Set this record back to pending?') }}
+  </section>
+  {% endif %}
+  <section class="card">
+    <h2>Found a problem?</h2>
+    <p class="muted small">Log it as an issue so it's tracked to resolution and appears in the monthly report.</p>
+    <a class="btn" href="{{ url_for('main.issue_new', website_id=occ.website_id, occurrence_id=occ.id if occ.status == 'completed' else None) }}">Log issue</a>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Record history</h2>
+  {% if events %}
+  <ol class="timeline">
+    {% for e in events %}
+      <li>
+        <strong>{{ action_labels.get(e.action, e.action) }}</strong>
+        <span class="muted small">{{ e.created_at }}{% if e.recorded_by %} · {{ e.recorded_by }}{% endif %}</span><br>
+        {% if e.status == 'completed' %}Completed {{ e.completed_on|nice_date }} · {{ RESULTS.get(e.result, '-') }}{% if e.evidence_count %} · {{ e.evidence_count }} evidence file{{ '' if e.evidence_count == 1 else 's' }}{% endif %}
+        {% elif e.status == 'skipped' %}Skipped{% else %}Back to pending{% endif %}
+        {% if e.notes %}<br><span class="muted small prewrap">{{ e.notes }}</span>{% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+  {% else %}<p class="empty">Nothing recorded yet.</p>{% endif %}
+</section>
+{% endblock %}

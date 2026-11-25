@@ -1,0 +1,19 @@
+{% from "macros.html" import field_error %}
+<div class="field">
+  <label for="i-title">Idea <span class="req">*</span></label>
+  <input id="i-title" name="title" value="{{ form.title or '' }}" maxlength="120" required>
+  {{ field_error(errors, 'title') }}
+</div>
+<div class="field">
+  <label for="i-notes">Notes</label>
+  <textarea id="i-notes" name="notes" rows="4">{{ form.notes or '' }}</textarea>
+  {{ field_error(errors, 'notes') }}
+</div>
+<div class="field">
+  <label for="i-cat">Category</label>
+  <select id="i-cat" name="category_id">
+    <option value="">— None —</option>
+    {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if (form.category_id or '')|string == c.id|string }}>{{ c.name }}</option>{% endfor %}
+  </select>
+  {{ field_error(errors, 'category_id') }}
+</div>

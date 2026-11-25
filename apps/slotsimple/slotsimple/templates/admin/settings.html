@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field_error %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<header class="page-head"><h1>Business settings</h1></header>
+<form method="post" class="settings-form" novalidate>
+  {{ csrf() }}
+  <div class="layout-2 even">
+    <section class="card form">
+      <h2>Business</h2>
+      <label for="business_name">Business name</label>
+      <input id="business_name" name="business_name" maxlength="100" required value="{{ form.business_name }}">
+      {{ field_error(errors, 'business_name') }}
+      <label for="booking_slug">Booking page address</label>
+      <div class="slug-field"><span class="muted small">{{ url_for('site.landing', _external=True) }}book/</span>
+        <input id="booking_slug" name="booking_slug" maxlength="40" required value="{{ form.booking_slug }}"
+               pattern="[a-z0-9][a-z0-9-]{1,38}[a-z0-9]" autocapitalize="off" spellcheck="false"></div>
+      {{ field_error(errors, 'booking_slug') }}
+      <p class="hint">Lowercase letters, numbers and dashes. Changing it breaks links you already shared.</p>
+      <label for="about">Short description</label>
+      <textarea id="about" name="about" rows="3" maxlength="1000">{{ form.about }}</textarea>
+      {{ field_error(errors, 'about') }}
+      <label for="timezone">Timezone</label>
+      <select id="timezone" name="timezone">
+        {% for tz in timezones %}<option value="{{ tz }}" {% if tz == form.timezone %}selected{% endif %}>{{ tz }}</option>{% endfor %}
+      </select>
+      {{ field_error(errors, 'timezone') }}
+      <p class="hint">All opening hours, availability and customer-facing times use this timezone.</p>
+      <h2>Contact</h2>
+      <label for="contact_email">Email</label>
+      <input id="contact_email" name="contact_email" type="email" maxlength="254" value="{{ form.contact_email }}">
+      {{ field_error(errors, 'contact_email') }}
+      <label for="contact_phone">Phone</label>
+      <input id="contact_phone" name="contact_phone" maxlength="40" value="{{ form.contact_phone }}">
+      {{ field_error(errors, 'contact_phone') }}
+      <label for="address">Address</label>
+      <input id="address" name="address" maxlength="200" value="{{ form.address }}">
+      {{ field_error(errors, 'address') }}
+      <label for="currency_symbol">Currency symbol</label>
+      <input id="currency_symbol" name="currency_symbol" maxlength="4" value="{{ form.currency_symbol }}" class="short">
+      {{ field_error(errors, 'currency_symbol') }}
+    </section>
+
+    <section class="card form">
+      <h2>Booking rules</h2>
+      <div class="grid-2">
+        <div><label for="default_duration">Default appointment duration (min)</label>
+          <input id="default_duration" name="default_duration" type="number" min="5" max="480" value="{{ form.default_duration }}">
+          {{ field_error(errors, 'default_duration') }}</div>
+        <div><label for="slot_interval">Start times every (min)</label>
+          <input id="slot_interval" name="slot_interval" type="number" min="5" max="120" value="{{ form.slot_interval }}">
+          {{ field_error(errors, 'slot_interval') }}</div>
+        <div><label for="buffer_minutes">Buffer between bookings (min)</label>
+          <input id="buffer_minutes" name="buffer_minutes" type="number" min="0" max="240" value="{{ form.buffer_minutes }}">
+          {{ field_error(errors, 'buffer_minutes') }}</div>
+        <div><label for="min_notice_minutes">Minimum notice (min)</label>
+          <input id="min_notice_minutes" name="min_notice_minutes" type="number" min="0" max="43200" value="{{ form.min_notice_minutes }}">
+          {{ field_error(errors, 'min_notice_minutes') }}</div>
+        <div><label for="max_advance_days">Bookable up to (days ahead)</label>
+          <input id="max_advance_days" name="max_advance_days" type="number" min="1" max="365" value="{{ form.max_advance_days }}">
+          {{ field_error(errors, 'max_advance_days') }}</div>
+        <div><label for="customer_cancel_hours">Online cancellation until (hours before)</label>
+          <input id="customer_cancel_hours" name="customer_cancel_hours" type="number" min="0" max="720" value="{{ form.customer_cancel_hours }}">
+          {{ field_error(errors, 'customer_cancel_hours') }}</div>
+      </div>
+      <label class="check"><input type="checkbox" name="auto_confirm" value="1" {% if form.auto_confirm == '1' %}checked{% endif %}>
+        Confirm bookings automatically (otherwise they start as “pending”)</label>
+
+      <h2>Opening hours</h2>
+      <table class="table compact hours-edit">
+        <tbody>
+        {% for wd in range(7) %}
+          {% set row = opening[wd] %}
+          <tr>
+            <th scope="row"><label class="check"><input type="checkbox" name="open_{{ wd }}" value="1" {% if row.is_open %}checked{% endif %}> {{ WEEKDAYS[wd] }}</label></th>
+            <td><input type="time" name="from_{{ wd }}" value="{{ row.open_time or '' }}" aria-label="{{ WEEKDAYS[wd] }} opens"></td>
+            <td><input type="time" name="to_{{ wd }}" value="{{ row.close_time or '' }}" aria-label="{{ WEEKDAYS[wd] }} closes"></td>
+          </tr>
+          {% if errors.get('hours_' ~ wd) %}<tr><td colspan="3">{{ field_error(errors, 'hours_' ~ wd) }}</td></tr>{% endif %}
+        {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+  <p class="sticky-save"><button class="btn btn-primary" type="submit">Save settings</button></p>
+</form>
+{% endblock %}

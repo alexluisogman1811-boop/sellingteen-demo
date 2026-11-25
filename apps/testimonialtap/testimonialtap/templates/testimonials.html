@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, demo_badge, permission_badge, public_state, copy_text %}
+{% block title %}Testimonials{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Testimonials <span class="muted">({{ total }})</span></h1>
+  <a class="btn" href="{{ url_for('admin.export_filtered', **filters) }}">Export all matching to CSV</a>
+</div>
+
+<form method="get" class="filters card" aria-label="Filter testimonials">
+  <div class="filter-grid">
+    <div>
+      <label for="q">Search</label>
+      <input id="q" name="q" type="search" maxlength="100" value="{{ filters.get('q', '') }}" placeholder="Name, business or text">
+    </div>
+    <div>
+      <label for="project">Project</label>
+      <select id="project" name="project">
+        <option value="">All projects</option>
+        {% for p in projects %}
+        <option value="{{ p.id }}" {% if filters.get('project') == p.id %}selected{% endif %}>{{ p.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        <option value="">Any status</option>
+        {% for s in statuses %}<option value="{{ s }}" {% if filters.get('status') == s %}selected{% endif %}>{{ s|capitalize }}</option>{% endfor %}
+        <option value="publishable" {% if filters.get('status') == 'publishable' %}selected{% endif %}>Public (approved + permission)</option>
+      </select>
+    </div>
+    <div>
+      <label for="permission">Permission</label>
+      <select id="permission" name="permission">
+        <option value="">Any</option>
+        <option value="yes" {% if filters.get('permission') == 'yes' %}selected{% endif %}>Granted</option>
+        <option value="no" {% if filters.get('permission') == 'no' %}selected{% endif %}>Not granted</option>
+      </select>
+    </div>
+    <div>
+      <label for="rating">Rating</label>
+      <select id="rating" name="rating">
+        <option value="">Any rating</option>
+        {% for r in ['5', '4', '3', '2', '1'] %}<option value="{{ r }}" {% if filters.get('rating') == r %}selected{% endif %}>{{ r }}★{{ '' if r == '5' else ' & up' }}</option>{% endfor %}
+        <option value="none" {% if filters.get('rating') == 'none' %}selected{% endif %}>No rating given</option>
+      </select>
+    </div>
+    <div>
+      <label for="from">From</label>
+      <input id="from" name="from" type="date" value="{{ filters.get('from', '') }}">
+    </div>
+    <div>
+      <label for="to">To</label>
+      <input id="to" name="to" type="date" value="{{ filters.get('to', '') }}">
+    </div>
+    <div>
+      <label for="sort">Sort</label>
+      <select id="sort" name="sort">
+        <option value="newest">Newest first</option>
+        <option value="oldest" {% if filters.get('sort') == 'oldest' %}selected{% endif %}>Oldest first</option>
+        <option value="rating" {% if filters.get('sort') == 'rating' %}selected{% endif %}>Highest rating</option>
+      </select>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-primary" type="submit">Apply filters</button>
+    {% if filters %}<a class="btn" href="{{ url_for('admin.testimonials') }}">Clear</a>{% endif %}
+  </div>
+</form>
+
+{% if rows %}
+<form method="post" action="{{ url_for('admin.bulk') }}" id="bulk-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="next" value="{{ request.script_root ~ request.full_path }}">
+  <div class="bulk-bar">
+    <label class="checkbox"><input type="checkbox" data-select-all="ids"> Select all on page</label>
+    <select name="action" aria-label="Bulk action">
+      <option value="export">Export selected to CSV</option>
+      <option value="approved">Approve selected</option>
+      <option value="rejected">Reject selected</option>
+      <option value="archived">Archive selected</option>
+      <option value="pending">Move back to pending</option>
+      <option value="delete">Delete selected</option>
+    </select>
+    <button class="btn btn-small" type="submit" data-bulk-submit>Apply</button>
+  </div>
+
+  <ul class="t-list">
+  {% for t in rows %}
+    <li class="t-item">
+      <input type="checkbox" name="ids" value="{{ t.id }}" aria-label="Select testimonial from {{ t.customer_name }}">
+      <div class="t-body">
+        <div class="t-head">
+          <a href="{{ url_for('admin.testimonial_detail', tid=t.id) }}"><strong>{{ t.customer_name }}</strong></a>
+          {% if t.business %}<span class="muted">· {{ t.business }}</span>{% endif %}
+          {% if t.rating %}<span class="stars" aria-label="{{ t.rating }} out of 5">{{ t.rating|stars }}</span>{% endif %}
+        </div>
+        <div class="badges">
+          {{ status_badge(t.status) }} {{ permission_badge(t) }} {{ public_state(t) }} {{ demo_badge(t) }}
+          {% if t.edited %}<span class="badge">Edited</span>{% endif %}
+        </div>
+        <p class="excerpt">{{ t.feedback|truncate(220) }}</p>
+        <div class="muted small">{{ t.project_name }} · submitted {{ t.submitted_at|date }}</div>
+      </div>
+      <div class="t-actions">
+        <button type="button" class="btn btn-small" data-copy-text="{{ copy_text(t) }}">Copy</button>
+        <a class="btn btn-small" href="{{ url_for('admin.testimonial_detail', tid=t.id) }}">Open</a>
+      </div>
+    </li>
+  {% endfor %}
+  </ul>
+</form>
+
+{% if pages > 1 %}
+<nav class="pager" aria-label="Pagination">
+  {% if page > 1 %}<a class="btn btn-small" href="{{ url_for('admin.testimonials', page=page - 1, **filters) }}">← Previous</a>{% endif %}
+  <span>Page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a class="btn btn-small" href="{{ url_for('admin.testimonials', page=page + 1, **filters) }}">Next →</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<section class="card empty">
+  {% if filters %}<p>No testimonials match these filters.</p>
+  {% else %}<p>No testimonials yet. Share a project's submission link with a client to start collecting.</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

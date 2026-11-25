@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Plan & billing — QuoteFlow AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Plan & billing</h1>
+    <p class="muted" style="margin:4px 0 0">You're on the <strong>{{ usage.plan_name }}</strong> plan.{% if usage.trial %} Your free trial ends on {{ usage.access.until.strftime('%B') }} {{ usage.access.until.day }}; after that you'll be on Free unless you subscribe.{% elif usage.access.state == 'paid' and not g.user.stripe_customer_id %} Pro is active until {{ usage.access.until.strftime('%B') }} {{ usage.access.until.day }}, {{ usage.access.until.year }}.{% endif %}</p>
+  </div>
+</div>
+
+<div class="card">
+  <h3>This month</h3>
+  {% include "_usage.html" %}
+  {% if usage.plan == 'pro' and period_end %}
+    <p class="muted small" style="margin:8px 0 0">
+      {% if g.user.cancel_at_period_end %}Your Pro plan ends on {{ period_end }} and won't renew.
+      {% else %}Your subscription renews on {{ period_end }}.{% endif %}
+    </p>
+  {% endif %}
+</div>
+
+<div class="plans">
+  <div class="card plan {{ 'current' if usage.plan == 'free' }}">
+    <h3>Free</h3>
+    <div class="price">$0 <small>/ month</small></div>
+    <ul>
+      <li>{{ plans.free.quota }} generated quotes per month</li>
+      <li>Business profile and pricing rules</li>
+      <li>Edit, save and copy replies</li>
+    </ul>
+    {% if usage.plan == 'free' %}<p class="plan-badge">Current plan</p>{% endif %}
+  </div>
+
+  <div class="card plan featured {{ 'current' if usage.plan == 'pro' }}">
+    <h3>Pro</h3>
+    <div class="price">${{ plans.pro.price }} <small>/ month</small></div>
+    <ul>
+      <li>{{ plans.pro.quota }} generated quotes per month</li>
+      <li>Everything in Free</li>
+      <li>Cancel anytime</li>
+    </ul>
+    {% if usage.plan == 'pro' and not usage.trial %}
+      <p class="plan-badge">Current plan</p>
+    {% elif configured %}
+      <form method="post" action="{{ url_for('billing_checkout') }}" data-busy-label="Opening secure checkout…">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn block" type="submit">Upgrade to Pro</button>
+      </form>
+      <p class="muted small" style="margin:10px 0 0">Secure payment by Stripe. We never see or store your card details.</p>
+    {% elif config.BILLING_ENABLED and (config.PAYMENT_LINK or support_email) %}
+      <a href="{{ url_for('subscribe') }}" class="btn block">Subscribe to Pro</a>
+    {% else %}
+      <button class="btn block" type="button" disabled>Upgrade to Pro</button>
+      <p class="muted small" style="margin:10px 0 0">Upgrades aren't available yet. Please check back soon.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% if g.user.stripe_customer_id and configured %}
+  <div class="card">
+    <h3>Manage subscription</h3>
+    <p class="muted small">Update your card, download invoices, or cancel on Stripe's secure billing page.</p>
+    <form method="post" action="{{ url_for('billing_portal') }}" data-busy-label="Opening…" style="margin:0">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn secondary" type="submit">Manage billing</button>
+    </form>
+  </div>
+{% endif %}
+{% endblock %}

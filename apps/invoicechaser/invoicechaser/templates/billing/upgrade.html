@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Upgrade to Pro{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Upgrade to Pro for {{ pro_price() }}</h1>
+  <p>You're on the <strong>Free plan</strong>, which includes up to {{ limit }} customers, and you have {{ customers }}.
+    Pro gives you unlimited customers.</p>
+  <p class="muted">Nothing is locked: your customers, invoices and follow-ups all keep working exactly as before.
+    You can also free up a slot by deleting a customer you no longer bill.</p>
+  <a class="btn btn-primary btn-block" href="{{ url_for('billing.subscribe') }}">Upgrade to Pro for {{ pro_price() }}</a>
+  <p><a class="btn" href="{{ url_for('customers.index') }}">Back to customers</a></p>
+</section>
+{% endblock %}

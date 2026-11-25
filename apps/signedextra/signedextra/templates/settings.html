@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+<div class="grid grid-2">
+  <div class="card">
+    <h2>Labor rates</h2>
+    <p class="small muted">Hourly rates by worker type. Tickets keep the rate that applied when they were created.</p>
+    {% if rates %}
+    <table class="table">
+      <thead><tr><th>Worker type</th><th>Rate / hr</th><th>Active</th><th></th></tr></thead>
+      <tbody>
+      {% for r in rates %}
+      <tr>
+        <td>{{ r.label }}</td>
+        <td><input type="text" name="rate" form="rate-{{ r.id }}" inputmode="decimal" value="{{ '%.2f'|format(r.rate_cents / 100) }}" aria-label="Hourly rate for {{ r.label }}"></td>
+        <td><input type="checkbox" name="active" form="rate-{{ r.id }}" {{ "checked" if r.active }} aria-label="Active"></td>
+        <td>
+          <form method="post" id="rate-{{ r.id }}" action="{{ url_for('core.update_rate', rate_id=r.id) }}">
+            {{ csrf() }}<button class="btn btn-secondary btn-sm" type="submit">Save</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="flash flash-info">Add at least one worker type (for example Journeyman, Apprentice) before creating tickets.</p>
+    {% endif %}
+    <form method="post" action="{{ url_for('core.add_rate') }}" class="mt" novalidate>
+      {{ csrf() }}
+      <div class="grid grid-2">
+        {{ field(rate_form, "label", "Worker type", required=True) }}
+        {{ field(rate_form, "rate", "Hourly rate ($)", required=True, attrs='inputmode="decimal"') }}
+      </div>
+      <button class="btn btn-primary" type="submit">Add rate</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Company</h2>
+    {% if g.user.role == 'owner' %}
+    <form method="post" novalidate>
+      {{ csrf() }}
+      {{ field(form, "name", "Company name", required=True) }}
+      {{ field(form, "address", "Address") }}
+      {{ field(form, "phone", "Phone", type="tel") }}
+      {{ field(form, "email", "Company email", type="email", hint="Shown on notices and invoices.") }}
+      {{ field(form, "markup_pct", "Default material markup %", required=True, attrs='inputmode="decimal"') }}
+      {{ field(form, "notice_hours", "Default notice deadline (hours)", required=True, attrs='inputmode="numeric"') }}
+      <label class="checkbox"><input type="checkbox" name="foreman_sees_prices" {{ "checked" if form.values.get("foreman_sees_prices") }}> Foremen can see prices and totals</label>
+      <button class="btn btn-primary mt" type="submit">Save settings</button>
+    </form>
+    {% else %}
+    <p><strong>{{ g.company.name }}</strong><br>{{ g.company.address }}<br>{{ g.company.phone }} {{ g.company.email }}</p>
+    <p class="small muted">Default markup {{ g.company.default_markup_bp|qty }}% · notice deadline {{ g.company.notice_hours }} h. Only the owner can change company settings.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>Your data</h2>
+  <p class="small muted">Download every ticket as a spreadsheet (CSV).</p>
+  <a class="btn btn-secondary" href="{{ url_for('core.export_tickets') }}">Export tickets (CSV)</a>
+</div>
+{% endblock %}

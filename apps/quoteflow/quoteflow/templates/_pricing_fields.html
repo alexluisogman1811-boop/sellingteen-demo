@@ -1,0 +1,43 @@
+{# Pricing-rule inputs shared by the profile page and onboarding. Expects `profile`. #}
+  <fieldset class="pricing-rules">
+    <legend>Pricing rules</legend>
+    <p class="hint">Quote prices are calculated only from these numbers ({{ profile.currency }}). Leave a field blank if it doesn't apply; the quote will tell you what's missing.</p>
+    <div class="field-row">
+      <div class="field">
+        <label for="basic_price">Basic cleaning starting price</label>
+        <input type="text" inputmode="decimal" id="basic_price" name="basic_price" value="{{ profile.basic_price }}" placeholder="e.g. 120">
+      </div>
+      <div class="field">
+        <label for="deep_price">Deep cleaning starting price</label>
+        <input type="text" inputmode="decimal" id="deep_price" name="deep_price" value="{{ profile.deep_price }}" placeholder="e.g. 200">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="bedrooms_included">Bedrooms included in starting price</label>
+        <input type="text" inputmode="numeric" id="bedrooms_included" name="bedrooms_included" value="{{ profile.bedrooms_included }}" placeholder="e.g. 2">
+      </div>
+      <div class="field">
+        <label for="bathrooms_included">Bathrooms included in starting price</label>
+        <input type="text" inputmode="numeric" id="bathrooms_included" name="bathrooms_included" value="{{ profile.bathrooms_included }}" placeholder="e.g. 1">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="extra_bedroom_price">Extra bedroom price</label>
+        <input type="text" inputmode="decimal" id="extra_bedroom_price" name="extra_bedroom_price" value="{{ profile.extra_bedroom_price }}" placeholder="e.g. 30">
+      </div>
+      <div class="field">
+        <label for="extra_bathroom_price">Extra bathroom price</label>
+        <input type="text" inputmode="decimal" id="extra_bathroom_price" name="extra_bathroom_price" value="{{ profile.extra_bathroom_price }}" placeholder="e.g. 25">
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:0">
+      <label for="addons">Add-on services and prices</label>
+      <p class="hint">One per line, as "Name: price".</p>
+      <textarea id="addons" name="addons" rows="4" placeholder="e.g.
+Inside oven: 45
+Inside fridge: 30
+Interior windows: 40">{{ profile.addons }}</textarea>
+    </div>
+  </fieldset>

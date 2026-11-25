@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, csrf, ticket_no %}
+{% block title %}INV-{{ "%04d"|format(invoice.number) }}{% endblock %}
+{% block content %}
+<div class="row no-print">
+  <a class="btn btn-secondary" href="{{ url_for('invoices.invoice_list') }}">← Invoices</a>
+  <button class="btn btn-primary" type="button" data-print>Print / Save as PDF</button>
+  {% for status in transitions %}
+  <form method="post" action="{{ url_for('invoices.invoice_status', invoice_id=invoice.id) }}" data-confirm="Mark this invoice as {{ status }}?">
+    {{ csrf() }}<input type="hidden" name="status" value="{{ status }}">
+    <button class="btn {{ 'btn-ok' if status == 'paid' else 'btn-danger' if status == 'disputed' else 'btn-secondary' }}" type="submit">Mark {{ status }}</button>
+  </form>
+  {% endfor %}
+</div>
+<p class="small muted no-print mt">SignedExtra doesn't send invoices or collect payments. Print or save this as a PDF and send it yourself, then mark it as sent.</p>
+
+<div class="card mt">
+  <div class="spread">
+    <div>
+      <h1>Invoice INV-{{ "%04d"|format(invoice.number) }}</h1>
+      <p><strong>{{ company.name }}</strong><br><span class="small">{{ company.address }}<br>{{ company.phone }} {{ company.email }}</span></p>
+    </div>
+    <div class="right">
+      {{ badge(invoice.status) }}<br>
+      <span class="small">Date: {{ invoice.created_at[:10] }}{% if invoice.sent_at %}<br>Sent: {{ invoice.sent_at[:10] }}{% endif %}{% if invoice.paid_at %}<br>Paid: {{ invoice.paid_at[:10] }}{% endif %}</span>
+    </div>
+  </div>
+  <p><strong>Bill to:</strong> {{ invoice.customer_name }}{% if invoice.customer_address %}, {{ invoice.customer_address }}{% endif %}<br>
+    <strong>Job:</strong> {{ invoice.job_name }}{% if invoice.gc_reference %} (ref {{ invoice.gc_reference }}){% endif %}</p>
+
+  {% for t in tickets %}
+  <h3 class="mt">{{ ticket_no(t) }} · {{ t.work_date }}</h3>
+  <p class="small">{{ t.description }}</p>
+  <table class="table">
+    <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead>
+    <tbody>
+      {% for l in ticket_lines[t.id] %}
+      <tr><td>{{ l.labor_label ~ " labor" if l.kind == 'labor' else l.description }}</td><td class="num">{{ l.qty_x100|qty }} {{ l.unit }}</td>
+        <td class="num">{{ l.rate_cents|money }}</td><td class="num">{{ l.amount_cents|money }}</td></tr>
+      {% endfor %}
+      <tr><td colspan="3" class="right">Markup {{ t.markup_bp|qty }}%</td><td class="num">{{ t.markup_cents|money }}</td></tr>
+      <tr><td colspan="3" class="right"><strong>Ticket total</strong></td><td class="num"><strong>{{ t.total_cents|money }}</strong></td></tr>
+    </tbody>
+  </table>
+  {% endfor %}
+  <table class="table mt"><tr><td class="right"><strong>Invoice total</strong></td><td class="num"><strong>{{ invoice.total_cents|money }}</strong></td></tr></table>
+  {% if invoice.notes %}<p class="mt">{{ invoice.notes }}</p>{% endif %}
+</div>
+{% endblock %}

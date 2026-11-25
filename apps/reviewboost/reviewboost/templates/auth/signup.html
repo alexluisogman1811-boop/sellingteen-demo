@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}Sign up{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Create your account</h1>
+  <p class="muted">Remember to ask every happy customer for a review. It takes about a minute per job.</p>
+  {% if errors %}<div class="flash flash-error" role="alert">Please fix the {{ 'item' if errors|length == 1 else 'items' }} marked below.</div>{% endif %}
+  <form method="post" novalidate>
+    {{ csrf() }}
+    {{ field('name', 'Business name', form.name, errors, required=true, attrs='maxlength="100" autocomplete="organization" placeholder="e.g. Bright Spark Electric"') }}
+    {{ field('email', 'Email', form.email, errors, type='email', required=true, attrs='maxlength="254" autocomplete="email"') }}
+    {{ field('password', 'Password', '', errors, type='password', required=true, hint='At least 8 characters.', attrs='autocomplete="new-password"') }}
+    {{ field('review_link', 'Review link', form.review_link, errors, type='url', hint='Where customers leave a review, e.g. your Google review link. You can add this later.', attrs='maxlength="300" placeholder="https://g.page/r/..."') }}
+    <button class="btn btn-block" type="submit">Create account</button>
+  </form>
+  <p class="muted center small">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+</section>
+{% endblock %}

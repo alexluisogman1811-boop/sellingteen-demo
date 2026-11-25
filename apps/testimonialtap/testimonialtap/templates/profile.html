@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error %}
+{% block title %}Business profile{% endblock %}
+{% block content %}
+<section class="card narrow-wide">
+  <h1>Business profile</h1>
+  <p class="muted">Clients see your business name on the feedback form, in the publication-consent text, and on your public testimonial pages.</p>
+  <form method="post" action="{{ url_for('admin.profile') }}" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="business_name">Business name *</label>
+    <input id="business_name" name="business_name" required maxlength="{{ limits.business_name }}"
+           value="{{ values.business_name }}" placeholder="e.g. Bright Pixel Studio"
+           {% if errors.business_name %}aria-invalid="true"{% endif %}>
+    {{ field_error(errors, 'business_name') }}
+    <label for="website">Your website <span class="muted">(optional, shown on your public page)</span></label>
+    <input id="website" name="website" maxlength="{{ limits.website }}" inputmode="url" placeholder="https://"
+           value="{{ values.website }}" {% if errors.website %}aria-invalid="true"{% endif %}>
+    {{ field_error(errors, 'website') }}
+    <button class="btn btn-primary" type="submit">Save profile</button>
+  </form>
+  <p class="small muted">Changing the name later doesn't alter the consent text clients have already agreed to; that's stored with each testimonial.</p>
+</section>
+
+<section class="card narrow-wide" id="password">
+  <h2>Change password</h2>
+  <form method="post" action="{{ url_for('admin.change_password') }}" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="current">Current password</label>
+    <input id="current" name="current" type="password" autocomplete="current-password" maxlength="200">
+    {{ field_error(password_errors, 'current') }}
+    <label for="new">New password <span class="muted">(at least 10 characters)</span></label>
+    <input id="new" name="new" type="password" autocomplete="new-password" minlength="10" maxlength="200">
+    {{ field_error(password_errors, 'new') }}
+    <label for="confirm">Confirm new password</label>
+    <input id="confirm" name="confirm" type="password" autocomplete="new-password" maxlength="200">
+    {{ field_error(password_errors, 'confirm') }}
+    <button class="btn" type="submit">Change password</button>
+  </form>
+</section>
+
+<section class="card narrow-wide" id="your-data">
+  <h2>Your data</h2>
+  <p><a class="btn" href="{{ url_for('admin.export_all') }}">Export all my data</a></p>
+  <p class="small muted">A ZIP file with CSV files of your account, projects, testimonials and activity.</p>
+  <p><a href="{{ url_for('admin.delete_account') }}">Delete my account</a></p>
+</section>
+{% endblock %}

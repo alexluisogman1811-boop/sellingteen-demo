@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_macros.html" import shift_card with context %}
+{% block title %}My shifts{% endblock %}
+{% block content %}
+{% set here = url_for('main.dashboard') %}
+<div class="page-head">
+  <h1>Hi {{ d.employee.name if d.employee else current_user.username }}</h1>
+  <span class="muted">{{ d.today|dlong }}</span>
+</div>
+
+<section class="stats stats-2">
+  <div class="stat"><span class="stat-num">{{ d.today_shifts|length + d.carry_over|length }}</span><span class="stat-label">your shifts today</span></div>
+  <div class="stat"><span class="stat-num">{{ d.week_hours|hours }}</span><span class="stat-label">your hours this week ({{ d.week_shift_count }} shift{{ "" if d.week_shift_count == 1 else "s" }})</span></div>
+</section>
+
+<section class="card">
+  <h2>Today</h2>
+  {% if d.carry_over %}
+    <p class="muted small">Continuing from last night:</p>
+    {% for s in d.carry_over %}{{ shift_card(s, here) }}{% endfor %}
+  {% endif %}
+  {% for s in d.today_shifts %}{{ shift_card(s, here) }}{% else %}
+    {% if not d.carry_over %}<p class="empty-inline">You're not scheduled today.</p>{% endif %}
+  {% endfor %}
+</section>
+
+<section class="card">
+  <h2>Your next 14 days</h2>
+  {% if d.upcoming %}
+  <div class="shift-list">{% for s in d.upcoming %}{{ shift_card(s, here, show_date=true) }}{% endfor %}</div>
+  {% else %}
+  <p class="empty-inline">No shifts scheduled for you in the next 14 days. If that looks wrong, check with your manager.</p>
+  {% endif %}
+  <p><a href="{{ url_for('main.schedule') }}">See the full team schedule</a></p>
+</section>
+{% endblock %}

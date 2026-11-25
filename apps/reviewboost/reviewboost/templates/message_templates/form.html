@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}{{ 'Edit template' if template else 'New template' }}{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <a class="small back" href="{{ url_for('message_templates.list_templates') }}">← Templates</a>
+  <h1>{{ 'Edit template' if template else 'New template' }}</h1>
+  <form method="post" novalidate>
+    {{ csrf() }}
+    {{ field('name', 'Template name', data.name, errors, required=true, attrs='maxlength="80" placeholder="e.g. Friendly thank-you"') }}
+    <div class="field {{ 'has-error' if errors.body }}">
+      <label for="body">Message text</label>
+      <textarea id="body" name="body" rows="6" maxlength="1000" required>{{ data.body or '' }}</textarea>
+      <p class="hint">These get filled in for each customer:
+        {% for p in placeholders %}<code>{{ '{' ~ p ~ '}' }}</code>{{ ', ' if not loop.last }}{% endfor %}.
+        <code>{review_link}</code> is required.
+      </p>
+      {% if errors.body %}<p class="error">{{ errors.body }}</p>{% endif %}
+    </div>
+    <button class="btn btn-block" type="submit">Save template</button>
+  </form>
+</section>
+{% endblock %}

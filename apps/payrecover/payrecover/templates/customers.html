@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+{% block content %}
+<div class="section-head">
+  <h1>Customers</h1>
+  <a class="btn btn-primary" href="{{ url_for('routes.customer_new') }}">+ Add customer</a>
+</div>
+<form class="search" method="get" role="search">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search name, company, email or phone" aria-label="Search customers">
+  <button class="btn" type="submit">Search</button>
+</form>
+{% if customers %}
+<div class="list card">
+  {% for c in customers %}
+  <a class="row" href="{{ url_for('routes.customer_detail', customer_id=c.id) }}">
+    <div class="row-main">
+      <div class="row-title">{{ c.name }}{% if c.company %} <span class="muted">· {{ c.company }}</span>{% endif %}</div>
+      <div class="row-sub">{{ c.email or c.phone }} · {{ c.invoice_count }} invoice{{ 's' if c.invoice_count != 1 }}</div>
+    </div>
+    <div class="row-side">
+      {% if c.owed_cents %}<div class="row-amount">{{ c.owed_cents|money }}</div><span class="muted small">owed</span>
+      {% else %}<span class="muted small">Nothing owed</span>{% endif %}
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% elif q %}
+<p class="card muted">No customers match “{{ q }}”. <a href="{{ url_for('routes.customers') }}">Clear search</a></p>
+{% else %}
+<div class="card empty">
+  <p>No customers yet. Add the people and businesses you send invoices to.</p>
+  <a class="btn btn-primary" href="{{ url_for('routes.customer_new') }}">Add your first customer</a>
+</div>
+{% endif %}
+{% endblock %}

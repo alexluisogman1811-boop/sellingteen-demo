@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field_error %}
+{% block title %}Delete my account{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Delete my account</h1>
+  <p>This permanently deletes <strong>{{ settings.business_name }}</strong> ({{ current_admin.email }}) and all of its data:
+    {{ counts.bookings }} booking{{ '' if counts.bookings == 1 else 's' }}, {{ counts.services }} service{{ '' if counts.services == 1 else 's' }},
+    your settings, hours, availability and blocked dates. Your booking page will stop working. This cannot be undone.</p>
+  <p><a href="{{ url_for('admin.export_data') }}">Download all my data first</a> (ZIP of CSV files).</p>
+  <form method="post" action="{{ url_for('admin.delete_account') }}" class="form" novalidate>
+    {{ csrf() }}
+    <label for="confirm">Type <strong>DELETE</strong> (or your email) to confirm</label>
+    <input id="confirm" name="confirm" required maxlength="254" autocomplete="off" autocapitalize="off" spellcheck="false">
+    {{ field_error(errors, 'confirm') }}
+    <label for="password">Your password</label>
+    <input id="password" name="password" type="password" required autocomplete="current-password" maxlength="200">
+    {{ field_error(errors, 'password') }}
+    <button class="btn btn-danger" type="submit">Delete my account and all data</button>
+    <a class="btn" href="{{ url_for('admin.account') }}">Cancel</a>
+  </form>
+</section>
+{% endblock %}

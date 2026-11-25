@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, demo_badge, follow_badge %}
+{% block title %}Follow-ups{% endblock %}
+
+{% macro queue_item(lead) %}
+<li class="q-item">
+  <div class="q-main">
+    <a class="q-name" href="{{ url_for('leads.detail', lead_id=lead.id) }}">{{ lead.full_name }}</a> {{ demo_badge(lead) }}
+    <div class="q-meta">
+      {{ status_badge(lead) }} {{ follow_badge(lead, today) }}
+      <span>{{ lead.estimated_value|money }}</span>
+      {% if lead.job_type %}<span>· {{ lead.job_type }}</span>{% endif %}
+      <span class="muted">· last contact {{ lead.last_contact_date|nice_date }}</span>
+    </div>
+    {% if lead.phone %}<a class="q-phone" href="tel:{{ lead.phone }}">{{ lead.phone }}</a>{% endif %}
+  </div>
+  <div class="q-actions">
+    <form method="post" action="{{ url_for('leads.add_activity', lead_id=lead.id) }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="type" value="call">
+      <input type="hidden" name="next" value="{{ url_for('main.queue') }}">
+      <input type="hidden" name="occurred_on" value="{{ today.isoformat() }}">
+      <input type="hidden" name="body" value="Follow-up call (logged from queue).">
+      <input type="hidden" name="next_follow_up_date" value="{{ default_next.isoformat() }}">
+      <button class="btn btn-small" type="submit" title="Log a call today">Called ✓</button>
+    </form>
+    {% for d in (1, 3, 7) %}
+    <form method="post" action="{{ url_for('leads.snooze', lead_id=lead.id) }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="days" value="{{ d }}">
+      <button class="btn btn-small btn-ghost" type="submit" title="Move follow-up {{ d }} day(s) out">+{{ d }}d</button>
+    </form>
+    {% endfor %}
+  </div>
+</li>
+{% endmacro %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Follow-up queue <span class="muted small">{{ today|nice_date }}</span></h1>
+</div>
+<p class="muted">Work top to bottom. "Called ✓" logs a call for today and schedules the next follow-up in 3 days; +1d / +3d / +7d just moves the follow-up date.</p>
+
+<section class="card">
+  <h2 class="h-alert">Overdue ({{ overdue|length }})</h2>
+  {% if overdue %}<ul class="queue">{% for lead in overdue %}{{ queue_item(lead) }}{% endfor %}</ul>
+  {% else %}<p class="muted">Nothing overdue. Nice.</p>{% endif %}
+</section>
+
+<section class="card">
+  <h2 class="h-warn">Due today ({{ due_today|length }})</h2>
+  {% if due_today %}<ul class="queue">{% for lead in due_today %}{{ queue_item(lead) }}{% endfor %}</ul>
+  {% else %}<p class="muted">No follow-ups scheduled for today.</p>{% endif %}
+</section>
+
+<section class="card">
+  <h2>Open leads with no follow-up date ({{ unscheduled|length }}{% if unscheduled|length == 25 %}+{% endif %})</h2>
+  {% if unscheduled %}<ul class="queue">{% for lead in unscheduled %}{{ queue_item(lead) }}{% endfor %}</ul>
+  {% else %}<p class="muted">Every open lead has a next step.</p>{% endif %}
+</section>
+
+<section class="card">
+  <h2>Coming up this week ({{ upcoming|length }})</h2>
+  {% if upcoming %}
+  <div class="table-scroll"><table class="table compact">
+    <thead><tr><th>Date</th><th>Lead</th><th>Status</th><th class="num">Value</th></tr></thead>
+    <tbody>
+    {% for lead in upcoming %}
+    <tr><td>{{ lead.next_follow_up_date|nice_date }}</td>
+      <td><a href="{{ url_for('leads.detail', lead_id=lead.id) }}">{{ lead.full_name }}</a> {{ demo_badge(lead) }}</td>
+      <td>{{ status_badge(lead) }}</td><td class="num">{{ lead.estimated_value|money }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="muted">Nothing scheduled in the next 7 days.</p>{% endif %}
+</section>
+{% endblock %}

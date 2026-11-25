@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ 'Edit website' if site else 'Add website' }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ 'Edit ' ~ site.domain if site else 'Add website' }}</h1></div>
+<form method="post" class="card form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if errors %}<p class="form-alert" role="alert">Please fix the highlighted fields.</p>{% endif %}
+  <div class="form-grid">
+    <div class="field{% if errors.get('client_id') %} has-error{% endif %}">
+      <label for="f-client_id">Client <span class="req" aria-hidden="true">*</span></label>
+      <select id="f-client_id" name="client_id" required>
+        <option value="">Choose a client</option>
+        {% for c in clients %}<option value="{{ c.id }}" {% if values.get('client_id')|string == c.id|string %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select>
+      {{ m.field_error(errors, 'client_id') }}
+    </div>
+    {{ m.input('name', 'Website name', values, errors, required=True, attrs='maxlength="120"') }}
+    {{ m.input('domain', 'Domain', values, errors, required=True, hint='e.g. example.com - a pasted URL is trimmed to the domain.', attrs='maxlength="253" autocapitalize="off" spellcheck="false"') }}
+    {{ m.select('platform', 'Platform', PLATFORMS.items(), values, errors) }}
+    {{ m.select('plan', 'Maintenance plan', PLANS.items(), values, errors) }}
+    {{ m.select('status', 'Status', WEBSITE_STATUSES.items(), values, errors, hint='Paused and archived websites have no due tasks.') }}
+    {{ m.textarea('notes', 'Notes', values, errors, hint="Hosting provider, where backups live, special instructions. No passwords, API keys or tokens - use a password manager.") }}
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">{{ 'Save changes' if site else 'Add website' }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.website_detail', website_id=site.id) if site else url_for('main.websites_list') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

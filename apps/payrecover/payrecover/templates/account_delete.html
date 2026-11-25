@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Delete account{% endblock %}
+{% block content %}
+<div class="narrow">
+  <a class="back" href="{{ url_for('account.settings') }}">← Account</a>
+  <h1>Delete your account?</h1>
+  <div class="card danger-zone">
+    <p>This permanently deletes:</p>
+    <ul>
+      <li>your account ({{ g.user.email }})</li>
+      <li>{{ counts.customers }} customer{{ '' if counts.customers == 1 else 's' }}</li>
+      <li>{{ counts.invoices }} invoice{{ '' if counts.invoices == 1 else 's' }} and their follow-up history</li>
+    </ul>
+    <p><strong>This can't be undone.</strong> You can <a href="{{ url_for('account.export') }}">download a copy of your data</a> first.</p>
+    {% if config.BILLING_ENABLED %}<p class="small muted">Deleting your account doesn't cancel a subscription with our payment provider. If you pay monthly, cancel it there too (see the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>).</p>{% endif %}
+    {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+    <form method="post" action="{{ url_for('account.delete') }}" class="form" novalidate>
+      {{ csrf() }}
+      <label class="check"><input type="checkbox" name="confirm" value="yes" required> I understand everything above will be deleted</label>
+      <label>Type DELETE (or your email) to confirm <input name="confirm_text" required autocomplete="off" spellcheck="false"></label>
+      <label>Your password <input type="password" name="password" required autocomplete="current-password"></label>
+      <div class="actions">
+        <button class="btn btn-danger" type="submit">Delete everything permanently</button>
+        <a class="btn" href="{{ url_for('account.settings') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

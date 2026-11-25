@@ -1,0 +1,86 @@
+{% macro field_error(errors, name) -%}
+  {% if errors.get(name) %}<p class="field-error" id="err-{{ name }}">{{ errors[name] }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro input(name, label, values, errors, type="text", required=False, hint="", attrs="") -%}
+<div class="field{% if errors.get(name) %} has-error{% endif %}">
+  <label for="f-{{ name }}">{{ label }}{% if required %} <span class="req" aria-hidden="true">*</span>{% endif %}</label>
+  <input id="f-{{ name }}" name="{{ name }}" type="{{ type }}"
+         value="{{ values.get(name) if values.get(name) is not none else '' }}"
+         {% if required %}required{% endif %} {% if errors.get(name) %}aria-invalid="true" aria-describedby="err-{{ name }}"{% endif %} {{ attrs|safe }}>
+  {% if hint %}<p class="hint">{{ hint }}</p>{% endif %}
+  {{ field_error(errors, name) }}
+</div>
+{%- endmacro %}
+
+{% macro textarea(name, label, values, errors, rows=4, hint="", maxlength=2000) -%}
+<div class="field field-wide{% if errors.get(name) %} has-error{% endif %}">
+  <label for="f-{{ name }}">{{ label }}</label>
+  <textarea id="f-{{ name }}" name="{{ name }}" rows="{{ rows }}" maxlength="{{ maxlength }}"
+            {% if errors.get(name) %}aria-invalid="true" aria-describedby="err-{{ name }}"{% endif %}>{{ values.get(name) or '' }}</textarea>
+  {% if hint %}<p class="hint">{{ hint }}</p>{% endif %}
+  {{ field_error(errors, name) }}
+</div>
+{%- endmacro %}
+
+{% macro select(name, label, options, values, errors, required=True, blank=None, hint="") -%}
+<div class="field{% if errors.get(name) %} has-error{% endif %}">
+  <label for="f-{{ name }}">{{ label }}{% if required %} <span class="req" aria-hidden="true">*</span>{% endif %}</label>
+  <select id="f-{{ name }}" name="{{ name }}" {% if required %}required{% endif %}
+          {% if errors.get(name) %}aria-invalid="true" aria-describedby="err-{{ name }}"{% endif %}>
+    {% if blank is not none %}<option value="">{{ blank }}</option>{% endif %}
+    {% for value, text in options %}
+      <option value="{{ value }}" {% if values.get(name)|string == value|string %}selected{% endif %}>{{ text }}</option>
+    {% endfor %}
+  </select>
+  {% if hint %}<p class="hint">{{ hint }}</p>{% endif %}
+  {{ field_error(errors, name) }}
+</div>
+{%- endmacro %}
+
+{% macro result_badge(result) -%}
+  {% set cls = {'passed': 'ok', 'issues_found': 'warn', 'failed': 'danger'}.get(result, 'muted') %}
+  <span class="badge badge-{{ cls }}">{{ RESULTS.get(result, '-') }}</span>
+{%- endmacro %}
+
+{% macro occ_status(o, today) -%}
+  {% set ts = today.isoformat() %}
+  {% if o.status == 'pending' %}
+    {% if o.due_date < ts %}<span class="badge badge-danger">Overdue</span>
+    {% elif o.due_date == ts %}<span class="badge badge-warn">Due today</span>
+    {% else %}<span class="badge badge-info">Scheduled</span>{% endif %}
+  {% elif o.status == 'completed' %}{{ result_badge(o.result) }}
+  {% else %}<span class="badge badge-muted">Skipped</span>{% endif %}
+{%- endmacro %}
+
+{% macro severity_badge(sev) -%}
+  {% set cls = {'low': 'muted', 'medium': 'info', 'high': 'warn', 'critical': 'danger'}.get(sev, 'muted') %}
+  <span class="badge badge-{{ cls }}">{{ SEVERITIES.get(sev, sev) }}</span>
+{%- endmacro %}
+
+{% macro issue_status_badge(status) -%}
+  {% set cls = {'open': 'warn', 'in_progress': 'info', 'resolved': 'ok', 'wont_fix': 'muted'}.get(status, 'muted') %}
+  <span class="badge badge-{{ cls }}">{{ ISSUE_STATUSES.get(status, status) }}</span>
+{%- endmacro %}
+
+{% macro site_status_badge(status) -%}
+  {% set cls = {'active': 'ok', 'paused': 'warn', 'archived': 'muted'}.get(status, 'muted') %}
+  <span class="badge badge-{{ cls }}">{{ WEBSITE_STATUSES.get(status, status) }}</span>
+{%- endmacro %}
+
+{% macro post_button(action, label, cls="btn btn-sm", confirm=None) -%}
+<form method="post" action="{{ action }}" class="inline-form"{% if confirm %} data-confirm="{{ confirm }}"{% endif %}>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button type="submit" class="{{ cls }}">{{ label }}</button>
+</form>
+{%- endmacro %}
+
+{% macro verification_badge(o) -%}
+  {% set key = verification_key(o) %}
+  <span class="badge badge-outline" title="{{ VERIFICATION_NOTE }}">{{ VERIFICATION[key] }}</span>
+{%- endmacro %}
+
+{% macro manual_notice() -%}
+<p class="notice"><strong>Manual records only.</strong> Every result here was entered by a person.
+SiteCare Desk does not run backups, uptime monitoring or security scans, and never marks work as done on its own.</p>
+{%- endmacro %}

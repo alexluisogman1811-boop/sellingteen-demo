@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import due with context %}
+{% block title %}Reminders{% endblock %}
+{% block content %}
+<h1>Reminders</h1>
+<p class="muted">Reminders appear 30, 14 and 7 days before a document expires, and again once it has expired. They are shown in the app only; no emails are sent.</p>
+<div class="card">
+  {% if not items %}<p class="muted">No active reminders.</p>{% else %}
+  <table class="responsive">
+    <thead><tr><th>Subcontractor</th><th>Document</th><th>Expires</th><th></th></tr></thead>
+    <tbody>
+    {% for i in items %}
+      <tr>
+        <td data-label="Subcontractor"><a href="{{ url_for('main.subcontractor_detail', sub_id=i.r.subcontractor_id) }}">{{ i.r.subcontractor_name }}</a></td>
+        <td data-label="Document"><span><a href="{{ url_for('main.document_detail', doc_id=i.r.document_id) }}">{{ i.r.document_name }}</a> <span class="muted">({{ i.r.doc_type }})</span></span></td>
+        <td data-label="Expires"><span class="{{ 'text-expired' if i.days_left < 0 else 'text-expiring' }}">{{ i.r.expiration_date }} ({{ due(i.days_left) }})</span></td>
+        <td>
+          <form method="post" action="{{ url_for('main.reminder_dismiss', rid=i.r.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="small">Dismiss</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

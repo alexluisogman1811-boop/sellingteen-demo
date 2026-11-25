@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Track subcontractor documents{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Keep track of your subcontractors' paperwork</h1>
+  <p class="lead">For US construction contractors who collect certificates of insurance, workers' comp certificates,
+    W-9s and licenses from their subcontractors, and need to know what's valid, expiring, expired or missing.</p>
+  <div class="hero-actions">
+    <a class="button primary" href="{{ url_for('main.signup') }}">{% if config.BILLING_ENABLED %}Start {{ config.TRIAL_DAYS }}-day free trial{% else %}Sign up{% endif %}</a>
+    <a class="button" href="{{ url_for('main.login') }}">Log in</a>
+  </div>
+  {% if config.BILLING_ENABLED %}
+  <p class="price"><strong>{{ config.PRICE_TEXT }}</strong> after a {{ config.TRIAL_DAYS }}-day free trial.</p>
+  {% endif %}
+</section>
+
+<div class="grid2">
+  <section class="card">
+    <h2>What it does</h2>
+    <ul class="plain-list">
+      <li>Keeps each subcontractor's documents in one place: upload PDFs or photos (PNG, JPEG, WEBP).</li>
+      <li>Records each document's type, upload date and expiration date.</li>
+      <li>Tries to read the type and expiration date from the file. You check and confirm them.</li>
+      <li>Never guesses a date: if none is clearly printed, the document is marked <strong>Needs review</strong>.</li>
+      <li>Dashboard of <strong>Valid</strong>, <strong>Expiring soon</strong> (30 days or less), <strong>Expired</strong>
+        and <strong>Missing</strong> documents, based on the document types you require.</li>
+      <li>In-app reminders 30, 14 and 7 days before a document expires, and again once it has expired.</li>
+      <li>Search and filter by subcontractor, document type and status.</li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>What it doesn't do</h2>
+    <ul class="plain-list">
+      <li>It tracks the documents and dates you upload or confirm. It does <strong>not</strong> verify that a document is genuine.</li>
+      <li>It does <strong>not</strong> give legal, insurance or compliance advice, or tell you whether you or a subcontractor are compliant.</li>
+      <li>Reminders appear in the app only. No emails are sent.</li>
+    </ul>
+  </section>
+</div>
+
+<p class="muted small">Read our <a href="{{ url_for('legal.terms') }}">Terms</a>,
+  <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a> and
+  <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+{% endblock %}

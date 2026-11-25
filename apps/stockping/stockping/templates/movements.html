@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_macros.html" import movement_table, pagination %}
+{% block title %}Stock history{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Stock history <span class="muted">({{ total }})</span></h1>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.export_movements', **request.args.to_dict()) }}">Export CSV</a>
+  </div>
+</div>
+<p class="muted small">Every stock change is recorded here and cannot be edited or deleted. Corrections are made with new adjustment entries.</p>
+
+<form class="filters card" method="get" action="{{ url_for('main.movement_list') }}">
+  <div class="field grow">
+    <label for="q">Product name or SKU</label>
+    <input id="q" name="q" type="search" value="{{ filters.q }}" maxlength="100">
+  </div>
+  <div class="field">
+    <label for="kind">Type</label>
+    <select id="kind" name="kind">
+      <option value="">All</option>
+      {% for value, label in MOVEMENT_LABELS.items() %}<option value="{{ value }}"{% if value == filters.kind %} selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field"><label for="from">From</label><input id="from" name="from" type="date" value="{{ filters.date_from }}"></div>
+  <div class="field"><label for="to">To</label><input id="to" name="to" type="date" value="{{ filters.date_to }}"></div>
+  {% if filters.product_id %}<input type="hidden" name="product" value="{{ filters.product_id }}">{% endif %}
+  <div class="filter-buttons">
+    <button class="btn btn-primary" type="submit">Apply</button>
+    <a class="btn" href="{{ url_for('main.movement_list') }}">Clear</a>
+  </div>
+</form>
+
+{{ movement_table(movements) }}
+{{ pagination(page, pages) }}
+{% endblock %}

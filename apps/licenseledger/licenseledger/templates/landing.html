@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block robots %}{% endblock %}
+{% block title %}Track licenses, orders and renewals{% endblock %}
+{% block auth_content %}
+<div class="card landing">
+  <div class="brand brand-lg"><span class="brand-mark">LL</span><span>LicenseLedger</span></div>
+  <h1>Keep track of the licenses you sell</h1>
+  <p>LicenseLedger is a simple tracker for small digital-product sellers. Record your orders, customers,
+    license keys and renewals by hand, in one dashboard.</p>
+  <ul class="landing-list">
+    <li>Orders with separate order, payment and delivery status (payment status is what you record; the app never checks payments).</li>
+    <li>License types: lifetime, fixed term, or managed by hand. See what expires soon and what has expired.</li>
+    <li>Secure license codes. Keys are stored only as a hash and shown in full just once, when they are issued.</li>
+    <li>Renewal history, revocation and key replacement, with a full history for every license.</li>
+    <li>Renewal reminder templates you copy with one click. Nothing is sent automatically.</li>
+    <li>CSV import (with a dry run) and CSV export.</li>
+  </ul>
+  <p class="muted">LicenseLedger is not a payment processor or a license-validation server. It does not connect to
+    any store and does not send email to your customers.</p>
+  <p class="landing-price"><strong>{{ price }}</strong> after a {{ trial_days }}-day free trial.</p>
+  <p class="landing-actions">
+    <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Start {{ trial_days }}-day free trial</a>
+    <a class="btn" href="{{ url_for('auth.login') }}">Log in</a>
+  </p>
+</div>
+{% endblock %}

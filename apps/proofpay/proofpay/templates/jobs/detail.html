@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, post_button %}
+{% block title %}{{ job.title }} · ProofPay{% endblock %}
+{% block content %}
+{% set link = public_job_url(job) %}
+<p class="crumb"><a href="{{ url_for('jobs.dashboard') }}">&larr; All jobs</a></p>
+<div class="page-head">
+  <div>
+    <h1>{{ job.title }}</h1>
+    <p class="muted">{{ job.customer.name }} &middot; {{ badge(job.display_status) }}</p>
+  </div>
+  <a class="btn btn-ghost" href="{{ url_for('jobs.edit_job', ref=job.ref) }}">Edit</a>
+</div>
+
+<div class="grid-2">
+  <div class="stack">
+    <!-- Next step -->
+    <section class="card">
+      <h2 class="card-title">Customer page</h2>
+      <p class="muted small">Send this link to {{ job.customer.name }}. Anyone with the link can view the job report, so share it only with your customer.</p>
+      <div class="copy-row">
+        <input id="share-link" type="text" readonly value="{{ link }}" aria-label="Customer page link">
+        <button class="btn" type="button" data-copy="#share-link">Copy link</button>
+      </div>
+      <div class="btn-row">
+        <a class="btn btn-ghost btn-sm" href="{{ link }}" target="_blank" rel="noopener">Preview</a>
+        {% if job.customer.email %}<a class="btn btn-ghost btn-sm" href="mailto:{{ job.customer.email }}?subject={{ ('Job report: ' ~ job.title)|urlencode }}&amp;body={{ ('Hi ' ~ job.customer.name ~ ',\n\nHere is the report for your job, including photos and the invoice:\n' ~ link ~ '\n\nThanks,\n' ~ job.business.name)|urlencode }}">Email</a>{% endif %}
+        {% if job.customer.phone %}<a class="btn btn-ghost btn-sm" href="sms:{{ job.customer.phone|replace(' ', '') }}?&amp;body={{ ('Your job report from ' ~ job.business.name ~ ': ' ~ link)|urlencode }}">Text</a>{% endif %}
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Status &amp; payment</h2>
+      <dl class="kv">
+        <dt>Job</dt><dd>{{ {'draft':'Draft','in_progress':'In progress','completed':'Completed'}[job.status] }}{% if job.completed_at %} &middot; {{ job.completed_at.strftime('%b %d, %Y') }}{% endif %}</dd>
+        <dt>Total</dt><dd class="big">{{ job.price_cents|money }}</dd>
+        <dt>Invoice</dt><dd>{% if job.is_paid %}<strong class="ok">Paid</strong> &middot; marked paid by you on {{ job.invoice.paid_at.strftime('%b %d, %Y') }}{% else %}<strong class="due">Not paid</strong>{% endif %}</dd>
+        {% if job.due_date %}<dt>Due</dt><dd>{{ job.due_date.strftime('%b %d, %Y') }}</dd>{% endif %}
+      </dl>
+      <div class="btn-row">
+        <form method="post" action="{{ url_for('jobs.set_status', ref=job.ref) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          {% if job.status != 'completed' %}
+            <input type="hidden" name="status" value="completed">
+            <button class="btn" type="submit">Mark completed</button>
+          {% else %}
+            <input type="hidden" name="status" value="in_progress">
+            <button class="btn btn-ghost" type="submit">Reopen job</button>
+          {% endif %}
+        </form>
+        {% if job.is_paid %}
+          {{ post_button(url_for('jobs.mark_unpaid', ref=job.ref), 'Mark unpaid', 'btn btn-ghost', confirm='Mark this invoice as unpaid?') }}
+        {% elif job.price_cents > 0 %}
+          {{ post_button(url_for('jobs.mark_paid', ref=job.ref), 'Mark paid', 'btn btn-paid', confirm='Only mark paid once you have actually received the money. Continue?') }}
+        {% endif %}
+      </div>
+      <p class="hint">ProofPay doesn't process payments yet. "Mark paid" records that you received the money yourself.</p>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title">Customer</h2>
+      <dl class="kv">
+        <dt>Name</dt><dd><a href="{{ url_for('customers.customer_detail', ref=job.customer.ref) }}">{{ job.customer.name }}</a></dd>
+        {% if job.customer.email %}<dt>Email</dt><dd>{{ job.customer.email }}</dd>{% endif %}
+        {% if job.customer.phone %}<dt>Phone</dt><dd>{{ job.customer.phone }}</dd>{% endif %}
+        {% if job.address %}<dt>Address</dt><dd>{{ job.address }}</dd>{% endif %}
+      </dl>
+      {% if job.description %}<h3 class="sub">Description</h3><p class="pre">{{ job.description }}</p>{% endif %}
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="card" id="work">
+      <h2 class="card-title">Work completed</h2>
+      {% if job.work_items %}
+        <ul class="checklist">{% for item in job.work_items %}<li>{{ item }}</li>{% endfor %}</ul>
+      {% else %}
+        <p class="muted">No work notes yet. <a href="{{ url_for('jobs.edit_job', ref=job.ref) }}#work_notes">Add them</a>.</p>
+      {% endif %}
+    </section>
+
+    <section class="card" id="summary">
+      <h2 class="card-title">Job summary <span class="opt">shown to customer</span></h2>
+      {% if draft_summary %}
+        <div class="flash flash-info">Review this AI draft. It isn't saved or shown to the customer until you click Save.</div>
+        {% if omitted_notes %}
+        <div class="flash flash-error">Left out because they don't clearly describe completed work:
+          {% for n in omitted_notes %}&ldquo;{{ n }}&rdquo;{% if not loop.last %}, {% endif %}{% endfor %}.
+          Add them yourself if they were done.</div>
+        {% endif %}
+        <form method="post" action="{{ url_for('jobs.save_summary', ref=job.ref) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <textarea name="summary" rows="4" aria-label="Summary">{{ draft_summary }}</textarea>
+          <div class="btn-row"><button class="btn" type="submit">Save summary</button>
+            <a class="btn btn-ghost" href="{{ url_for('jobs.job_detail', ref=job.ref) }}#summary">Discard</a></div>
+        </form>
+      {% else %}
+        <form method="post" action="{{ url_for('jobs.save_summary', ref=job.ref) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <textarea name="summary" rows="4" placeholder="A short professional summary of the work. Write it yourself or use the AI helper below." aria-label="Summary">{{ job.summary or '' }}</textarea>
+          <button class="btn btn-ghost btn-sm" type="submit">Save summary</button>
+        </form>
+        {% if g.access and not g.access.pro %}
+        <p class="hint">AI job summaries are part of Pro. <a href="{{ url_for('billing.subscribe') }}">Upgrade to Pro</a></p>
+        {% else %}
+        <details class="ai-box"{% if rough_notes %} open{% endif %}>
+          <summary>Create Job Summary with AI <span class="opt">optional</span></summary>
+          <form method="post" action="{{ url_for('jobs.generate_summary', ref=job.ref) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="rough_notes" class="small">Rough notes (leave blank to use your work notes)</label>
+            <textarea id="rough_notes" name="rough_notes" rows="3" maxlength="4000" placeholder="changed 3 outlets, fixed loose wire in kitchen, tested everything">{{ rough_notes or '' }}</textarea>
+            <button class="btn btn-sm" type="submit">Create Job Summary</button>
+            <p class="hint">The AI only rewords what you wrote. It never adds work, prices, materials, dates or guarantees, and you review the result before it's saved.</p>
+          </form>
+        </details>
+        {% endif %}
+      {% endif %}
+    </section>
+
+    <section class="card" id="photos">
+      <h2 class="card-title">Photos</h2>
+      {% for kind, label in [('before','Before'),('after','After'),('general','Other')] %}
+        {% set items = job.photos_of(kind) %}
+        {% if items %}
+        <h3 class="sub">{{ label }}</h3>
+        <div class="thumbs">
+          {% for p in items %}
+          <figure class="thumb">
+            <a href="{{ url_for('photos.view', ref=p.ref) }}" target="_blank" rel="noopener"><img src="{{ url_for('photos.view', ref=p.ref, thumb=1) }}" alt="{{ label }} photo" loading="lazy"></a>
+            {{ post_button(url_for('photos.delete', ref=p.ref), 'Delete', 'btn-x', confirm='Delete this photo?') }}
+          </figure>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endfor %}
+      {% if not job.photos %}<p class="muted">No photos yet. Before and after photos make the report much more convincing.</p>{% endif %}
+
+      <form method="post" action="{{ url_for('photos.upload', ref=job.ref) }}" enctype="multipart/form-data" class="upload">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="row2">
+          <div class="field">
+            <label for="kind">Photo type</label>
+            <select id="kind" name="kind">
+              <option value="before">Before</option><option value="after">After</option><option value="general">Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="photo-input">Photos</label>
+            <input id="photo-input" type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple required>
+          </div>
+        </div>
+        <button class="btn btn-sm" type="submit">Upload</button>
+        <p class="hint">JPG, PNG or WebP, up to {{ config.MAX_PHOTO_BYTES // (1024*1024) }} MB each. Location data is removed automatically.</p>
+      </form>
+    </section>
+
+    <section class="card danger-zone">
+      {{ post_button(url_for('jobs.delete_job', ref=job.ref), 'Delete job', 'btn btn-danger btn-sm', confirm='Delete this job, its photos and its invoice? This cannot be undone.') }}
+    </section>
+  </div>
+</div>
+{% endblock %}

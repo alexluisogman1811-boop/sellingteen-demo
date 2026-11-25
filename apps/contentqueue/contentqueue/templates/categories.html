@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, field_error %}
+{% block title %}Categories{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Content categories</h1><p class="muted">Content pillars such as Product, Education or Behind the scenes.</p></div></div>
+
+<div class="grid-side">
+  <section>
+    {% for c in categories %}
+      <article class="card item-card">
+        <div class="item-head">
+          <h2>{{ c.name }}</h2>
+          <div class="row-actions">
+            <a class="btn btn-sm" href="{{ url_for('posts.list_posts', category_id=c.id, status='all') }}">Posts ({{ c.post_count }})</a>
+            <a class="btn btn-sm btn-ghost" href="{{ url_for('library.edit_category', item_id=c.id) }}">Edit</a>
+          </div>
+        </div>
+        {% if c.description %}<p>{{ c.description }}</p>{% endif %}
+        <p class="muted small">{{ c.idea_count }} idea{{ '' if c.idea_count == 1 else 's' }} in the bank</p>
+      </article>
+    {% else %}
+      <div class="card empty-state"><p>No categories yet.</p></div>
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>New category</h2>
+    <form method="post" class="stack" novalidate>
+      {{ csrf() }}
+      <div class="field">
+        <label for="k-name">Name <span class="req">*</span></label>
+        <input id="k-name" name="name" value="{{ form.name or '' }}" maxlength="80" required>
+        {{ field_error(errors, 'name') }}
+      </div>
+      <div class="field">
+        <label for="k-desc">Description</label>
+        <textarea id="k-desc" name="description" rows="3">{{ form.description or '' }}</textarea>
+        {{ field_error(errors, 'description') }}
+      </div>
+      <button class="btn btn-primary" type="submit">Create category</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

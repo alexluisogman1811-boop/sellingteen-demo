@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import invoice_row %}
+{% block title %}Invoices{% endblock %}
+{% block content %}
+<div class="section-head">
+  <h1>Invoices</h1>
+  <a class="btn btn-primary" href="{{ url_for('routes.invoice_new') }}">+ New invoice</a>
+</div>
+<form class="search" method="get" role="search">
+  <input type="hidden" name="filter" value="{{ active }}">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search customer or invoice number" aria-label="Search invoices">
+  <button class="btn" type="submit">Search</button>
+</form>
+<nav class="tabs" aria-label="Filter invoices">
+  {% for key, label in filters.items() %}
+  <a href="{{ url_for('routes.invoices', filter=key, q=q or None) }}" class="tab {{ 'active' if key == active }}" {% if key == active %}aria-current="page"{% endif %}>
+    {{ label }} <span class="count">{{ counts[key] }}</span>
+  </a>
+  {% endfor %}
+</nav>
+{% if invoices %}
+<div class="list card">{% for inv in invoices %}{{ invoice_row(inv) }}{% endfor %}</div>
+{% elif q %}
+<p class="card muted">No invoices match “{{ q }}”{% if active != 'all' %} in {{ filters[active] }}{% endif %}. <a href="{{ url_for('routes.invoices') }}">Clear search</a></p>
+{% elif active != 'all' %}
+<p class="card muted">No invoices in {{ filters[active] }}.</p>
+{% else %}
+<div class="card empty">
+  <p>No invoices yet. Add one you've sent and PayRecover will track it.</p>
+  <a class="btn btn-primary" href="{{ url_for('routes.invoice_new') }}">Add an invoice</a>
+</div>
+{% endif %}
+{% endblock %}

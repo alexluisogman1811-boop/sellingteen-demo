@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, csrf %}
+{% block title %}{{ customer.name }}{% endblock %}
+{% block content %}
+<a class="small back" href="{{ url_for('customers.list_customers') }}">← All customers</a>
+<div class="page-head">
+  <div class="page-title">
+    <h1>{{ customer.name }}</h1>
+    {{ status_badge(customer.status) }}
+  </div>
+  <a class="btn btn-secondary" href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}">Edit details</a>
+</div>
+
+<div class="detail-grid">
+  <section class="card" id="message">
+    <h2>Review request message</h2>
+    {% if not g.business.review_link %}
+    <div class="flash flash-info">You haven't added your review link yet, so messages ask for a review without a link. <a href="{{ url_for('auth.settings') }}">Add it on the Account page</a> so customers can tap straight to your review page.</div>
+    {% endif %}
+    <form method="post" action="{{ url_for('customers.generate_message', customer_id=customer.id) }}" class="generate-form">
+      {{ csrf() }}
+      <label for="template_id" class="small">Message style</label>
+      <select id="template_id" name="template_id">
+        <option value="">Write it for me</option>
+        {% for t in templates %}
+        <option value="{{ t.id }}">Use template: {{ t.name }}</option>
+        {% endfor %}
+      </select>
+      <button class="btn" type="submit">{{ 'Write a new version' if customer.message else 'Write message' }}</button>
+    </form>
+    {% if mock_mode %}<p class="hint">Offline mode: messages are written on this computer. No AI credits are used.</p>{% endif %}
+
+    {% if customer.message %}
+    {% if customer.message_stale %}
+    <div class="flash flash-error" role="alert">Customer or business details changed since this message was written. Tap <strong>Write a new version</strong> before sending.</div>
+    {% endif %}
+    <label for="message-text" class="small">Message (you can edit it before copying)</label>
+    <textarea id="message-text" rows="6">{{ customer.message }}</textarea>
+    <p class="hint">Only uses details you saved for this customer and your business.</p>
+    <div class="message-actions">
+      <button type="button" class="btn" data-copy="#message-text" data-copy-note="#copy-note">Copy message</button>
+      {% if customer.status == 'not_contacted' %}
+      <form method="post" action="{{ url_for('customers.update_status', customer_id=customer.id) }}" class="inline">
+        {{ csrf() }}
+        {# Back to the dashboard so the owner sees the numbers update and who's next. #}
+        <input type="hidden" name="next" value="{{ url_for('customers.dashboard') }}">
+        <button type="submit" name="status" value="contacted" class="btn btn-secondary">I sent it: mark as contacted</button>
+      </form>
+      {% elif customer.status == 'contacted' %}
+      <form method="post" action="{{ url_for('customers.update_status', customer_id=customer.id) }}" class="inline">
+        {{ csrf() }}
+        <button type="submit" name="status" value="review_received" class="btn btn-secondary">They left a review</button>
+      </form>
+      {% endif %}
+    </div>
+    <p id="copy-note" class="copy-note" aria-live="polite" hidden>Copied. Paste it into a text or email to {{ customer.name }}{% if customer.status == 'not_contacted' %}, then tap “I sent it”{% endif %}.</p>
+    {% else %}
+    <p class="muted">Tap <strong>Write message</strong> to draft a review request. Then copy it and send it by text or email.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Review request status</h2>
+    <form method="post" action="{{ url_for('customers.update_status', customer_id=customer.id) }}" class="status-buttons">
+      {{ csrf() }}
+      {% for key, label in STATUS_LABELS.items() %}
+      <button type="submit" name="status" value="{{ key }}"
+              class="btn btn-toggle {{ 'is-active' if customer.status == key }}"
+              {% if customer.status == key %}aria-pressed="true" disabled{% else %}aria-pressed="false"{% endif %}>{{ label }}</button>
+      {% endfor %}
+    </form>
+
+    <h2 class="spaced">Job details</h2>
+    <dl class="details">
+      <dt>Job done</dt><dd>{{ customer.service }}</dd>
+      <dt>Job date</dt><dd>{{ customer.job_date|nice_date }}</dd>
+      <dt>Phone</dt><dd><a href="tel:{{ customer.phone }}">{{ customer.phone }}</a></dd>
+      <dt>Email</dt><dd>{% if customer.email %}<a href="mailto:{{ customer.email }}">{{ customer.email }}</a>{% else %}<span class="muted">Not added</span>{% endif %}</dd>
+      <dt>Added</dt><dd>{{ customer.created_at[:10]|nice_date }}</dd>
+    </dl>
+  </section>
+</div>
+
+<section class="danger-zone">
+  <form method="post" action="{{ url_for('customers.delete_customer', customer_id=customer.id) }}"
+        data-confirm="Delete {{ customer.name }}? This can't be undone.">
+    {{ csrf() }}
+    <button type="submit" class="btn btn-danger">Delete customer</button>
+  </form>
+</section>
+{% endblock %}

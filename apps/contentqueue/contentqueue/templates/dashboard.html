@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "macros.html" import post_row, csrf %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted">{{ today|nice_date('%A %d %B %Y') }}</p>
+  </div>
+  <div class="head-actions">
+    <a class="btn" href="{{ url_for('main.calendar_view') }}">Open calendar</a>
+    <a class="btn btn-primary" href="{{ url_for('posts.new_post') }}">+ New post</a>
+  </div>
+</div>
+
+{% if is_empty %}
+  <section class="card empty-state">
+    <h2>Welcome to ContentQueue</h2>
+    <p>Plan captions, organise campaigns and keep track of what you've published — all stored locally on this computer.</p>
+    <div class="head-actions">
+      <a class="btn btn-primary" href="{{ url_for('posts.new_post') }}">Create your first post</a>
+      <form method="post" action="{{ url_for('data.demo') }}">{{ csrf() }}
+        <button class="btn" type="submit">Load demo data</button>
+      </form>
+    </div>
+  </section>
+{% endif %}
+
+<section class="stats" aria-label="Post counts">
+  <a class="stat" href="{{ url_for('posts.list_posts', status='draft') }}"><span class="stat-num">{{ counts.draft }}</span><span>Drafts</span></a>
+  <a class="stat" href="{{ url_for('posts.list_posts', status='review') }}"><span class="stat-num">{{ counts.review }}</span><span>In review</span></a>
+  <a class="stat" href="{{ url_for('posts.list_posts', status='scheduled') }}"><span class="stat-num">{{ counts.scheduled }}</span><span>Scheduled</span></a>
+  <a class="stat" href="{{ url_for('posts.list_posts', status='published') }}"><span class="stat-num">{{ counts.published }}</span><span>Published</span></a>
+  <a class="stat stat-alert{% if not overdue %} stat-ok{% endif %}" href="{{ url_for('posts.list_posts', status='overdue') }}"><span class="stat-num">{{ overdue|length }}</span><span>Overdue</span></a>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><h2>Overdue</h2><a href="{{ url_for('posts.list_posts', status='overdue') }}">View all</a></div>
+    <p class="muted small">Planned time has passed but the post isn't marked published. If you already posted it, mark it published; otherwise move it to a new date.</p>
+    {% for p in overdue %}{{ post_row(p) }}{% else %}<p class="empty">Nothing overdue. 🎉</p>{% endfor %}
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Next 7 days</h2><a href="{{ url_for('main.calendar_view', view='week') }}">Week view</a></div>
+    {% for p in upcoming %}{{ post_row(p) }}{% else %}<p class="empty">Nothing planned for the coming week.</p>{% endfor %}
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Recent drafts</h2><a href="{{ url_for('posts.list_posts', status='draft') }}">View all</a></div>
+    {% for p in drafts %}{{ post_row(p, show_actions=false) }}{% else %}<p class="empty">No drafts.</p>{% endfor %}
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Waiting for review</h2><a href="{{ url_for('posts.list_posts', status='review') }}">View all</a></div>
+    {% for p in in_review %}{{ post_row(p, show_actions=false) }}{% else %}<p class="empty">Nothing waiting for review.</p>{% endfor %}
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Recently published</h2><a href="{{ url_for('posts.list_posts', status='published') }}">View all</a></div>
+    {% for p in published %}{{ post_row(p, show_actions=false) }}{% else %}<p class="empty">No posts marked published yet.</p>{% endfor %}
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Campaigns</h2><a href="{{ url_for('library.campaigns') }}">Manage</a></div>
+    {% for c in campaigns %}
+      <a class="campaign-line" href="{{ url_for('posts.list_posts', campaign_id=c.id, status='all') }}">
+        <span class="dot color-{{ c.color }}"></span>{{ c.name }}
+        <span class="muted small">{{ c.open_posts or 0 }} open · {{ c.published_posts or 0 }} published</span>
+      </a>
+    {% else %}<p class="empty">No campaigns yet.</p>{% endfor %}
+  </section>
+</div>
+{% endblock %}

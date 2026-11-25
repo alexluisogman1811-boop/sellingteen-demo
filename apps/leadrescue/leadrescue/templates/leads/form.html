@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}{{ 'Edit lead' if lead else 'New lead' }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ 'Edit ' ~ lead.full_name if lead else 'New lead' }}</h1>
+  {% if lead %}<a class="btn btn-ghost" href="{{ url_for('leads.detail', lead_id=lead.id) }}">Cancel</a>{% endif %}
+</div>
+<form method="post" class="card form-grid" novalidate>
+  {{ form.hidden_tag() }}
+  <fieldset>
+    <legend>Customer</legend>
+    <div class="row">{{ field(form.first_name) }}{{ field(form.last_name) }}</div>
+    <div class="row">{{ field(form.phone) }}{{ field(form.email) }}</div>
+    {{ field(form.address) }}
+    <div class="row row-3">{{ field(form.city) }}{{ field(form.state) }}{{ field(form.zip_code) }}</div>
+  </fieldset>
+  <fieldset>
+    <legend>Job</legend>
+    <div class="row">{{ field(form.status) }}{{ field(form.source) }}</div>
+    <div class="row">{{ field(form.job_type) }}{{ field(form.estimated_value) }}</div>
+    <div class="row">{{ field(form.last_contact_date) }}{{ field(form.next_follow_up_date) }}</div>
+    {{ field(form.assigned_to_id) }}
+    {{ field(form.notes) }}
+  </fieldset>
+  <div class="actions">
+    <button class="btn btn-primary" type="submit">{{ 'Save changes' if lead else 'Create lead' }}</button>
+  </div>
+</form>
+{% endblock %}

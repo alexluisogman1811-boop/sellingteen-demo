@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Import / Export{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Import / Export</h1></div>
+<div class="grid-2">
+  <section class="card">
+    <h2>Import products from CSV</h2>
+    {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+    <form method="post" enctype="multipart/form-data" class="form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="file">CSV file (UTF-8, max 2 MB, up to 5,000 rows)</label>
+        <input id="file" name="file" type="file" accept=".csv,text/csv" required>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Upload and preview</button></div>
+    </form>
+    <p>Nothing is saved until you review the preview and confirm.</p>
+    <h3>Columns</h3>
+    <p><strong>Required:</strong> <code>sku, name, cost, price, quantity, reorder_threshold</code><br>
+       <strong>Optional:</strong> <code>category, supplier, description</code></p>
+    <ul class="small">
+      <li>Prices use a dot for decimals with at most 2 places (12.50); no currency symbols.</li>
+      <li>Quantities and thresholds are whole numbers, 0 or more.</li>
+      <li>Rows whose SKU already exists are skipped; existing products are never overwritten.</li>
+      <li>Duplicate SKUs inside the file are errors. If any row has errors, nothing is imported.</li>
+      <li>Unknown supplier names are created as new suppliers.</li>
+      <li>Each imported quantity is recorded as an "Opening stock" movement.</li>
+    </ul>
+    <p><a href="{{ url_for('main.import_template') }}">Download a template CSV</a></p>
+  </section>
+  <section class="card">
+    <h2>Export</h2>
+    <p>Downloads are UTF-8 CSV files that open in Excel, Numbers or Google Sheets.</p>
+    <p><a class="btn" href="{{ url_for('main.export_products') }}">Export active products</a></p>
+    <p><a class="btn" href="{{ url_for('main.export_products', archived=1) }}">Export all products (incl. archived)</a></p>
+    <p><a class="btn" href="{{ url_for('main.export_movements') }}">Export stock movement history</a></p>
+    <p class="muted small">Filtered exports are available from the Products and History pages. The product export uses the same columns as the import.</p>
+  </section>
+</div>
+{% endblock %}

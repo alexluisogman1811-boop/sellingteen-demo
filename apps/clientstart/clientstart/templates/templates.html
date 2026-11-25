@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block title %}Templates{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Onboarding templates</h1><p class="muted">Reusable checklists by project type. Applying a template copies its items, so later edits don't change existing onboardings.</p></div>
+</div>
+<div class="cols">
+  <div>
+    {% for t in templates %}
+    <a class="card card-link" href="{{ url_for('owner.template_detail', template_id=t.id) }}">
+      <p class="eyebrow">{{ t.project_type }}</p>
+      <h2>{{ t.name }}</h2>
+      <p class="muted">{{ t.description }}</p>
+      <p class="small">{{ t.item_count }} item{{ '' if t.item_count == 1 else 's' }}</p>
+    </a>
+    {% else %}
+    <div class="card empty">
+      <p><strong>No templates yet.</strong> A template is a reusable checklist — for example “Website build”: logo files, brand guide, hosting details, kickoff call.</p>
+      <p class="muted small">Create one with the form, then add items. Each item can ask the client for a file, an answer, or an action, with a due date counted from the project start.</p>
+    </div>
+    {% endfor %}
+  </div>
+  <div>
+    <form method="post" action="{{ url_for('owner.template_new') }}" class="card form">
+      {{ csrf() }}
+      <h2>New template</h2>
+      <label>Name * <input name="name" required maxlength="200" placeholder="e.g. E-commerce Build"></label>
+      <label>Project type * <input name="project_type" required maxlength="80" placeholder="e.g. Website"></label>
+      <label>Description <textarea name="description" rows="2" maxlength="1000"></textarea></label>
+      <button class="btn btn-primary" type="submit">Create template</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

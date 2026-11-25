@@ -1,0 +1,425 @@
+{
+  "website": "https://sellingteen1.netlify.app",
+  "managed_env": [
+    "ADMIN_EMAILS",
+    "AI_API_KEY",
+    "AI_MOCK",
+    "AI_MODEL",
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_MODEL",
+    "APP_BASE_URL",
+    "APP_ENV",
+    "APP_TIMEZONE",
+    "AUTO_MIGRATE",
+    "BACKUP_DIR",
+    "BACKUP_FOLDER",
+    "BACKUP_RETENTION_DAYS",
+    "BEHIND_PROXY",
+    "BILLING_ENABLED",
+    "CLIENTSTART_AGENCY_NAME",
+    "CLIENTSTART_ALLOW_RESET",
+    "CLIENTSTART_BEHIND_PROXY",
+    "CLIENTSTART_DATA_DIR",
+    "CLIENTSTART_LEGACY_EMAIL",
+    "CLIENTSTART_MAX_UPLOAD_MB",
+    "CLIENTSTART_PORTAL_LINK_DAYS",
+    "CLIENTSTART_PUBLIC_URL",
+    "CLIENTSTART_SECRET_KEY",
+    "CLIENTSTART_SECURE_COOKIES",
+    "CONTENTQUEUE_ALLOWED_HOSTS",
+    "CONTENTQUEUE_SECRET_KEY",
+    "CONTENTQUEUE_TIMEZONE",
+    "COOKIE_SECURE",
+    "DATABASE_PATH",
+    "DATABASE_URL",
+    "DEMO_MODE",
+    "DEMO_PASSWORD",
+    "DRAFT_PROVIDER",
+    "FLASK_DEBUG",
+    "FORCE_HTTPS",
+    "FREE_ACTIVE_JOBS",
+    "FREE_CUSTOMER_LIMIT",
+    "JOBPROOF_DATA_DIR",
+    "JOBPROOF_ENV",
+    "JOBPROOF_SECRET_KEY",
+    "JOBPROOF_SECURE_COOKIES",
+    "KEY_HASH_SECRET",
+    "LEGACY_OWNER_EMAIL",
+    "LEGAL_ENTITY_NAME",
+    "LEGAL_NAME",
+    "MAX_UPLOAD_BYTES",
+    "PAYMENT_LINK",
+    "PRICE_TEXT",
+    "PROOFOFWORK_ALLOW_RESET",
+    "PROOFOFWORK_BASE_URL",
+    "PROOFOFWORK_COMPANY_NAME",
+    "PROOFOFWORK_DATABASE",
+    "PROOFOFWORK_INSTANCE_DIR",
+    "PROOFOFWORK_SECRET_KEY",
+    "PROOFOFWORK_SECURE_COOKIES",
+    "PROOFOFWORK_UPLOAD_DIR",
+    "PUBLIC_BASE_URL",
+    "SCOPEGUARD_BASE_URL",
+    "SCOPEGUARD_DB",
+    "SCOPEGUARD_DEMO",
+    "SCOPEGUARD_SECRET_KEY",
+    "SCOPEGUARD_SECURE_COOKIES",
+    "SCOPEGUARD_TRUSTED_PROXIES",
+    "SECRET_KEY",
+    "SESSION_COOKIE_SECURE",
+    "SIGNEDEXTRA_DEMO",
+    "SIGNEDEXTRA_ENV",
+    "SIGNEDEXTRA_INSTANCE",
+    "SIGNEDEXTRA_SECRET_KEY",
+    "SIGNUP_ACCESS_CODE",
+    "SITECARE_OWNER_EMAIL",
+    "SITECARE_SECRET_KEY",
+    "SITECARE_SECURE_COOKIES",
+    "STRIPE_PRICE_ID",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "SUPPORT_EMAIL",
+    "TRIAL_DAYS",
+    "TRUSTED_HOSTS",
+    "TRUST_PROXY",
+    "UPLOAD_FOLDER"
+  ],
+  "apps": {
+    "reviewboost": {
+      "name": "ReviewBoost",
+      "price_usd": 19,
+      "billing": "reviewboost.billing",
+      "folder": "review boost",
+      "package": "reviewboost",
+      "module": "reviewboost",
+      "callable": "create_app",
+      "price": "$19 per month",
+      "env": {
+        "APP_ENV": "production",
+        "TRUST_PROXY": "1",
+        "AI_MOCK": "1",
+        "DEMO_MODE": "1",
+        "DATABASE_PATH": "{DATA}/reviewboost.sqlite"
+      }
+    },
+    "invoicechaser": {
+      "name": "InvoiceChaser",
+      "price_usd": 9,
+      "billing": "invoicechaser.billing",
+      "folder": "invoice chaser",
+      "package": "invoicechaser",
+      "module": "invoicechaser",
+      "callable": "create_app",
+      "price": "$9 per month",
+      "env": {
+        "APP_ENV": "production",
+        "TRUST_PROXY": "1",
+        "AI_MOCK": "1",
+        "DATABASE_PATH": "{DATA}/invoicechaser.sqlite3"
+      }
+    },
+    "quoteflow": {
+      "name": "QuoteFlow AI",
+      "price_usd": 15,
+      "billing": "quoteflow.billing",
+      "folder": "quote flow",
+      "package": "quoteflow",
+      "module": "quoteflow",
+      "callable": "create_app",
+      "price": "$15 per month for 100 quotes",
+      "env": {
+        "AI_MOCK": "1",
+        "COOKIE_SECURE": "1",
+        "BEHIND_PROXY": "1",
+        "DATABASE_PATH": "{DATA}/quoteflow.db",
+        "APP_BASE_URL": "{BASE}/quoteflow"
+      }
+    },
+    "contractordocs": {
+      "name": "ContractorDocs",
+      "price_usd": 29,
+      "billing": "contractordocs.billing",
+      "folder": "contractor Docs",
+      "package": "contractordocs",
+      "module": "contractordocs",
+      "callable": "create_app",
+      "price": "$29 per month",
+      "env": {
+        "AI_MOCK": "1",
+        "SESSION_COOKIE_SECURE": "1"
+      }
+    },
+    "payrecover": {
+      "name": "PayRecover",
+      "price_usd": 12,
+      "billing": "payrecover.billing",
+      "folder": "pay recover",
+      "package": "payrecover",
+      "module": "payrecover",
+      "callable": "create_app",
+      "price": "$12 per month",
+      "env": {
+        "AI_MOCK": "1",
+        "SESSION_COOKIE_SECURE": "1"
+      }
+    },
+    "leadfollowup": {
+      "name": "LeadFollowUp",
+      "price_usd": 12,
+      "billing": "leadfollowup.billing",
+      "folder": "lead follow up",
+      "package": "leadfollowup",
+      "module": "leadfollowup",
+      "callable": "create_app",
+      "price": "$12 per month",
+      "env": {
+        "AI_MOCK": "1",
+        "SESSION_COOKIE_SECURE": "1",
+        "DATABASE_PATH": "{DATA}/leadfollowup.db"
+      }
+    },
+    "jobproof": {
+      "name": "JobProof AI",
+      "price_usd": 15,
+      "billing": "jobproof.billing",
+      "folder": "job proof ai",
+      "package": "jobproof",
+      "module": "jobproof",
+      "callable": "create_app",
+      "price": "$15 per month",
+      "secret_keys": [
+        "JOBPROOF_SECRET_KEY"
+      ],
+      "env": {
+        "JOBPROOF_ENV": "production",
+        "JOBPROOF_DATA_DIR": "{DATA}",
+        "JOBPROOF_SECURE_COOKIES": "1",
+        "AI_MOCK": "1"
+      }
+    },
+    "proofpay": {
+      "name": "ProofPay",
+      "price_usd": 12,
+      "billing": "proofpay.billing",
+      "folder": "proof paay",
+      "package": "proofpay",
+      "module": "proofpay",
+      "callable": "create_app",
+      "price": "$12 per month",
+      "env": {
+        "APP_ENV": "production",
+        "AI_MOCK": "1",
+        "DEMO_MODE": "0",
+        "SESSION_COOKIE_SECURE": "1",
+        "DATABASE_URL": "sqlite:///{DATA}/proofpay.db",
+        "UPLOAD_FOLDER": "{DATA}/uploads",
+        "APP_BASE_URL": "{BASE}/proofpay"
+      }
+    },
+    "stockping": {
+      "name": "StockPing",
+      "price_usd": 12,
+      "billing": "stockping.billing",
+      "folder": "stock ping/stockping",
+      "package": "stockping",
+      "module": "stockping",
+      "callable": "create_app",
+      "price": "$12 per month",
+      "env": {
+        "APP_ENV": "production",
+        "TRUST_PROXY": "1",
+        "DATABASE_PATH": "{DATA}/stockping.sqlite3"
+      }
+    },
+    "slotsimple": {
+      "name": "SlotSimple",
+      "price_usd": 12,
+      "billing": "slotsimple.billing",
+      "folder": "slot simple/slotsimple",
+      "package": "slotsimple",
+      "module": "slotsimple",
+      "callable": "create_app",
+      "price": "$12 per month",
+      "env": {
+        "APP_ENV": "production",
+        "TRUST_PROXY": "1",
+        "SESSION_COOKIE_SECURE": "1",
+        "DEMO_MODE": "0",
+        "DATABASE_PATH": "{DATA}/slotsimple.sqlite3"
+      }
+    },
+    "shiftsnap": {
+      "name": "ShiftSnap",
+      "price_usd": 19,
+      "billing": "shiftsnap.billing",
+      "folder": "shift snap/shiftsnap",
+      "package": "shiftsnap",
+      "module": "shiftsnap",
+      "callable": "create_app",
+      "price": "$19 per month per location",
+      "env": {
+        "TRUST_PROXY": "1",
+        "SESSION_COOKIE_SECURE": "1",
+        "DATABASE_PATH": "{DATA}/shiftsnap.sqlite3"
+      }
+    },
+    "testimonialtap": {
+      "name": "TestimonialTap",
+      "price_usd": 9,
+      "billing": "testimonialtap.billing",
+      "folder": "testimoniasl tap/testimonialtap",
+      "package": "testimonialtap",
+      "module": "testimonialtap",
+      "callable": "create_app",
+      "price": "$9 per month",
+      "env": {
+        "APP_ENV": "production",
+        "TRUST_PROXY": "1",
+        "SESSION_COOKIE_SECURE": "1",
+        "DATABASE_PATH": "{DATA}/testimonialtap.sqlite"
+      }
+    },
+    "signedextra": {
+      "name": "SignedExtra",
+      "price_usd": 29,
+      "billing": "signedextra.billing",
+      "folder": "SignedExtra",
+      "package": "signedextra",
+      "module": "signedextra",
+      "callable": "create_app",
+      "price": "$29 per month (founding price, locked for 12 months)",
+      "secret_keys": [
+        "SIGNEDEXTRA_SECRET_KEY"
+      ],
+      "env": {
+        "SIGNEDEXTRA_ENV": "production",
+        "TRUST_PROXY": "1",
+        "SIGNEDEXTRA_INSTANCE": "{DATA}",
+        "PUBLIC_BASE_URL": "{BASE}/signedextra"
+      }
+    },
+    "clientstart": {
+      "name": "ClientStart",
+      "price_usd": 15,
+      "billing": "clientstart.billing",
+      "folder": "cilent start/clientstart",
+      "package": "clientstart",
+      "module": "clientstart",
+      "callable": "create_app",
+      "price": "$15 per month",
+      "env": {
+        "CLIENTSTART_DATA_DIR": "{DATA}",
+        "CLIENTSTART_BEHIND_PROXY": "1",
+        "CLIENTSTART_SECURE_COOKIES": "1"
+      }
+    },
+    "contentqueue": {
+      "name": "ContentQueue",
+      "price_usd": 9,
+      "billing": "contentqueue.billing",
+      "folder": "content queue/contentqueue",
+      "package": "contentqueue",
+      "module": "contentqueue",
+      "callable": "create_app",
+      "price": "$9 per month",
+      "env": {
+        "APP_ENV": "production",
+        "TRUST_PROXY": "1",
+        "SESSION_COOKIE_SECURE": "1",
+        "DATABASE_PATH": "{DATA}/contentqueue.sqlite3"
+      }
+    },
+    "licenseledger": {
+      "name": "LicenseLedger",
+      "price_usd": 9,
+      "billing": "licenseledger.billing",
+      "folder": "license ledger/licenseledger",
+      "package": "licenseledger",
+      "module": "licenseledger",
+      "callable": "create_app",
+      "price": "$9 per month",
+      "secret_keys": [
+        "KEY_HASH_SECRET"
+      ],
+      "env": {
+        "SESSION_COOKIE_SECURE": "1",
+        "DATABASE_PATH": "{DATA}/licenseledger.db",
+        "BACKUP_DIR": "{DATA}/backups"
+      }
+    },
+    "scopeguard": {
+      "name": "ScopeGuard",
+      "price_usd": 12,
+      "billing": "scopeguard.billing",
+      "folder": "scope guard/scopeguard",
+      "package": "scopeguard",
+      "module": "scopeguard",
+      "callable": "create_app",
+      "price": "$12 per month",
+      "env": {
+        "TRUST_PROXY": "1",
+        "SESSION_COOKIE_SECURE": "1",
+        "DEMO_MODE": "0",
+        "DATABASE_PATH": "{DATA}/scopeguard.db",
+        "APP_BASE_URL": "{BASE}/scopeguard"
+      }
+    },
+    "proofofwork": {
+      "name": "ProofOfWork",
+      "price_usd": 19,
+      "billing": "proofofwork.billing",
+      "folder": "proof of work/proofofwork",
+      "package": "proofofwork",
+      "module": "proofofwork",
+      "callable": "create_app",
+      "price": "$19 per month",
+      "secret_keys": [
+        "PROOFOFWORK_SECRET_KEY"
+      ],
+      "env": {
+        "TRUST_PROXY": "1",
+        "PROOFOFWORK_INSTANCE_DIR": "{DATA}",
+        "PROOFOFWORK_DATABASE": "{DATA}/proofofwork.sqlite3",
+        "PROOFOFWORK_UPLOAD_DIR": "{DATA}/uploads",
+        "PROOFOFWORK_SECURE_COOKIES": "1",
+        "PROOFOFWORK_BASE_URL": "{BASE}/proofofwork"
+      }
+    },
+    "sitecare": {
+      "name": "SiteCare Desk",
+      "price_usd": 15,
+      "billing": "sitecare.billing",
+      "folder": "site care desk/sitecare-desk",
+      "package": "sitecare",
+      "module": "sitecare",
+      "callable": "create_app",
+      "price": "$15 per month",
+      "env": {
+        "APP_ENV": "production",
+        "TRUST_PROXY": "1",
+        "SESSION_COOKIE_SECURE": "1",
+        "DATABASE_PATH": "{DATA}/sitecare.sqlite3",
+        "UPLOAD_FOLDER": "{DATA}/uploads"
+      }
+    },
+    "leadrescue": {
+      "name": "LeadRescue",
+      "price_usd": 29,
+      "billing": "leadrescue.billing",
+      "folder": "LeadRescue/leadrescue",
+      "package": "leadrescue",
+      "module": "leadrescue",
+      "callable": "create_app",
+      "price": "$29 per month (founder price, locked for life for the first 10 roofers; regular $49)",
+      "env": {
+        "APP_ENV": "production",
+        "TRUST_PROXY": "1",
+        "DATABASE_URL": "sqlite:///{DATA}/leadrescue.db",
+        "DRAFT_PROVIDER": "template",
+        "TRIAL_DAYS": "14",
+        "AUTO_MIGRATE": "1",
+        "APP_BASE_URL": "{BASE}/leadrescue"
+      }
+    }
+  }
+}

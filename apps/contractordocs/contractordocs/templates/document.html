@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pill, due with context %}
+{% block title %}{{ doc.name }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('main.subcontractor_detail', sub_id=doc.subcontractor_id) }}">← {{ doc.subcontractor_name }}</a></p>
+<h1>{{ doc.name }} {{ pill(status) }}</h1>
+
+{% if doc.needs_review %}
+<div class="flash warning"><strong>Needs manual review.</strong> {{ doc.review_reason or 'Please confirm the details.' }}</div>
+{% endif %}
+
+<div class="grid2">
+  <div class="card">
+    <h2>Details</h2>
+    <dl>
+      <dt>Subcontractor</dt><dd>{{ doc.subcontractor_name }}</dd>
+      <dt>File</dt><dd><a href="{{ url_for('main.document_file', doc_id=doc.id) }}" target="_blank" rel="noopener">{{ doc.original_filename }}</a></dd>
+      <dt>Uploaded</dt><dd>{{ doc.uploaded_at.replace('T', ' ') }}</dd>
+      <dt>Type</dt><dd>{{ doc.doc_type or 'Unknown' }}</dd>
+      <dt>Expires</dt><dd>{% if doc.no_expiration %}Does not expire{% elif doc.expiration_date %}{{ doc.expiration_date }} ({{ due(days_left) }}){% else %}Unknown{% endif %}</dd>
+      <dt>Read by</dt><dd>{{ {'ai': 'AI extraction', 'mock': 'Demo text rules'}.get(doc.extraction_source, doc.extraction_source or '–') }}</dd>
+      {% if doc.extraction_evidence %}<dt>Text found</dt><dd><q>{{ doc.extraction_evidence }}</q></dd>{% endif %}
+    </dl>
+  </div>
+  <div class="card">
+    <h2>{{ 'Review and confirm' if doc.needs_review else 'Edit details' }}</h2>
+    <form method="post" action="{{ url_for('main.document_detail', doc_id=doc.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Name <input name="name" value="{{ form.name }}" maxlength="120"></label>
+      <label>Document type
+        <select name="doc_type" required>
+          <option value="">Choose…</option>
+          {% for t in DOC_TYPES %}<option {{ 'selected' if form.doc_type == t }}>{{ t }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Expiration date <input type="date" name="expiration_date" value="{{ form.expiration_date or '' }}"></label>
+      <label class="check"><input type="checkbox" name="no_expiration" {{ 'checked' if form.no_expiration }}> This document does not expire</label>
+      <button class="primary">Save{{ ' & mark reviewed' if doc.needs_review }}</button>
+    </form>
+    <p class="muted small">Check the values against the original file. Automatically read values can be wrong.</p>
+  </div>
+</div>
+
+<form method="post" action="{{ url_for('main.document_delete', doc_id=doc.id) }}" onsubmit="return confirm('Delete this document? This cannot be undone.')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="danger">Delete document</button>
+</form>
+{% endblock %}

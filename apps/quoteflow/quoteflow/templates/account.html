@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Account — QuoteFlow AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Account settings</h1></div>
+
+<div class="card">
+  <h3>Email</h3>
+  <p class="muted" style="margin:0">{{ g.user.email }}</p>
+</div>
+
+<div class="card">
+  <h3>Plan & billing</h3>
+  <p class="muted small">See your quote usage, upgrade to Pro, or manage your subscription.</p>
+  <a href="{{ url_for('billing_page') }}" class="btn secondary">Plan & billing</a>
+</div>
+
+<form method="post" action="{{ url_for('account') }}" class="card" data-busy-label="Updating…">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h3>Change password</h3>
+  <div class="field">
+    <label for="current_password">Current password</label>
+    <input type="password" id="current_password" name="current_password" required autocomplete="current-password">
+  </div>
+  <div class="field">
+    <label for="new_password">New password</label>
+    <input type="password" id="new_password" name="new_password" required minlength="8" autocomplete="new-password">
+  </div>
+  <button class="btn" type="submit">Update password</button>
+</form>
+
+<div class="card">
+  <h3>Your data</h3>
+  <p class="muted small">Download everything stored for your account (business profile, quotes and usage) as a ZIP of CSV files.</p>
+  <a href="{{ url_for('export_data') }}" class="btn secondary">Export all my data</a>
+</div>
+
+<div class="card">
+  <h3>Delete my account</h3>
+  <p class="muted small">Permanently delete your account and all of its data.</p>
+  <a href="{{ url_for('delete_account') }}" class="btn secondary">Delete my account</a>
+</div>
+
+<div class="card">
+  <h3>Sign out</h3>
+  <form method="post" action="{{ url_for('logout') }}" style="margin:0">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn secondary" type="submit">Log out</button>
+  </form>
+</div>
+{% endblock %}

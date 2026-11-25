@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Jobs{% endblock %}
+{% block content %}
+<div class="spread">
+  <h1>Jobs</h1>
+  {% if is_manager() %}<a class="btn btn-primary" href="{{ url_for('core.job_form') }}">+ New job</a>{% endif %}
+</div>
+<div class="card">
+  {% if jobs %}
+  <ul class="list">
+    {% for j in jobs %}
+    <li class="spread">
+      <a class="item" href="{{ url_for('core.job_detail', job_id=j.id) }}">
+        <span><span class="item-title">{{ j.name }}</span><br><span class="small muted">{{ j.customer_name }}{% if j.status == 'closed' %} · Closed{% endif %}</span></span>
+      </a>
+      {% if j.status == 'active' %}
+      <a class="btn btn-sm btn-primary mt" href="{{ url_for('tickets.new_ticket', job_id=j.id) }}">+ Ticket</a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty">{% if is_manager() %}No jobs yet. Add a GC first, then create a job.{% else %}You aren't assigned to any jobs yet. Ask your office to add you to a job.{% endif %}</p>
+  {% endif %}
+</div>
+{% endblock %}

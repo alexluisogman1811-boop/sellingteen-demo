@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}QuoteFlow AI — Professional quotes for cleaning businesses{% endblock %}
+{% block body %}
+<main>
+  <section class="hero">
+    <div class="container">
+      <div>
+        <p class="eyebrow">For residential cleaning businesses</p>
+        <h1>Turn Cleaning Requests Into Professional Quotes in Seconds.</h1>
+        <p class="lead">AI helps cleaning businesses create accurate, professional customer replies without spending hours writing them.</p>
+        {% if config.BILLING_ENABLED %}
+        <a href="{{ url_for('signup') }}" class="btn lg">Start {{ config.TRIAL_DAYS }}-day free trial</a>
+        <p class="sub-cta">{{ config.TRIAL_DAYS }} days of Pro free, then {{ plans.free.quota }} free quotes every month or Pro for {{ config.PRICE_TEXT }}. No credit card needed. Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+        {% else %}
+        <a href="{{ url_for('signup') }}" class="btn lg">Try Free</a>
+        <p class="sub-cta">{{ plans.free.quota }} free quotes every month. No credit card needed. Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+        {% endif %}
+      </div>
+      <div class="card mock" aria-hidden="true">
+        <div class="section-label" style="margin-top:0">Customer request</div>
+        <p style="margin-bottom:14px">"Hi, I need a deep clean for a 3-bedroom, 2-bathroom house before we move out. How much would it cost?"</p>
+        <div class="mock-row"><span class="muted">Price (from your rules)</span><strong>$255</strong></div>
+        <div class="mock-row"><span class="muted">Estimated time</span><strong>About 5 hours</strong></div>
+        <div class="mock-row"><span class="muted">Suggested add-on</span><strong>Inside oven +$45</strong></div>
+        <div class="mock-reply">Hi Sarah, thanks for reaching out! A deep clean for your 3-bed, 2-bath home would be $255. That covers…</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="problem">
+    <div class="container">
+      <div class="section-head">
+        <h2>Quoting eats into your evenings</h2>
+        <p>Every inquiry needs a price worked out and a careful reply written. When you're busy cleaning, replies wait — and customers book whoever answers first.</p>
+      </div>
+      <div class="features">
+        <div class="card">
+          <h3>Inquiries arrive all day</h3>
+          <p>Texts, emails and website forms come in while you're on a job, then pile up for the evening.</p>
+        </div>
+        <div class="card">
+          <h3>Every quote is a little different</h3>
+          <p>Extra bedrooms, an oven, a deep clean instead of a regular one — working out the right price takes time.</p>
+        </div>
+        <div class="card">
+          <h3>Slow replies lose jobs</h3>
+          <p>A customer who waits a day for a price has often booked someone else.</p>
+        </div>
+        <div class="card">
+          <h3>Rushed replies look unprofessional</h3>
+          <p>Short, inconsistent answers make it harder to win customers who are comparing cleaners.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt" id="how-it-works">
+    <div class="container">
+      <div class="section-head">
+        <h2>How QuoteFlow AI solves it</h2>
+        <p>Set up your prices once. After that, every quote takes seconds — and you always check it before it's sent.</p>
+      </div>
+      <div class="steps">
+        <div class="card">
+          <div class="step-num">1</div>
+          <h3>Add your services and prices</h3>
+          <p>Basic and deep clean prices, extra rooms, add-ons, service area and hours. Takes about 3 minutes.</p>
+        </div>
+        <div class="card">
+          <div class="step-num">2</div>
+          <h3>Paste a customer's message</h3>
+          <p>From text, email, Facebook or your website form. However they phrase it.</p>
+        </div>
+        <div class="card">
+          <div class="step-num">3</div>
+          <h3>Review, copy, send</h3>
+          <p>Get the price with a breakdown, a time estimate and a friendly reply. Edit anything, then copy it.</p>
+        </div>
+      </div>
+      <div class="card trust">
+        <h3>Your prices are never made up</h3>
+        <p>Prices are calculated from the numbers you enter — the AI only works out what the customer asked for. If something's missing, like the number of bedrooms or a price you haven't set, QuoteFlow tells you instead of guessing.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="who">
+    <div class="container">
+      <div class="section-head">
+        <h2>Who it's for</h2>
+      </div>
+      <div class="features">
+        <div class="card">
+          <h3>A good fit</h3>
+          <ul class="checklist">
+            <li>Owner-operators and small teams (1–10 people)</li>
+            <li>Home cleaning, deep cleans and end-of-tenancy cleans</li>
+            <li>Businesses that price by job type, rooms and add-ons</li>
+            <li>Anyone who answers inquiries by text or email</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Not a fit yet</h3>
+          <ul class="checklist no">
+            <li>Large commercial contracts that need site visits</li>
+            <li>Pricing by square footage or hourly-only pricing</li>
+            <li>Sending replies automatically — you always review first</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt" id="example">
+    <div class="container">
+      <div class="section-head">
+        <h2>Example quote</h2>
+        <p>An example inquiry, quoted from a business's saved prices.</p>
+      </div>
+      <div class="example">
+        <div class="card customer">
+          <div class="section-label" style="margin-top:0">Customer message</div>
+          <p class="msg">Hello! Could you do a regular clean of my 3 bed, 1 bath house next week? Also inside the oven if possible. What would it cost?
+
+– Daniel</p>
+        </div>
+        <div class="card">
+          <div class="kv">
+            <div><div class="k">Price</div><div class="v">$195</div></div>
+            <div><div class="k">Estimated time</div><div class="v">About 3½ hours</div></div>
+          </div>
+          <ul class="breakdown">
+            <li>Basic cleaning (includes 2 bed, 1 bath): $120</li>
+            <li>1 extra bedroom × $30: $30</li>
+            <li>Inside oven: $45</li>
+          </ul>
+          <div class="section-label">Reply</div>
+          <p class="msg" style="margin:0">Hi Daniel,
+
+Thanks for getting in touch! We'd be happy to clean your home next week. For a regular clean of a 3-bedroom, 1-bathroom house including the inside of the oven, the price would be $195.
+
+Just so you know, we ask for 24 hours' notice if you need to reschedule. Which day works best for you?
+
+Best,
+Sparkle Home Cleaning</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="pricing">
+    <div class="container">
+      <div class="section-head">
+        <h2>Simple pricing</h2>
+        <p>Start free. Upgrade when QuoteFlow is saving you real time. Cancel anytime.</p>
+      </div>
+      <div class="pricing">
+        <div class="card">
+          <h3>Free</h3>
+          <div class="price">$0 <small>/ month</small></div>
+          <p class="muted small">For trying it out.</p>
+          <ul>
+            <li>{{ plans.free.quota }} quotes per month</li>
+            <li>Business profile and pricing rules</li>
+            <li>Edit, save and copy replies</li>
+          </ul>
+          <a href="{{ url_for('signup') }}" class="btn secondary block">Try Free</a>
+        </div>
+        <div class="card featured">
+          <h3>Pro</h3>
+          <div class="price">${{ plans.pro.price }} <small>/ month</small></div>
+          <p class="muted small">For busy cleaning businesses.</p>
+          <ul>
+            <li>{{ plans.pro.quota }} quotes per month</li>
+            <li>Everything in Free</li>
+            <li>Cancel anytime</li>
+          </ul>
+          <a href="{{ url_for('signup') }}" class="btn block">Start free, upgrade later</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section alt" id="faq">
+    <div class="container">
+      <div class="section-head"><h2>Questions</h2></div>
+      <div class="faq">
+        <details>
+          <summary>Will the AI make up prices?</summary>
+          <p>No. Prices are calculated from the pricing rules you set. If something is missing, the quote tells you what to add instead of guessing.</p>
+        </details>
+        <details>
+          <summary>Are replies sent to customers automatically?</summary>
+          <p>No. You review and edit every reply, then copy it into your email, text or messaging app.</p>
+        </details>
+        <details>
+          <summary>Do I need to install anything?</summary>
+          <p>No. QuoteFlow runs in your browser on your computer or phone.</p>
+        </details>
+        <details>
+          <summary>What happens when I use my free quotes?</summary>
+          <p>You can upgrade to Pro for {{ plans.pro.quota }} quotes a month, or wait until your free quotes reset on the 1st of next month. Your saved quotes stay available either way.</p>
+        </details>
+      </div>
+      <p class="muted" style="margin-top:16px">More answers in <a href="{{ url_for('help_page') }}">Help &amp; FAQ</a>.</p>
+    </div>
+  </section>
+
+  <section class="section final-cta">
+    <div class="container narrow">
+      <h2>Spend less time writing quotes and more time cleaning.</h2>
+      <p>Set up in about 3 minutes. {{ plans.free.quota }} free quotes every month.</p>
+      <a href="{{ url_for('signup') }}" class="btn lg">Try Free</a>
+    </div>
+  </section>
+</main>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Payment follow-ups for service businesses{% endblock %}
+{% block content %}
+<section class="landing-hero">
+  <p class="eyebrow">Payment follow-ups for small service businesses</p>
+  <h1>Who owes me money, and who should I follow up with today?</h1>
+  <p class="lead">PayRecover answers that one question. It keeps track of your unpaid invoices, tells you who is due a follow-up, and drafts a polite reminder you copy into your own text or email.</p>
+  <div class="actions landing-cta">
+    <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">{% if config.BILLING_ENABLED %}Start {{ config.TRIAL_DAYS }}-day free trial{% else %}Sign up{% endif %}</a>
+    <a class="btn" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+  {% if config.BILLING_ENABLED %}<p class="muted small">{{ config.TRIAL_DAYS }}-day free trial, then {{ config.PRICE_TEXT }}.</p>{% endif %}
+</section>
+
+<section>
+  <h2>Built for</h2>
+  <ul class="trades">
+    <li>Plumbers</li><li>Electricians</li><li>Cleaners</li><li>Landscapers</li><li>Handymen</li><li>Contractors</li>
+  </ul>
+</section>
+
+<section class="landing-grid">
+  <div class="card">
+    <h2>How it works</h2>
+    <ol class="steps">
+      <li>Add the invoices you've sent. “Due soon” and “Overdue” are worked out from the due date.</li>
+      <li>Each day, the dashboard shows who to follow up with.</li>
+      <li>Review the drafted reminder, copy it, send it yourself, then mark it as sent.</li>
+      <li>When a customer pays, mark the invoice as paid. Follow-ups stop and the amount is added to your recovered revenue.</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h2>Reminders, in order</h2>
+    <table class="schedule">
+      <thead><tr><th>Days overdue</th><th>Reminder</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Friendly reminder</td></tr>
+        <tr><td>4</td><td>Second reminder</td></tr>
+        <tr><td>8</td><td>Stronger reminder</td></tr>
+        <tr><td>14</td><td>Final reminder</td></tr>
+      </tbody>
+    </table>
+    <p class="hint">Reminders are at least 3 days apart. Drafts and paid invoices never get follow-ups.</p>
+  </div>
+</section>
+
+<section class="card landing-honest">
+  <h2>What it is not</h2>
+  <ul>
+    <li><strong>It never sends messages itself.</strong> It drafts a reminder, and you copy it into your own text or email.</li>
+    <li><strong>It is deliberately not a CRM or an accounting system.</strong></li>
+  </ul>
+</section>
+
+{% if config.BILLING_ENABLED %}
+<section class="card landing-price">
+  <h2>Price</h2>
+  <p class="plan-price">{{ config.PRICE_TEXT }}</p>
+  <p>after a {{ config.TRIAL_DAYS }}-day free trial.</p>
+  <p class="small muted">See the <a href="{{ url_for('legal.terms') }}">Terms</a>, <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a> and <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+  <div class="actions">
+    <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Sign up</a>
+    <a class="btn" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, movement_table %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Dashboard</h1>
+  <div class="actions">
+    <a class="btn btn-primary" href="{{ url_for('main.product_new') }}">+ New product</a>
+  </div>
+</div>
+
+{% if inconsistent %}
+<div class="flash flash-error">
+  Stock ledger check failed for {{ inconsistent|length }} product(s):
+  {% for p in inconsistent %}{{ p.sku }} (on hand {{ p.quantity }}, history total {{ p.ledger_quantity }}){{ ', ' if not loop.last }}{% endfor %}.
+</div>
+{% endif %}
+
+<section class="stats">
+  <a class="stat" href="{{ url_for('main.product_list') }}">
+    <span class="stat-label">Active products</span>
+    <span class="stat-value" id="stat-active">{{ stats.active }}</span>
+  </a>
+  <a class="stat stat-low" href="{{ url_for('main.product_list', status='low') }}">
+    <span class="stat-label">Low stock</span>
+    <span class="stat-value" id="stat-low">{{ stats.low_count }}</span>
+  </a>
+  <a class="stat stat-out" href="{{ url_for('main.product_list', status='out') }}">
+    <span class="stat-label">Out of stock</span>
+    <span class="stat-value" id="stat-out">{{ stats.out_count }}</span>
+  </a>
+  <div class="stat">
+    <span class="stat-label">Units on hand · value at cost</span>
+    <span class="stat-value stat-value-sm">{{ '{:,}'.format(stats.units) }} · {{ stats.value_cents|money }}</span>
+  </div>
+</section>
+
+{% if stats.active == 0 %}
+<div class="card">
+  <h2>Get started</h2>
+  <p>Add your first product, <a href="{{ url_for('main.import_upload') }}">import a CSV</a>,
+     or <a href="{{ url_for('main.demo') }}">load the demo dataset</a> to explore.</p>
+</div>
+{% endif %}
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head">
+      <h2>Needs reordering ({{ attention|length }})</h2>
+      <a href="{{ url_for('main.reorder') }}">Printable list →</a>
+    </div>
+    {% if attention %}
+      <ul class="plain-list">
+      {% for p in (attention|sort(attribute='quantity'))[:8] %}
+        <li class="alert-item alert-{{ p.status }}">
+          <a href="{{ url_for('main.product_detail', product_id=p.id) }}">{{ p.sku }}</a> {{ p.name }}
+          <span class="right">{{ p.quantity }} / {{ p.reorder_threshold }} {{ status_badge(p.status) }}</span>
+        </li>
+      {% endfor %}
+      </ul>
+      {% if attention|length > 8 %}
+        <p class="small"><a href="{{ url_for('main.product_list', status='attention') }}">+ {{ attention|length - 8 }} more →</a></p>
+      {% endif %}
+    {% else %}
+      <p class="empty">Nothing is at or below its reorder threshold.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Recent stock movements</h2>
+      <a href="{{ url_for('main.movement_list') }}">Full history →</a>
+    </div>
+    {{ movement_table(recent, compact=true) }}
+  </section>
+</div>
+
+{% if demo.products %}
+<p class="muted small">Demo data is loaded ({{ demo.products }} demo products, SKUs start with DEMO-). <a href="{{ url_for('main.demo') }}">Manage demo data</a>.</p>
+{% endif %}
+{% endblock %}

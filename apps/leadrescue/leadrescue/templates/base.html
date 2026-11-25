@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}LeadRescue{% endblock %} · LeadRescue</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body>
+{% if current_user.is_authenticated %}
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="{{ url_for('main.dashboard') }}"><span class="brand-mark">LR</span> LeadRescue</a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mainnav">Menu</button>
+    <nav id="mainnav" class="mainnav">
+      {% set ep = request.endpoint or '' %}
+      <a href="{{ url_for('main.dashboard') }}" class="{{ 'active' if ep == 'main.dashboard' }}">Dashboard</a>
+      <a href="{{ url_for('main.queue') }}" class="{{ 'active' if ep == 'main.queue' }}">Follow-ups</a>
+      <a href="{{ url_for('leads.index') }}" class="{{ 'active' if ep.startswith('leads.') }}">Leads</a>
+      <a href="{{ url_for('workspace.team') }}" class="{{ 'active' if ep.startswith('workspace.team') }}">Team</a>
+      <a href="{{ url_for('workspace.settings') }}" class="{{ 'active' if ep == 'workspace.settings' }}">Settings</a>
+      <div class="nav-right">
+        {% if all_memberships|length > 1 %}
+        <form method="post" action="{{ url_for('workspace.switch') }}" class="switcher">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label class="sr-only" for="business_id">Workspace</label>
+          <select name="business_id" id="business_id" data-autosubmit>
+            {% for m in all_memberships %}
+            <option value="{{ m.business_id }}" {{ 'selected' if active_business and m.business_id == active_business.id }}>{{ m.business.name }}</option>
+            {% endfor %}
+          </select>
+        </form>
+        {% elif active_business %}
+        <span class="biz-name">{{ active_business.name }}</span>
+        {% endif %}
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="link-btn" type="submit">Log out</button>
+        </form>
+      </div>
+    </nav>
+  </div>
+</header>
+{% if active_business and active_business.is_demo %}
+<div class="demo-banner">DEMO WORKSPACE: all data here is fictional sample data.</div>
+{% endif %}
+{% if active_business and g.access and g.access.state == 'trial' and request.endpoint != 'billing.subscribe' %}
+<div class="trial-bar" role="note">
+  <div class="trial-bar-inner">
+    <span><strong>Free trial:</strong> {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.</span>
+    {% if is_owner %}<a class="trial-bar-link" href="{{ url_for('billing.subscribe') }}">Subscribe</a>
+    {% else %}<span class="muted">Your workspace owner can subscribe.</span>{% endif %}
+  </div>
+</div>
+{% endif %}
+{% endif %}
+
+<main class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flashes">
+    {% for category, message in messages %}
+    <div class="flash flash-{{ category }}" role="status">{{ message }}</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="site-footer">
+  <div class="site-footer-inner">
+    <span>LeadRescue · follow-up tracking for roofing contractors{% if config.LEGAL_ENTITY_NAME %} · sold by {{ config.LEGAL_ENTITY_NAME }}{% endif %}</span>
+    <nav aria-label="Legal">
+      <a href="{{ url_for('main.terms') }}">Terms</a>
+      <a href="{{ url_for('main.privacy') }}">Privacy</a>
+      <a href="{{ url_for('main.refunds') }}">Refunds</a>
+      {% if active_business and config.BILLING_ENABLED and not active_business.is_demo and is_owner %}<a href="{{ url_for('billing.subscribe') }}">Subscription</a>{% endif %}
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+<div class="card narrow">
+  <h2>Required documents</h2>
+  <p class="muted">Every subcontractor is checked for these document types. A required type with no upload shows as Missing.</p>
+  <form method="post" action="{{ url_for('main.settings') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% for t in DOC_TYPES %}
+    <label class="check"><input type="checkbox" name="required_types" value="{{ t }}" {{ 'checked' if t in required }}> {{ t }}</label>
+    {% endfor %}
+    <button class="primary">Save</button>
+  </form>
+</div>
+{% endblock %}

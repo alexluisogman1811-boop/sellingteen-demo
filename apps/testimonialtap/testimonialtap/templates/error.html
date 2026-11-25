@@ -1,0 +1,13 @@
+{% extends "public/base_public.html" if public else "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="card narrow{% if public %} public-card center{% endif %}">
+  <h1>{% if code != 500 %}{{ code }} · {% endif %}{{ title }}</h1>
+  {% if code == 404 %}
+    <p>This page doesn't exist, or the link is no longer active.{% if public %} If someone sent you this link, please ask them for a new one.{% endif %}</p>
+  {% elif description %}
+    <p>{{ description }}</p>
+  {% endif %}
+  {% if not public and is_owner() %}<p><a href="{{ url_for('admin.dashboard') }}">Back to dashboard</a></p>{% endif %}
+</section>
+{% endblock %}

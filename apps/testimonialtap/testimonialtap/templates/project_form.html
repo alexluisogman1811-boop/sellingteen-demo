@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error %}
+{% block title %}{{ 'Edit project' if project else 'New project' }}{% endblock %}
+{% block content %}
+<section class="card narrow-wide">
+  <h1>{{ 'Edit project' if project else 'New project' }}</h1>
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label for="name">Project or campaign name *</label>
+    <input id="name" name="name" required maxlength="{{ limits.project_name }}" value="{{ values.get('project_name', '') }}"
+           placeholder="e.g. Website redesign 2026">
+    {{ field_error(errors, 'project_name') }}
+
+    <label for="client_name">Client name <span class="muted">(optional, private)</span></label>
+    <input id="client_name" name="client_name" maxlength="{{ limits.client_name }}" value="{{ values.get('client_name', '') }}">
+    {{ field_error(errors, 'client_name') }}
+
+    <label for="description">Private notes <span class="muted">(optional, only you see this)</span></label>
+    <textarea id="description" name="description" rows="3" maxlength="{{ limits.description }}">{{ values.get('description', '') }}</textarea>
+    {{ field_error(errors, 'description') }}
+
+    <label for="intro_message">Message shown on the submission form <span class="muted">(optional, public)</span></label>
+    <textarea id="intro_message" name="intro_message" rows="3" maxlength="{{ limits.intro_message }}"
+              placeholder="Thanks for working with me! I'd love a few words about the project.">{{ values.get('intro_message', '') }}</textarea>
+    {{ field_error(errors, 'intro_message') }}
+
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">{{ 'Save changes' if project else 'Create project' }}</button>
+      <a class="btn" href="{{ url_for('admin.project_detail', project_id=project.id) if project else url_for('admin.projects') }}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

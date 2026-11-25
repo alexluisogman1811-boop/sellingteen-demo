@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}Create account{% endblock %}
+{% block main_class %}narrow auth-page{% endblock %}
+{% block content %}
+<div class="auth-brand"><span class="brand-mark">SE</span> SignedExtra</div>
+<div class="card">
+  <h1>Create your company account</h1>
+  <p class="muted small">You'll be the owner. You can invite office staff and foremen afterwards.</p>
+  <form method="post" novalidate>
+    {{ csrf() }}
+    {{ field(form, "company_name", "Company name", required=True, attrs='autocomplete="organization"') }}
+    {{ field(form, "name", "Your name", required=True, attrs='autocomplete="name"') }}
+    {{ field(form, "email", "Email", type="email", required=True, attrs='autocomplete="email"') }}
+    {{ field(form, "password", "Password", type="password", required=True, hint="At least 10 characters.", attrs='autocomplete="new-password"') }}
+    <button class="btn btn-primary btn-block" type="submit">Create account</button>
+  </form>
+  <p class="small muted mt">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a>.</p>
+</div>
+{% endblock %}

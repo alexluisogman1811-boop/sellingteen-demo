@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service{% endblock %}
+{% block content %}
+<article class="panel legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>1. Who we are</h2>
+  <p>ProofOfWork ("the service") is provided by {{ operator }} ("we", "us").{% if support_email %} You can contact us at {{ support_email }}.{% endif %}</p>
+
+  <h2>2. What the service does</h2>
+  <p>ProofOfWork helps cleaning, repair and maintenance businesses record completed work: checklists, before-and-after photos, notes and the reasons any task was not completed. It produces completion reports you can print or share with your customers through a link you can revoke.</p>
+  <p><strong>Reports only contain what your team recorded.</strong> ProofOfWork does not use AI and does not check, certify or verify the work, its location or its timing. A report is not a digital signature, legal certificate or customer approval.</p>
+
+  <h2>3. Your account</h2>
+  <p>Each business has its own account. The person who signs up is its first manager and can add managers and workers. You must give a valid email address, keep passwords private, and only give access to people who work for your business. You are responsible for what happens in your account. You must be allowed to enter into this agreement where you live.</p>
+
+  <h2>4. Your responsibilities</h2>
+  <ul>
+    <li>Only record jobs and take photos of properties where you have your customer's permission to work.</li>
+    <li>Make sure what your team records is accurate. Don't use reports to claim work that wasn't done.</li>
+    <li>Only share report links with the people who should see them. Anyone with an active link can view that report, so revoke links you no longer need.</li>
+    <li>Do not use the service to break any law.</li>
+  </ul>
+
+  <h2>5. Free trial and subscription</h2>
+  <p>New accounts get a free trial of {{ trial_days }} days. After the trial, using the service requires a paid subscription ({{ price }} per business), billed through our payment provider. Subscriptions renew each month until you cancel. You can cancel at any time; access continues until the end of the period you paid for. See the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+  <p>If your trial or subscription ends, your data is kept and report links you already shared keep working, but your team can't open or update jobs until you subscribe.</p>
+
+  <h2>6. Your data</h2>
+  <p>Your jobs, customers, photos and reports belong to you. We handle them as described in the <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>. If your account ends, we may delete its data after 90 days; shared report links stop working once the data is deleted.</p>
+
+  <h2>7. Availability and changes</h2>
+  <p>We work to keep the service available but cannot promise it will always be online or error-free. Keep your own copies of reports you need (for example, print them to PDF). We may change features or these terms; we will update the date above and, for important changes, tell you by email or in the app.</p>
+
+  <h2>8. Limitation of liability</h2>
+  <p>The service is provided "as is". To the extent the law allows, we are not liable for indirect losses, lost profits, disputes between you and your customers, or the content your team records. Our total liability is limited to the amount you paid us in the last 3 months.</p>
+
+  <h2>9. Ending the agreement</h2>
+  <p>You can stop using the service at any time, and a manager can delete the business account from the Account page. We may suspend accounts that break these terms.</p>
+  <p class="muted small">A parent/guardian must still decide: the governing law and the business address for these terms.</p>
+</article>
+{% endblock %}

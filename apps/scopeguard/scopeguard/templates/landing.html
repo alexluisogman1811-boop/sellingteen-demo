@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Scope records, change requests and client approvals for freelancers{% endblock %}
+{% block content %}
+{# Every claim on this page is stated in the README. #}
+<section class="hero">
+  <h1>Write down what was agreed. Keep every version. Know who approved what.</h1>
+  <p class="lead">ScopeGuard helps freelancers and studios record the agreed scope with a client, keep every version of it, track revision requests and out-of-scope change requests, and keep a clear record of who approved what, when, and how.</p>
+  <div class="actions">
+    <a class="btn primary" href="{{ url_for('auth.signup') }}">{% if billing %}Start your {{ trial_days }}-day free trial{% else %}Create an account{% endif %}</a>
+    <a class="btn" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+</section>
+
+<section class="feature-grid">
+  <div class="card">
+    <h2>Scope you can point back to</h2>
+    <p>Deliverables, exclusions, milestones, deadlines and revision allowances. Publishing a version freezes it as a timestamped snapshot that is never edited; changes become a new version, with a diff against the last one.</p>
+  </div>
+  <div class="card">
+    <h2>Change requests with a clear status</h2>
+    <p>Each request records what will change, the reason, and an optional time and price impact. ScopeGuard never fills those in for you. A request moves from draft to submitted to approved or rejected, and once submitted it is frozen.</p>
+  </div>
+  <div class="card">
+    <h2>A review page for your client</h2>
+    <p>Send a private link issued to one named person, either as an approval link or as view-only. They review the scope on any phone or computer, approve it or ask for changes, and approve or reject change requests. No client account needed.</p>
+  </div>
+  <div class="card">
+    <h2>Revisions and history</h2>
+    <p>Revision requests are counted against each deliverable's allowance, with a warning when it's used up. Every decision and change goes into an append-only history.</p>
+  </div>
+  <div class="card">
+    <h2>Printable record and exports</h2>
+    <p>A printable summary shows the original agreed scope next to approved changes. Export everything as JSON or CSV.</p>
+  </div>
+  <div class="card">
+    <h2>Messages you send yourself</h2>
+    <p>Editable message templates are filled in per project for you to copy. ScopeGuard never sends email.</p>
+  </div>
+</section>
+
+<section class="card notice-card">
+  <h2>What an approval is, and isn't</h2>
+  <p>Client approvals are typed-name acknowledgements, recorded with a timestamp, IP address and browser. They are <strong>not</strong> handwritten or certified electronic signatures, and every record is labelled that way. An approval click is a record of agreement, not a legal electronic signature. ScopeGuard documents agreements; it is not legal advice and does not guarantee that an agreement or approval is legally enforceable.</p>
+</section>
+
+{% if billing %}
+<section class="card plan" id="pricing">
+  <h2>Pricing</h2>
+  <p class="plan-price">{{ price }}</p>
+  <p>Every new account starts with a {{ trial_days }}-day free trial with every feature. Your clients' review links keep working even if your trial ends.</p>
+  <a class="btn primary" href="{{ url_for('auth.signup') }}">Start free trial</a>
+  <p class="muted"><small>See the <a href="{{ url_for('legal.terms') }}">Terms</a>, <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a> and <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</small></p>
+</section>
+{% endif %}
+{% endblock %}

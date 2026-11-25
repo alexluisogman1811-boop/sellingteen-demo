@@ -1,0 +1,42 @@
+{% macro badge(status) -%}
+<span class="badge badge-{{ status }}">{{ STATUS_LABELS[status] }}</span>
+{%- endmacro %}
+
+{% macro field_error(errors, name) -%}
+{% if errors.get(name) %}<p class="field-error" id="{{ name }}-error">{{ errors[name] }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro invalid(errors, name) -%}
+{% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}
+{%- endmacro %}
+
+{% macro csrf() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{% macro empty(title, text, href=None, cta=None) -%}
+<div class="empty">
+  <h3>{{ title }}</h3>
+  <p>{{ text }}</p>
+  {% if href %}<a class="btn btn-primary" href="{{ href }}">{{ cta }}</a>{% endif %}
+</div>
+{%- endmacro %}
+
+{# One invoice row used by the dashboard, invoice list and customer page. #}
+{% macro invoice_row(inv, show_customer=True) -%}
+<li>
+  <a class="row" href="{{ url_for('invoices.detail', invoice_id=inv.id) }}">
+    <span class="row-main">
+      <strong>{{ inv.number }}{% if show_customer %} · {{ inv.customer_name }}{% endif %}</strong>
+      <span class="muted small">
+        {%- if inv.status == 'paid' %}Paid {{ inv.paid_at | date }}
+        {%- elif inv.status == 'overdue' %}<span class="text-overdue">{{ inv | due_relative }}</span> · was due {{ inv.due_date | date }}
+        {%- elif inv.status == 'due_soon' %}<span class="text-soon">{{ inv | due_relative }}</span> · {{ inv.due_date | date }}
+        {%- else %}Due {{ inv.due_date | date }}{% endif %}
+        {%- if inv.status != 'paid' %} · {% if inv.last_followup_at %}last follow-up {{ inv.last_followup_at | date }}{% else %}no follow-ups yet{% endif %}{% endif %}
+      </span>
+    </span>
+    <span class="row-side"><strong class="amount">{{ inv.amount_cents | money_for_user }}</strong>{{ badge(inv.status) }}</span>
+  </a>
+</li>
+{%- endmacro %}

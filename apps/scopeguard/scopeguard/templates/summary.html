@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, scope_view, record, cr_sections, baseline_view %}
+{% block title %}Summary · {{ p.name }}{% endblock %}
+{% block content %}
+<div class="actions no-print">
+  <a class="btn" href="{{ url_for('main.project', project_id=p.id) }}">← Back</a>
+  <button class="btn primary" type="button" data-print>Print / save as PDF</button>
+</div>
+
+<header class="doc-head">
+  <h1>Project scope record: {{ p.name }}</h1>
+  <table class="doc-meta">
+    <tr><th>Client</th><td>{{ p.client_name }}{% if p.client_company %} ({{ p.client_company }}){% endif %}</td>
+        <th>Prepared by</th><td>{{ freelancer }}</td></tr>
+    <tr><th>Project status</th><td>{{ p.status|replace('_', ' ')|capitalize }}</td>
+        <th>Generated</th><td>{{ generated|ts }}</td></tr>
+    <tr><th>Start</th><td>{{ p.start_date or '—' }}</td><th>Deadline</th><td>{{ p.deadline or '—' }}</td></tr>
+  </table>
+</header>
+
+<section class="card">
+  <h2>Agreement status</h2>
+  {% if approved_v %}
+    <p class="agreement ok"><strong>Client-approved scope: version {{ approved_v.version_no }}</strong> (published {{ approved_v.created_at|ts }}).<br>
+      {{ DECISION_LABELS[approved_dec.decision] }} by {{ approved_dec.approver_name }}{% if approved_dec.approver_email %} &lt;{{ approved_dec.approver_email }}&gt;{% endif %} on {{ approved_dec.created_at|ts }}.<br>
+      <em>How it was recorded: {{ METHOD_LABELS[approved_dec.method] }}</em></p>
+  {% else %}
+    <p class="agreement warn"><strong>No scope version has been approved by the client.</strong></p>
+  {% endif %}
+  {% if latest and (not approved_v or approved_v.id != latest.id) %}
+    <p class="agreement warn">Latest published version {{ latest.version_no }} ({{ latest.created_at|ts }}) is
+      <strong>{% if latest_dec %}{{ DECISION_LABELS[latest_dec.decision]|lower }}{% else %}awaiting the client's decision{% endif %}</strong>{% if latest_dec %} by {{ latest_dec.approver_name }} on {{ latest_dec.created_at|ts }}{% endif %}.
+      It is not part of the approved agreement.</p>
+  {% endif %}
+  {% if open_items %}<p><strong>Open items:</strong> {{ open_items|join('; ') }}.</p>{% endif %}
+</section>
+
+{{ baseline_view(baseline, p) }}
+
+{% if shown %}
+<h2 class="section-title">{% if approved_v %}Approved scope (version {{ shown.version_no }}){% else %}Latest published scope (version {{ shown.version_no }}, not yet approved){% endif %}</h2>
+{% if scope.terms.description %}<p>{{ scope.terms.description }}</p>{% endif %}
+<p class="muted">{{ scope.terms.revision_allowance }} revision round(s) per deliverable unless stated otherwise.</p>
+{{ scope_view(scope) }}
+{% else %}
+<p class="notice warn">No scope version has been published yet.</p>
+{% endif %}
+
+<section class="card">
+  <h2>Scope version history</h2>
+  <table>
+    <thead><tr><th>Version</th><th>Published</th><th>Note</th><th>Client decision</th></tr></thead>
+    <tbody>{% for v, d in versions %}<tr><td>v{{ v.version_no }}</td><td>{{ v.created_at|ts }}</td><td>{{ v.change_note or '' }}</td>
+      <td>{% if d %}{{ DECISION_LABELS[d.decision] }}, {{ d.approver_name }}, {{ d.created_at|ts }}{% else %}None recorded{% endif %}</td></tr>
+    {% else %}<tr><td colspan="4" class="empty">None.</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Change requests</h2>
+  {{ cr_sections(crs, p, link=False, show_drafts=False) }}
+  <p class="muted"><small>Drafts that were never sent to the client are not included.</small></p>
+</section>
+
+<section class="card">
+  <h2>Revisions</h2>
+  <table>
+    <thead><tr><th>Deliverable</th><th>Used / included</th></tr></thead>
+    <tbody>
+    {% for d in (scope.deliverables if scope else []) %}{% set u = usage[d.id] %}<tr><td>{{ d.title }}</td><td class="{{ 'over' if u.over }}">{{ u.used }} / {{ u.allowance }}{% if u.over %} (over allowance){% endif %}</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>Decision records</h2>
+  {% for a in data.approvals|reverse %}
+    {{ record(a) }}
+    <small class="muted">Subject: {% if a.subject_type == 'scope_version' %}scope version #{{ a.scope_version_id }}{% else %}change request #{{ a.change_request_id }}{% endif %}</small>
+  {% else %}<p class="empty">None recorded.</p>{% endfor %}
+</section>
+<p class="doc-foot">This summary was generated from ScopeGuard records. Approvals are typed-name acknowledgements, not handwritten or certified electronic signatures, and each is labelled with how it was captured. {{ data.notice }}</p>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}{{ customer.name }}{% endblock %}
+{% block content %}
+<div class="spread">
+  <div>
+    <p class="small muted"><a href="{{ url_for('core.customers') }}">GCs</a></p>
+    <h1>{{ customer.name }}</h1>
+    {% if customer.address %}<p class="muted">{{ customer.address }}</p>{% endif %}
+  </div>
+  <div class="row">
+    <a class="btn btn-secondary" href="{{ url_for('core.customer_form', customer_id=customer.id) }}">Edit</a>
+    <a class="btn btn-primary" href="{{ url_for('core.job_form', customer_id=customer.id) }}">+ New job</a>
+  </div>
+</div>
+{% if customer.notes %}<div class="card"><h2>Contract notes</h2><p>{{ customer.notes }}</p></div>{% endif %}
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2>Contacts</h2>
+    {% if contacts %}
+    <ul class="list">
+      {% for c in contacts %}
+      <li class="spread">
+        <div class="mt">
+          <strong>{{ c.name }}</strong>{% if c.title %} · {{ c.title }}{% endif %}<br>
+          <span class="small muted">{{ c.email }}{% if c.phone %} · {{ c.phone }}{% endif %}</span>
+          {% if c.receives_notices %}<br><span class="badge badge-sent">Receives notices</span>{% endif %}
+        </div>
+        <form method="post" action="{{ url_for('core.delete_contact', customer_id=customer.id, contact_id=c.id) }}" data-confirm="Remove this contact?">
+          {{ csrf() }}<button class="btn btn-secondary btn-sm" type="submit">Remove</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">No contacts yet. Add at least one person who should receive written notices.</p>
+    {% endif %}
+  </div>
+  <div class="card">
+    <h2>Add contact</h2>
+    <form method="post" action="{{ url_for('core.add_contact', customer_id=customer.id) }}" novalidate>
+      {{ csrf() }}
+      {{ field(form, "name", "Name", required=True) }}
+      {{ field(form, "title", "Title", hint="Superintendent, project manager…") }}
+      {{ field(form, "email", "Email", type="email") }}
+      {{ field(form, "phone", "Phone", type="tel") }}
+      <label class="checkbox"><input type="checkbox" name="receives_notices" checked> Send written notices to this contact</label>
+      <button class="btn btn-primary mt" type="submit">Add contact</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Jobs</h2>
+  {% if jobs %}
+  <ul class="list">
+    {% for j in jobs %}
+    <li><a class="item" href="{{ url_for('core.job_detail', job_id=j.id) }}"><span class="item-title">{{ j.name }}</span><span class="badge">{{ j.status|capitalize }}</span></a></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">No jobs for this GC yet.</p>{% endif %}
+</div>
+{% endblock %}

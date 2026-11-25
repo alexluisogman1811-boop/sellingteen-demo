@@ -1,0 +1,11 @@
+<div class="pricing">
+  {% for plan in PLANS %}
+  <div class="plan{% if plan.highlight %} plan-hl{% endif %}">
+    <h3>{{ plan.name }}</h3>
+    <p class="plan-price">{{ plan.price }}<span> {{ plan.period }}</span></p>
+    <ul class="checklist">{% for f in plan.features %}<li>{{ f }}</li>{% endfor %}</ul>
+    <a class="btn btn-block{% if not plan.highlight %} btn-ghost{% endif %}" href="{{ url_for('auth.signup') }}">{{ plan.cta }}</a>
+  </div>
+  {% endfor %}
+</div>
+<p class="muted small center">Every new account starts with a {{ config.TRIAL_DAYS }}-day free trial of Pro, no card needed. After it, keep Pro for {{ config.PRICE_TEXT }} or stay on Free: your jobs and customer links keep working either way.</p>

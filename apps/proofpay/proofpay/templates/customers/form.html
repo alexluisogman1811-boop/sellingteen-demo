@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}{{ 'Edit customer' if customer else 'Add customer' }} · ProofPay{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>{{ 'Edit customer' if customer else 'Add customer' }}</h1>
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {{ field('name', 'Name', form.name, errors, required=true, attrs='maxlength="120"') }}
+    {{ field('email', 'Email', form.email, errors, type='email') }}
+    {{ field('phone', 'Phone', form.phone, errors, type='tel', attrs='maxlength="40"') }}
+    <div class="btn-row">
+      <button class="btn" type="submit">Save</button>
+      <a class="btn btn-ghost" href="{{ url_for('customers.customer_detail', ref=customer.ref) if customer else url_for('customers.list_customers') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

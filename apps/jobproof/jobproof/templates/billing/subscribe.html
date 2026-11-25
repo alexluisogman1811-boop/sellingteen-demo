@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Subscription – JobProof AI{% endblock %}
+{% block container_class %}medium{% endblock %}
+{% block content %}
+<section class="card">
+  {% if access.state == 'ended' %}
+    <h1>{{ 'Your subscription has ended' if access.was_paid else 'Your free trial has ended' }}</h1>
+    <p class="muted">Your jobs, photos and reports are saved, and report links you already shared keep working for your customers. Subscribe to keep using JobProof AI.</p>
+  {% elif access.state == 'paid' %}
+    <h1>You're subscribed</h1>
+    <p class="muted">Your account is active until {{ access.until.isoformat()|date }}. Thank you!</p>
+  {% else %}
+    <h1>Subscribe to JobProof AI</h1>
+    <p class="muted">{% if access.days_left is defined %}You have {{ access.days_left }} day{{ '' if access.days_left == 1 else 's' }} left in your free trial.{% endif %} Subscribe any time to keep going after it.</p>
+  {% endif %}
+
+  {% if access.state != 'paid' %}
+  <div class="plan">
+    <p class="plan-price">{{ price }}</p>
+    <ul class="plan-list">
+      <li>Unlimited jobs, photos and customer reports</li>
+      <li>Share links and PDF downloads for your customers</li>
+      <li>Your business name and logo on every report</li>
+    </ul>
+    {% if payment_link %}
+      <a class="btn btn-block" href="{{ payment_link }}" target="_blank" rel="noopener noreferrer">Subscribe now</a>
+      <p class="muted small">You pay on our payment provider's secure page. Use the same email as your account: <strong>{{ g.user.email }}</strong>. Your account is switched on within 24 hours of payment.</p>
+    {% else %}
+      <p class="plan-notice">Online payment is opening soon.{% if support_email %} To subscribe now, email <strong>{{ support_email }}</strong> from <strong>{{ g.user.email }}</strong>.{% endif %}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <p class="muted small">Questions? {% if support_email %}Email {{ support_email }}.{% endif %} See our <a href="{{ url_for('legal.terms') }}">Terms</a> and <a href="{{ url_for('legal.refunds') }}">Refund policy</a>.</p>
+  {% if access.state != 'ended' %}<a class="btn btn-secondary" href="{{ url_for('dashboard.index') }}">Back to dashboard</a>{% endif %}
+</section>
+{% endblock %}

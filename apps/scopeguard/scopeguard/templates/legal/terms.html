@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>1. Who we are</h2>
+  <p>ScopeGuard ("the service") is provided by {{ operator }} ("we", "us").{% if support_email %} You can contact us at {{ support_email }}.{% endif %}</p>
+
+  <h2>2. What the service does</h2>
+  <p>ScopeGuard helps you write down the scope you agreed with a client, keep every version of it, track revision requests and change requests, and keep a record of who approved what, when and how. It gives you review links to send to your clients and message templates for you to copy. <strong>ScopeGuard never sends messages or emails for you.</strong></p>
+
+  <h2>3. ScopeGuard is not legal advice</h2>
+  <p><strong>ScopeGuard is not legal advice and is not a law firm or a substitute for one.</strong> It helps you document what was agreed. It does not tell you what your contracts should say, and it does not guarantee that any agreement, scope, change request or approval recorded in it is legally binding or enforceable. If you need legal advice, ask a qualified lawyer where you work.</p>
+
+  <h2>4. Approvals are typed-name acknowledgements, not electronic signatures</h2>
+  <p>An approval click is a record of agreement, not a legal electronic signature. When your client approves something on a review link, ScopeGuard records the name they typed, a confirmation statement, the date and time, their IP address and their browser. This is a <strong>typed-name acknowledgement, not a handwritten, certified or qualified electronic signature</strong>, and ScopeGuard does not verify anyone's identity. Anyone holding an approval link can act as the person it was issued to, so send each link only to that person. Decisions you record yourself are labelled as recorded by you, and you must only record decisions your client really made.</p>
+
+  <h2>5. Your account</h2>
+  <p>You must give a valid email address and keep your password private. You are responsible for what happens in your account. You must be allowed to enter into this agreement where you live.</p>
+
+  <h2>6. Your responsibilities</h2>
+  <ul>
+    <li>Only add clients you have a real business relationship with, and only enter information you are allowed to keep.</li>
+    <li>Record decisions truthfully. Do not use the service to fake an approval, mislead a client, or break any law.</li>
+    <li>Keep your own copies of important agreements. You can export your data at any time.</li>
+  </ul>
+
+  <h2>7. Free trial and subscription</h2>
+  <p>New accounts get a free trial of {{ trial_days }} days. After the trial, using the service requires a paid subscription ({{ price }}), billed through our payment provider. Subscriptions renew each month until you cancel. You can cancel at any time; access continues until the end of the period you paid for. Review links you have already sent keep working for your clients after a trial or subscription ends. See the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+
+  <h2>8. Your data</h2>
+  <p>Your clients, projects and records belong to you. We handle them as described in the <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>. If your account ends, we may delete its data after 90 days.</p>
+
+  <h2>9. Availability and changes</h2>
+  <p>We work to keep the service available but cannot promise it will always be online or error-free. We may change features or these terms; we will update the date above and, for important changes, tell you by email or in the app.</p>
+
+  <h2>10. Limitation of liability</h2>
+  <p>The service is provided "as is". To the extent the law allows, we are not liable for indirect losses, lost profits, disputes between you and your clients, or the outcome of any agreement you record. Our total liability is limited to the amount you paid us in the last 3 months.</p>
+
+  <h2>11. Ending the agreement</h2>
+  <p>You can stop using the service at any time. We may suspend accounts that break these terms.</p>
+</article>
+{% endblock %}

@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, status_badge, demo_badge, follow_badge %}
+{% block title %}{{ lead.full_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="muted small" href="{{ url_for('leads.index') }}">← All leads</a>
+    <h1>{{ lead.full_name }} {{ demo_badge(lead) }}</h1>
+    <div>{{ status_badge(lead) }} {{ follow_badge(lead, today) }}</div>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('leads.edit', lead_id=lead.id) }}">Edit</a>
+    {% if is_admin %}
+    <form method="post" action="{{ url_for('leads.delete', lead_id=lead.id) }}" class="inline" data-confirm="Delete this lead and its whole history? This can't be undone.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-danger" type="submit">Delete</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid-2 detail-grid">
+  <div>
+    <section class="card">
+      <h2>Customer</h2>
+      <dl class="dl">
+        <dt>Phone</dt><dd>{% if lead.phone %}<a href="tel:{{ lead.phone }}">{{ lead.phone }}</a>{% else %}—{% endif %}</dd>
+        <dt>Email</dt><dd>{% if lead.email %}<a href="mailto:{{ lead.email }}">{{ lead.email }}</a>{% else %}—{% endif %}</dd>
+        <dt>Address</dt><dd>{{ lead.address or '—' }}{% if lead.city %}<br>{{ lead.city }}{% if lead.state %}, {{ lead.state }}{% endif %} {{ lead.zip_code }}{% endif %}</dd>
+      </dl>
+    </section>
+    <section class="card">
+      <h2>Job</h2>
+      <dl class="dl">
+        <dt>Job type</dt><dd>{{ lead.job_type or '—' }}</dd>
+        <dt>Estimated value</dt><dd class="strong">{{ lead.estimated_value|money }}</dd>
+        <dt>Source</dt><dd>{{ lead.source_label }}</dd>
+        <dt>Last contact</dt><dd>{{ lead.last_contact_date|nice_date }}</dd>
+        <dt>Next follow-up</dt><dd>{{ lead.next_follow_up_date|nice_date }}</dd>
+        <dt>Assigned to</dt><dd>{{ lead.assigned_to.full_name if lead.assigned_to else 'Unassigned' }}</dd>
+        <dt>Created</dt><dd>{{ lead.created_at|localfmt('%b %d, %Y') }}</dd>
+      </dl>
+      {% if lead.notes %}<h3>Notes</h3><p class="prewrap">{{ lead.notes }}</p>{% endif %}
+    </section>
+    <section class="card">
+      <h2>Quick actions</h2>
+      <form method="post" action="{{ url_for('leads.change_status', lead_id=lead.id) }}" class="inline-form">
+        {{ status_form.hidden_tag() }}
+        {{ status_form.status.label() }} {{ status_form.status() }}
+        <button class="btn btn-small" type="submit">Update status</button>
+      </form>
+      <div class="inline-form">
+        <span>Follow up in:</span>
+        {% for d in (1, 3, 7, 14, 30) %}
+        <form method="post" action="{{ url_for('leads.snooze', lead_id=lead.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="days" value="{{ d }}">
+          <button class="btn btn-small btn-ghost" type="submit">{{ d }}d</button>
+        </form>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div>
+    <section class="card">
+      <h2>Message drafts</h2>
+      <p class="muted small">Get a suggested follow-up message to review and edit. Nothing is sent, and the owner must approve every message.</p>
+      <form method="post" action="{{ url_for('drafts.create', lead_id=lead.id) }}" class="inline-form">
+        {{ draft_form.hidden_tag() }}
+        {{ draft_form.channel.label() }} {{ draft_form.channel() }}
+        <button class="btn btn-small" type="submit">Draft a follow-up</button>
+      </form>
+      {% set visible_drafts = lead.drafts|rejectattr('status', 'equalto', 'discarded')|list %}
+      {% if visible_drafts %}
+      <ul class="draft-list">
+        {% for d in visible_drafts[:5] %}
+        <li><a href="{{ url_for('drafts.view', lead_id=lead.id, draft_id=d.id) }}">{{ d.channel_label }} · {{ d.created_at|localfmt('%b %d') }}</a>
+          <span class="badge draft-{{ d.status }}">{{ d.status|upper }}</span>
+          <div class="muted small">{{ d.body|truncate(80) }}</div></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </section>
+    <section class="card">
+      <h2>Log activity</h2>
+      <form method="post" action="{{ url_for('leads.add_activity', lead_id=lead.id) }}" novalidate>
+        {{ activity_form.hidden_tag() }}
+        <div class="row">{{ field(activity_form.type) }}{{ field(activity_form.occurred_on) }}</div>
+        {{ field(activity_form.body) }}
+        {{ field(activity_form.next_follow_up_date) }}
+        <button class="btn btn-primary" type="submit">Save activity</button>
+      </form>
+    </section>
+    <section class="card">
+      <h2>Timeline</h2>
+      {% if lead.activities %}
+      <ul class="timeline">
+        {% for a in lead.activities %}
+        <li class="tl-{{ a.type }}">
+          <div><span class="tl-type">{{ a.type_label }}</span>
+            <span class="tl-when">{{ a.occurred_at|localfmt('%b %d, %Y') }}{% if a.user %} · {{ a.user.full_name }}{% endif %}</span></div>
+          {% if a.body %}<p class="prewrap">{{ a.body }}</p>{% endif %}
+          {% if is_admin %}
+          <form method="post" action="{{ url_for('leads.delete_activity', lead_id=lead.id, activity_id=a.id) }}" class="inline" data-confirm="Remove this timeline entry?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="link-btn small muted" type="submit">remove</button>
+          </form>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="muted">No activity yet.</p>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

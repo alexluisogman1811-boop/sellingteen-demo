@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, errors as show_errors %}
+{% block title %}{{ 'Edit draft change request' if editing else 'New change request' }}{% endblock %}
+{% block content %}
+<div class="narrow">
+  <p><a href="{{ url_for('main.project', project_id=p.id, _anchor='changes') }}">← {{ p.name }}</a></p>
+  <h1>{{ 'Edit draft change request' if editing else 'New change request' }}</h1>
+  <p class="muted">Document work that falls outside the agreed scope. Save it as a <em>draft</em> while you prepare it, then
+    <em>submit</em> it so the client can approve or reject it. Once submitted, it can no longer be edited.</p>
+  {{ show_errors(errors) }}
+  <form method="post" class="stack card">
+    {{ csrf() }}
+    <div class="field"><label for="title">Title</label><input id="title" name="title" type="text" required maxlength="200" value="{{ form.title or '' }}"></div>
+    <div class="field"><label for="description">What will change</label>
+      <textarea id="description" name="description" required maxlength="5000" placeholder="What is being added or changed.">{{ form.description or '' }}</textarea></div>
+    <div class="field"><label for="reason">Reason for the change</label>
+      <textarea id="reason" name="reason" required maxlength="3000" placeholder="Why it is needed and why it is outside the current scope, e.g. requested by the client on the call of 12 May.">{{ form.reason or '' }}</textarea></div>
+    <div class="row">
+      <div class="field"><label for="estimated_hours">Time impact: extra hours <span class="muted">(optional)</span></label>
+        <input id="estimated_hours" name="estimated_hours" type="number" min="0" step="0.25" value="{{ form.estimated_hours if form.estimated_hours not in (None, '') else '' }}"></div>
+      <div class="field"><label for="proposed_cost">Price impact, {{ p.currency }} <span class="muted">(optional)</span></label>
+        <input id="proposed_cost" name="proposed_cost" type="number" min="0" step="0.01" value="{{ form.proposed_cost if form.proposed_cost not in (None, '') else '' }}">
+        {% if form.hint_rate %}<div class="hint">Your rate is {{ p.currency }} {{ '%.2f'|format(form.hint_rate) }}/h. Nothing is calculated for you.</div>{% endif %}</div>
+    </div>
+    <p class="hint">Leave either impact blank if you have not estimated it. It will show as “not estimated” and ScopeGuard never fills it in for you.</p>
+    <div class="actions">
+      {% if editing %}
+        <button class="btn primary" type="submit">Save draft</button>
+        <a class="btn" href="{{ url_for('main.change_detail', project_id=p.id, cr_id=editing.id) }}">Cancel</a>
+      {% else %}
+        <button class="btn" type="submit" name="action" value="draft">Save as draft</button>
+        <button class="btn primary" type="submit" name="action" value="submit">Submit to client</button>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

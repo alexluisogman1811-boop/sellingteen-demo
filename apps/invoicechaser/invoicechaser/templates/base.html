@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="InvoiceChaser tracks your unpaid invoices and writes polite payment reminders, so you get paid on time.">
+  <title>{% block title %}Get paid on time{% endblock %} · InvoiceChaser</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="{{ url_for('dashboard.home') }}"><span class="logo" aria-hidden="true">IC</span> InvoiceChaser</a>
+      {% if g.user %}
+      <nav class="nav" aria-label="Main">
+        <a href="{{ url_for('dashboard.index') }}" class="{{ 'active' if request.blueprint == 'dashboard' }}">Dashboard</a>
+        <a href="{{ url_for('invoices.index') }}" class="{{ 'active' if request.blueprint == 'invoices' }}">Invoices</a>
+        <a href="{{ url_for('customers.index') }}" class="{{ 'active' if request.blueprint == 'customers' }}">Customers</a>
+        <a href="{{ url_for('settings.index') }}" class="{{ 'active' if request.blueprint == 'settings' }}">Settings</a>
+        <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="link-btn">Log out</button>
+        </form>
+      </nav>
+      {% else %}
+      <nav class="nav" aria-label="Account">
+        <a href="{{ url_for('auth.login') }}" class="{{ 'active' if request.endpoint == 'auth.login' }}">Log in</a>
+        <a href="{{ url_for('auth.signup') }}" class="btn btn-primary btn-small">Start free</a>
+      </nav>
+      {% endif %}
+    </div>
+  </header>
+  {% if g.user and g.access and g.access.state in ('trial', 'free') and request.endpoint not in ('billing.subscribe', 'customers.new') %}
+  <div class="trial-bar" role="note">
+    <div class="wrap trial-bar-inner">
+      {% if g.access.state == 'trial' %}
+      <span><strong>Free trial:</strong> {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left. After that, the Free plan covers up to {{ config.FREE_CUSTOMER_LIMIT }} customers.</span>
+      {% else %}
+      <span><strong>Free plan:</strong> {{ g.access.customers }} of {{ g.access.limit }} customers used.</span>
+      {% endif %}
+      <a class="trial-bar-link" href="{{ url_for('billing.subscribe') }}">Upgrade to Pro</a>
+    </div>
+  </div>
+  {% endif %}
+  <main class="wrap" id="main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer wrap small muted">
+    <div class="footer-inner">
+      <span>InvoiceChaser · by sellingteen · Your data stays private to your account.</span>
+      <nav class="footer-links" aria-label="Legal">
+        <a href="{{ url_for('legal.terms') }}">Terms</a>
+        <a href="{{ url_for('legal.privacy') }}">Privacy</a>
+        <a href="{{ url_for('legal.refunds') }}">Refunds</a>
+        {% if g.user and config.BILLING_ENABLED %}<a href="{{ url_for('billing.subscribe') }}">Subscription</a>{% endif %}
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Your account:</strong> company name, email address, a secure hash of your password (never the password itself), and the document types you mark as required.</li>
+    <li><strong>What you enter about your subcontractors:</strong> name, trade, contact email and phone.</li>
+    <li><strong>Documents you upload</strong> (PDF or image files) and the details stored with them: name, document type, upload date, expiration date, status, and the text the date was read from.</li>
+    <li><strong>Basic technical logs</strong> (time, page, IP address) to keep the service secure and working.</li>
+  </ul>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't sell your data or your subcontractors' data.</li>
+    <li>We don't send emails or messages to your subcontractors, and we never send marketing emails. If email is set up, we only send password reset links you ask for.</li>
+    <li>We don't use advertising or tracking cookies. We use one cookie to keep you logged in.</li>
+    <li>We never see your card details. Payments are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>Why we use it</h2>
+  <p>Only to run the service for you: to store and show your subcontractors and documents, read document types and expiration dates, show reminders, keep your account secure, manage your subscription, and answer your questions.</p>
+
+  <h2>Reading documents</h2>
+  <p>To read the document type and expiration date, an uploaded file is either read on our server with simple text rules, or, when AI reading is switched on, sent to our AI provider (Anthropic) for that purpose only. The result is always shown to you to check.</p>
+
+  <h2>Where it is stored</h2>
+  <p>On the server that hosts ContractorDocs, protected by your login. Each account can only see its own subcontractors and documents. When you delete a document, the stored file is deleted too.</p>
+
+  <h2>Your subcontractors' information</h2>
+  <p>You add your subcontractors' details and documents, so you are responsible for having a good reason to keep them (for example, you work with them and need their certificates) and for following the privacy laws that apply to you in the United States, including state privacy laws.</p>
+
+  <h2>Your choices</h2>
+  <p>You can delete documents at any time. On the Account page you can download all your data (a ZIP of CSV files plus your uploaded files) and delete your whole account. Deleting your account removes its subcontractors, documents, uploaded files and reminders right away.{% if support_email %} You can also email {{ support_email }} from your account email for help.{% endif %}</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }}{% if support_email %} · {{ support_email }}{% endif %}</p>
+</article>
+{% endblock %}

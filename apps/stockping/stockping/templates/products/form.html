@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import input, textarea %}
+{% block title %}{{ 'Edit ' ~ product.sku if product else 'New product' }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ 'Edit ' ~ product.sku if product else 'New product' }}</h1>
+</div>
+{% if errors %}<div class="flash flash-error" role="alert">Please fix the highlighted fields.</div>{% endif %}
+<form method="post" class="card form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="form-grid">
+    {{ input("sku", "SKU", form, errors, required=true, maxlength=64, help="Unique code. Letters, digits, . _ - /") }}
+    {{ input("name", "Name", form, errors, required=true, maxlength=200) }}
+    <div class="field{% if errors.get('category') %} has-error{% endif %}">
+      <label for="f-category">Category</label>
+      <input id="f-category" name="category" list="category-list" value="{{ form.get('category', '') }}" maxlength="80">
+      <datalist id="category-list">{% for c in categories %}<option value="{{ c }}">{% endfor %}</datalist>
+      {% if errors.get('category') %}<p class="error">{{ errors.category }}</p>{% endif %}
+    </div>
+    <div class="field{% if errors.get('supplier_id') %} has-error{% endif %}">
+      <label for="f-supplier_id">Supplier</label>
+      <select id="f-supplier_id" name="supplier_id">
+        <option value="">— None —</option>
+        {% for s in suppliers %}<option value="{{ s.id }}"{% if form.get('supplier_id', '')|string == s.id|string %} selected{% endif %}>{{ s.name }}</option>{% endfor %}
+      </select>
+      <p class="help"><a href="{{ url_for('main.supplier_form') }}">Add a supplier</a></p>
+      {% if errors.get('supplier_id') %}<p class="error">{{ errors.supplier_id }}</p>{% endif %}
+    </div>
+    {{ input("cost", "Unit cost", form, errors, required=true, inputmode="decimal", help="e.g. 4.50") }}
+    {{ input("price", "Selling price", form, errors, required=true, inputmode="decimal", help="e.g. 9.99") }}
+    {% if product %}
+      <div class="field">
+        <label>Current quantity</label>
+        <p class="static-value"><strong>{{ product.quantity }}</strong></p>
+        <p class="help">Quantity changes only through <a href="{{ url_for('main.stock_movement', product_id=product.id, kind='in') }}">stock in</a>, <a href="{{ url_for('main.stock_movement', product_id=product.id, kind='out') }}">stock out</a> or an <a href="{{ url_for('main.stock_movement', product_id=product.id, kind='adjust') }}">adjustment</a>, so every change is recorded.</p>
+      </div>
+    {% else %}
+      {{ input("quantity", "Opening quantity", form, errors, required=true, type="number", min=0, step=1, inputmode="numeric", help="Recorded as an 'Opening stock' movement.") }}
+    {% endif %}
+    {{ input("reorder_threshold", "Reorder threshold", form, errors, required=true, type="number", min=0, step=1, inputmode="numeric", help="Low stock when quantity is at or below this number.") }}
+  </div>
+  {{ textarea("description", "Description (optional)", form, errors, maxlength=2000) }}
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">{{ 'Save changes' if product else 'Create product' }}</button>
+    <a class="btn" href="{{ url_for('main.product_detail', product_id=product.id) if product else url_for('main.product_list') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

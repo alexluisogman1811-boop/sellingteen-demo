@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}Forgot password?{% endblock %}
+{% block main_class %}narrow auth-page{% endblock %}
+{% block content %}
+<div class="auth-brand"><span class="brand-mark">SE</span> SignedExtra</div>
+<div class="card">
+  <h1>Forgot password?</h1>
+  <p>Type the email you log in with. If an account exists, we'll email you a link to choose a new password. The link works once, for 1 hour.</p>
+  <form method="post" action="{{ url_for('auth.forgot_email') }}" novalidate>
+    {{ csrf() }}
+    {{ field(form, "email", "Email", type="email", required=True, attrs='autocomplete="username" autofocus') }}
+    <button class="btn btn-primary btn-block" type="submit">Email me a reset link</button>
+  </form>
+  <p class="small mt"><a href="{{ url_for('auth.forgot') }}">Other ways to get back in</a> · <a href="{{ url_for('auth.login') }}">Back to log in</a></p>
+</div>
+{% endblock %}

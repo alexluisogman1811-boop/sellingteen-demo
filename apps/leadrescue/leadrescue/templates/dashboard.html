@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Dashboard</h1>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.queue') }}">Today's follow-ups</a>
+    <a class="btn btn-primary" href="{{ url_for('leads.create') }}">+ New lead</a>
+  </div>
+</div>
+
+{% if m.total == 0 %}
+<div class="card empty">
+  <h2>No leads yet</h2>
+  <p>Add your first lead, import your spreadsheet{% if is_admin %}, or load clearly-labelled demo leads to try things out{% endif %}.</p>
+  <div class="actions center">
+    <a class="btn btn-primary" href="{{ url_for('leads.create') }}">Add a lead</a>
+    {% if is_admin %}
+    <a class="btn" href="{{ url_for('leads.import_csv') }}">Import CSV</a>
+    <form method="post" action="{{ url_for('workspace.demo_add') }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn" type="submit">Load demo leads</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<section class="stats">
+  <a class="stat stat-alert" href="{{ url_for('leads.index', follow_up='overdue') }}">
+    <span class="stat-label">Overdue follow-ups</span><span class="stat-value">{{ m.overdue }}</span></a>
+  <a class="stat stat-warn" href="{{ url_for('leads.index', follow_up='today') }}">
+    <span class="stat-label">Due today</span><span class="stat-value">{{ m.due_today }}</span></a>
+  <a class="stat" href="{{ url_for('leads.index', status='open') }}">
+    <span class="stat-label">Open leads</span><span class="stat-value">{{ m.open_count }}</span></a>
+  <a class="stat" href="{{ url_for('leads.index', status='open', sort='value') }}">
+    <span class="stat-label">Open pipeline value</span><span class="stat-value">{{ m.pipeline|money }}</span></a>
+  <a class="stat" href="{{ url_for('leads.index', status='estimate_sent') }}">
+    <span class="stat-label">Estimates out</span><span class="stat-value">{{ m.estimates_out }}</span></a>
+  <a class="stat stat-good" href="{{ url_for('leads.index', status='won') }}">
+    <span class="stat-label">Won ({{ m.won }})</span><span class="stat-value">{{ m.won_value|money }}</span></a>
+  <div class="stat">
+    <span class="stat-label">Win rate (won ÷ closed)</span><span class="stat-value">{{ '%d%%'|format(m.win_rate) if m.win_rate is not none else '—' }}</span></div>
+  <a class="stat" href="{{ url_for('leads.index', follow_up='none') }}">
+    <span class="stat-label">Open, no follow-up set</span><span class="stat-value">{{ m.no_follow }}</span></a>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Leads by status</h2>
+    {% set max_s = (m.by_status|map(attribute=1)|max) or 1 %}
+    <ul class="bars">
+      {% for label, count, key in m.by_status %}
+      <li>
+        <a href="{{ url_for('leads.index', status=key) }}" class="bar-label">{{ label }}</a>
+        <span class="bar"><span class="bar-fill status-{{ key }}" data-pct="{{ (100 * count / max_s)|round|int }}"></span></span>
+        <span class="bar-num">{{ count }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  <section class="card">
+    <h2>Leads by source</h2>
+    {% if m.by_source %}
+    <div class="table-scroll"><table class="table compact">
+      <thead><tr><th>Source</th><th class="num">Leads</th><th class="num">Est. value</th></tr></thead>
+      <tbody>
+      {% for label, count, value, key in m.by_source %}
+      <tr><td><a href="{{ url_for('leads.index', source=key) }}">{{ label }}</a></td><td class="num">{{ count }}</td><td class="num">{{ value|money }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="muted">No leads yet.</p>{% endif %}
+    <p class="muted small">{{ m.new_this_month }} new this month · {{ m.stale }} open leads not contacted in 14+ days</p>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Recent activity</h2>
+  {% if recent %}
+  <ul class="timeline">
+    {% for a in recent %}
+    <li>
+      <span class="tl-type">{{ a.type_label }}</span>
+      <a href="{{ url_for('leads.detail', lead_id=a.lead_id) }}">{{ a.lead.full_name }}</a>
+      {% if a.body %}<span class="muted">· {{ a.body|truncate(90) }}</span>{% endif %}
+      <span class="tl-when">{{ a.occurred_at|localfmt('%b %d') }}{% if a.user %} · {{ a.user.full_name }}{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="muted">Nothing yet.</p>{% endif %}
+</section>
+{% endblock %}

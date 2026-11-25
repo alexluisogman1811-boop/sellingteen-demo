@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Delete lead{% endblock %}
+{% block content %}
+<div class="card confirm-card">
+  <h1>Delete “{{ lead_name(lead) }}”?</h1>
+  <p>This permanently deletes the lead, its notes and follow-up date. This can't be undone.</p>
+  <form method="post" class="form-actions">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <a class="btn btn-ghost" href="{{ url_for('leads.lead_detail', lead_id=lead.id) }}" autofocus>Cancel</a>
+    <button type="submit" class="btn btn-danger" data-loading-text="Deleting…">Yes, delete lead</button>
+  </form>
+</div>
+{% endblock %}

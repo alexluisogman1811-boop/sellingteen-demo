@@ -1,0 +1,23 @@
+{% macro field(form, name, label, type="text", required=False, hint="", attrs="") -%}
+<div class="field{% if form.errors.get(name) %} has-error{% endif %}">
+  <label for="f-{{ name }}">{{ label }}{% if required %} <span class="req" aria-hidden="true">*</span>{% endif %}</label>
+  {% if type == "textarea" %}
+  <textarea id="f-{{ name }}" name="{{ name }}" rows="4" {% if required %}required{% endif %} {{ attrs|safe }}>{{ form.values.get(name, "") }}</textarea>
+  {% else %}
+  <input id="f-{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ form.values.get(name, "") if type != "password" else "" }}"
+         {% if required %}required{% endif %} {{ attrs|safe }}>
+  {% endif %}
+  {% if hint %}<p class="hint">{{ hint }}</p>{% endif %}
+  {% if form.errors.get(name) %}<p class="error-text" role="alert">{{ form.errors[name] }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro badge(status) -%}
+<span class="badge badge-{{ status }}">{{ status|status_label }}</span>
+{%- endmacro %}
+
+{% macro csrf() -%}
+<input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{% macro ticket_no(t) -%}T-{{ "%04d"|format(t.number) }}{%- endmacro %}

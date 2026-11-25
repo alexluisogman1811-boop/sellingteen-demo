@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Subscription — QuoteFlow AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+{% macro nice(d) %}{{ d.strftime('%B') }} {{ d.day }}, {{ d.year }}{% endmacro %}
+<div class="page-head">
+  <div>
+    {% if stripe_pro %}
+      <h1>You're on Pro</h1>
+      <p class="muted" style="margin:4px 0 0">Your Pro subscription is active. Thank you!</p>
+    {% elif access.state == 'paid' %}
+      <h1>You're subscribed</h1>
+      <p class="muted" style="margin:4px 0 0">Pro is active until {{ nice(access.until) }}. Thank you!</p>
+    {% elif access.state == 'ended' %}
+      <h1>{{ 'Your subscription has ended' if access.was_paid else 'Your free trial has ended' }}</h1>
+      <p class="muted" style="margin:4px 0 0">You're now on the Free plan: {{ plans.free.quota }} quotes per month. Your quotes and business profile are saved. Subscribe to Pro for {{ plans.pro.quota }} quotes per month.</p>
+    {% else %}
+      <h1>Subscribe to QuoteFlow Pro</h1>
+      <p class="muted" style="margin:4px 0 0">{% if access.days_left is defined %}You have {{ access.days_left }} day{{ '' if access.days_left == 1 else 's' }} left in your free Pro trial (until {{ nice(access.until) }}). {% endif %}After the trial you move to the Free plan ({{ plans.free.quota }} quotes per month) unless you subscribe.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% if not stripe_pro and access.state != 'paid' %}
+<div class="card plan featured">
+  <h3>Pro</h3>
+  <div class="price">{{ price }}</div>
+  <ul>
+    <li>{{ plans.pro.quota }} generated quotes per month</li>
+    <li>Prices calculated from your own pricing rules</li>
+    <li>Edit, save and copy replies</li>
+  </ul>
+  {% if configured %}
+    <form method="post" action="{{ url_for('billing_checkout') }}" data-busy-label="Opening secure checkout…" style="margin:0">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn block" type="submit">Subscribe to Pro</button>
+    </form>
+    <p class="muted small" style="margin:10px 0 0">Secure payment by Stripe. We never see or store your card details.</p>
+  {% elif payment_link %}
+    <a class="btn block" href="{{ payment_link }}" target="_blank" rel="noopener noreferrer">Subscribe to Pro</a>
+    <p class="muted small" style="margin:10px 0 0">You pay on our payment provider's secure page. Use the same email as your account: <strong>{{ g.user.email }}</strong>. Pro is switched on within 24 hours of payment.</p>
+  {% else %}
+    <p class="notice" style="margin:0">Online payment is opening soon.{% if support_email %} To subscribe now, email <strong>{{ support_email }}</strong> from <strong>{{ g.user.email }}</strong>.{% endif %}</p>
+  {% endif %}
+</div>
+{% endif %}
+
+<p class="muted small">Questions? {% if support_email %}Email <a href="mailto:{{ support_email }}">{{ support_email }}</a>. {% endif %}See our <a href="{{ url_for('terms') }}">Terms</a> and <a href="{{ url_for('refunds') }}">Refund policy</a>.</p>
+<p><a class="btn secondary" href="{{ url_for('billing_page') }}">Plan &amp; billing</a> <a class="btn secondary" href="{{ url_for('dashboard') }}">Back to dashboard</a></p>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}{{ 'Edit customer' if customer else 'Add customer' }}{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <a class="small back" href="{{ url_for('customers.detail', customer_id=customer.id) if customer else url_for('customers.list_customers') }}">← {{ 'Back to customer' if customer else 'Back to customers' }}</a>
+  <h1>{{ 'Edit customer' if customer else 'Add customer' }}</h1>
+  {% if not customer %}<p class="muted">Add someone you've finished a job for. Next, you'll write their review request.</p>{% endif %}
+  {% if errors %}<div class="flash flash-error" role="alert">Please fix the {{ 'item' if errors|length == 1 else 'items' }} marked below.</div>{% endif %}
+  <form method="post" novalidate>
+    {{ csrf() }}
+    {{ field('name', 'Customer name', data.name, errors, required=true, hint='The person you\'ll greet in the message. For a business customer, use your contact\'s name.', attrs='maxlength="100" autocomplete="off" placeholder="e.g. Maria Gonzalez"') }}
+    {{ field('phone', 'Phone', data.phone, errors, type='tel', required=true, attrs='maxlength="25" inputmode="tel" placeholder="(555) 123-4567"') }}
+    {{ field('email', 'Email', data.email, errors, type='email', attrs='maxlength="254" placeholder="name@example.com"') }}
+    {{ field('service', 'Job done', data.service, errors, required=true, attrs='maxlength="120" placeholder="e.g. Panel upgrade"', hint='Used in the message, e.g. "thanks for choosing us for your panel upgrade".') }}
+    <div class="grid-2">
+      {{ field('job_date', 'Job date', data.job_date, errors, type='date', required=true, attrs='max="' ~ max_date ~ '"') }}
+      <div class="field {{ 'has-error' if errors.status }}">
+        <label for="status">Review request status</label>
+        <select id="status" name="status">
+          {% for key, label in STATUS_LABELS.items() %}
+          <option value="{{ key }}" {{ 'selected' if data.status == key }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        {% if errors.status %}<p class="error">{{ errors.status }}</p>{% endif %}
+      </div>
+    </div>
+    <button class="btn btn-block" type="submit">{{ 'Save changes' if customer else 'Add customer' }}</button>
+  </form>
+</section>
+{% endblock %}

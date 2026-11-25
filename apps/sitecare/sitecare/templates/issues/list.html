@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Issues{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Issues</h1>
+  <div class="actions"><a class="btn btn-primary" href="{{ url_for('main.issue_new') }}">Log issue</a></div>
+</div>
+<form class="filters" method="get" role="search">
+  <label class="sr-only" for="q">Search issues</label>
+  <input id="q" type="search" name="q" value="{{ q }}" placeholder="Search title, notes, website">
+  <label class="sr-only" for="fs">Status</label>
+  <select id="fs" name="status">
+    <option value="active" {% if status == 'active' %}selected{% endif %}>Open & in progress</option>
+    <option value="all" {% if status == 'all' %}selected{% endif %}>All statuses</option>
+    {% for k, v in ISSUE_STATUSES.items() %}<option value="{{ k }}" {% if status == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <label class="sr-only" for="fv">Severity</label>
+  <select id="fv" name="severity">
+    <option value="">Any severity</option>
+    {% for k, v in SEVERITIES.items() %}<option value="{{ k }}" {% if severity == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <label class="sr-only" for="fw">Website</label>
+  <select id="fw" name="website_id">
+    <option value="">All websites</option>
+    {% for w in websites %}<option value="{{ w.id }}" {% if website_id == w.id %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+  </select>
+  <button class="btn" type="submit">Filter</button>
+  {% if q or severity or website_id or status != 'active' %}<a class="btn btn-ghost" href="{{ url_for('main.issues_list') }}">Clear</a>{% endif %}
+</form>
+<section class="card">
+  {% if issues %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Issue</th><th class="hide-sm">Website</th><th>Severity</th><th>Status</th><th class="hide-sm">Reported</th></tr></thead>
+      <tbody>
+      {% for i in issues %}
+        <tr>
+          <td><a href="{{ url_for('main.issue_edit', issue_id=i.id) }}">{{ i.title }}</a><span class="show-sm muted small"><br>{{ i.website_name }}</span></td>
+          <td class="hide-sm"><a href="{{ url_for('main.website_detail', website_id=i.website_id) }}">{{ i.website_name }}</a><br><span class="muted small">{{ i.client_name }}</span></td>
+          <td>{{ m.severity_badge(i.severity) }}</td>
+          <td>{{ m.issue_status_badge(i.status) }}</td>
+          <td class="hide-sm nowrap">{{ i.reported_on|nice_date }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="empty">No issues match these filters.</p>{% endif %}
+</section>
+{% endblock %}

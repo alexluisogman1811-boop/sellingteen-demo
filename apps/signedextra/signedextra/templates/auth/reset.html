@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}Choose a new password{% endblock %}
+{% block main_class %}narrow auth-page{% endblock %}
+{% block content %}
+<div class="auth-brand"><span class="brand-mark">SE</span> SignedExtra</div>
+<div class="card">
+  <h1>Choose a new password</h1>
+  <p>For <strong>{{ user.email }}</strong>. This link works once and expires {{ "1 hour" if email_link else "24 hours" }} after it was created.</p>
+  <form method="post" novalidate>
+    {{ csrf() }}
+    {{ field(form, "password", "New password", type="password", required=True, hint="At least 10 characters.", attrs='autocomplete="new-password"') }}
+    {{ field(form, "password_confirm", "Repeat new password", type="password", required=True, attrs='autocomplete="new-password"') }}
+    <button class="btn btn-primary btn-block" type="submit">Set new password</button>
+  </form>
+</div>
+{% endblock %}

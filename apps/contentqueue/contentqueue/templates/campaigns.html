@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, field_error %}
+{% block title %}Campaigns{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Campaigns</h1><p class="muted">Group posts around launches, promotions or themes.</p></div></div>
+
+<div class="grid-side">
+  <section>
+    {% for c in campaigns %}
+      <article class="card item-card">
+        <div class="item-head">
+          <h2><span class="dot color-{{ c.color }}"></span>{{ c.name }}</h2>
+          <div class="row-actions">
+            <a class="btn btn-sm" href="{{ url_for('posts.list_posts', campaign_id=c.id, status='all') }}">Posts ({{ c.post_count }})</a>
+            <a class="btn btn-sm" href="{{ url_for('posts.new_post', campaign_id=c.id) }}">+ Post</a>
+            <a class="btn btn-sm btn-ghost" href="{{ url_for('library.edit_campaign', item_id=c.id) }}">Edit</a>
+          </div>
+        </div>
+        {% if c.description %}<p>{{ c.description }}</p>{% endif %}
+        <p class="muted small">
+          {% if c.start_date or c.end_date %}{{ c.start_date|nice_date('%d %b %Y') or '…' }} – {{ c.end_date|nice_date('%d %b %Y') or '…' }} · {% endif %}
+          {{ c.published_count or 0 }} of {{ c.post_count }} published
+        </p>
+      </article>
+    {% else %}
+      <div class="card empty-state"><p>No campaigns yet. Create one to group related posts.</p></div>
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>New campaign</h2>
+    <form method="post" class="stack" novalidate>
+      {{ csrf() }}
+      {% include "_campaign_fields.html" %}
+      <button class="btn btn-primary" type="submit">Create campaign</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

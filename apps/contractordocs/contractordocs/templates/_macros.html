@@ -1,0 +1,6 @@
+{% macro pill(status) -%}
+<span class="pill {{ status }}">{{ LABELS[status] }}</span>
+{%- endmacro %}
+{% macro due(days) -%}
+{% if days is none %}{% elif days < 0 %}{{ -days }} day{{ '' if days == -1 else 's' }} ago{% elif days == 0 %}today{% else %}in {{ days }} day{{ '' if days == 1 else 's' }}{% endif %}
+{%- endmacro %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% from "_macros.html" import followup_item %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+{% set dash = url_for('leads.dashboard') %}
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted">{{ today().strftime('%A, %d %B %Y') }}</p>
+  </div>
+</div>
+
+{% if stats.total == 0 %}
+<section class="empty-state">
+  <div class="empty-icon" aria-hidden="true">👋</div>
+  <h2>Welcome! Let's add your first lead.</h2>
+  <p class="muted">You don't have any leads yet. Add your first lead to start tracking follow-ups.</p>
+  <a class="btn btn-primary" href="{{ url_for('leads.lead_new') }}">Add your first lead</a>
+</section>
+{% else %}
+
+<section class="stats" aria-label="Lead summary">
+  <a class="stat stat-danger" href="{{ url_for('leads.lead_list', followup='overdue') }}">
+    <span class="stat-label">Overdue</span><span class="stat-value" data-stat="overdue">{{ stats.overdue }}</span>
+  </a>
+  <a class="stat stat-alert" href="{{ url_for('leads.lead_list', followup='today') }}">
+    <span class="stat-label">Due today</span><span class="stat-value" data-stat="today">{{ stats.due_today }}</span>
+  </a>
+  <a class="stat" href="{{ url_for('leads.lead_list', followup='unscheduled') }}">
+    <span class="stat-label">No follow-up date</span><span class="stat-value" data-stat="unscheduled">{{ stats.unscheduled }}</span>
+  </a>
+  <a class="stat stat-info" href="{{ url_for('leads.lead_list', status='active') }}">
+    <span class="stat-label">Active leads</span><span class="stat-value" data-stat="active">{{ stats.active }}</span>
+  </a>
+  <a class="stat stat-success" href="{{ url_for('leads.lead_list', status='Won') }}">
+    <span class="stat-label">Won</span><span class="stat-value" data-stat="won">{{ stats.won }}</span>
+  </a>
+  <a class="stat stat-muted" href="{{ url_for('leads.lead_list', status='Lost') }}">
+    <span class="stat-label">Lost</span><span class="stat-value" data-stat="lost">{{ stats.lost }}</span>
+  </a>
+</section>
+
+<section class="card priority-card" aria-labelledby="contact-next">
+  <div class="card-head">
+    <div>
+      <h2 id="contact-next">Who should I contact next?</h2>
+      <p class="muted small">Overdue first, then today. Open a lead, send the message, then record the contact.</p>
+    </div>
+    {% set n = overdue|length + due_today|length %}
+    {% if n %}<span class="count-pill" aria-label="{{ n }} to contact">{{ n }}</span>{% endif %}
+  </div>
+  {% if overdue or due_today %}
+    {% if overdue %}
+    <h3 class="group-title group-overdue">Overdue <span class="muted">({{ overdue|length }})</span></h3>
+    <ol class="fu-list" id="priority-overdue">
+      {% for lead in overdue %}{{ followup_item(lead, back=dash, highlight=loop.first) }}{% endfor %}
+    </ol>
+    {% endif %}
+    {% if due_today %}
+    <h3 class="group-title group-today">Due today <span class="muted">({{ due_today|length }})</span></h3>
+    <ol class="fu-list" id="priority-today">
+      {% for lead in due_today %}{{ followup_item(lead, back=dash, highlight=(loop.first and not overdue)) }}{% endfor %}
+    </ol>
+    {% endif %}
+  {% else %}
+    <div class="empty-inline">
+      <p class="empty-title">You're all caught up.</p>
+      <p class="muted">No follow-ups are due today.</p>
+      {% if upcoming %}<p class="muted small">Next up: <a href="{{ url_for('leads.lead_detail', lead_id=upcoming[0].id) }}">{{ lead_name(upcoming[0]) }}</a> ({{ due_label(upcoming[0])|lower }}).</p>{% endif %}
+    </div>
+  {% endif %}
+</section>
+
+<div class="grid-2 lower-grid">
+  <section class="card" aria-labelledby="coming-up">
+    <div class="card-head">
+      <h2 id="coming-up">Upcoming</h2>
+      <a class="link-sm" href="{{ url_for('leads.followups') }}">All follow-ups →</a>
+    </div>
+    {% if upcoming %}
+      <ul class="fu-list fu-compact">
+        {% for lead in upcoming %}{{ followup_item(lead, actions=false) }}{% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty-inline"><p class="muted">No upcoming follow-ups scheduled.</p></div>
+    {% endif %}
+  </section>
+
+  <section class="card" aria-labelledby="no-date">
+    <div class="card-head">
+      <div>
+        <h2 id="no-date">Other leads</h2>
+        <p class="muted small">Active leads with no follow-up date. Give each one a next step.</p>
+      </div>
+      {% if stats.unscheduled > unscheduled|length %}<a class="link-sm" href="{{ url_for('leads.lead_list', followup='unscheduled') }}">See all {{ stats.unscheduled }} →</a>{% endif %}
+    </div>
+    {% if unscheduled %}
+      <ul class="fu-list fu-compact">
+        {% for lead in unscheduled %}{{ followup_item(lead, back=dash) }}{% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty-inline"><p class="muted">Every active lead has a follow-up date.</p></div>
+    {% endif %}
+  </section>
+</div>
+{% endif %}
+{% endblock %}

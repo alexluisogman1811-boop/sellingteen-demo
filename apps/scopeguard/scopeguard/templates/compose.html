@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Write message · {{ p.name }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('main.project', project_id=p.id) }}">← {{ p.name }}</a></p>
+<h1>Write a message</h1>
+<p class="notice">ScopeGuard never sends email. Edit the text below, copy it, and send it from your own email or chat app.</p>
+<form method="get" class="inline card">
+  <div class="field"><label for="template_id">Template</label>
+    <select id="template_id" name="template_id" data-autosubmit>
+      {% for x in templates %}<option value="{{ x.id }}" {% if x.id == t.id %}selected{% endif %}>{{ x.name }}</option>{% endfor %}
+    </select></div>
+  <div class="field"><label for="cr_id">About change request</label>
+    <select id="cr_id" name="cr_id" data-autosubmit>
+      <option value="">(none)</option>
+      {% for c in changes %}<option value="{{ c.id }}" {% if cr and c.id == cr.id %}selected{% endif %}>{{ c.title }}</option>{% endfor %}
+    </select></div>
+  <button class="btn" type="submit">Fill in</button>
+  <a class="btn" href="{{ url_for('main.template_edit', template_id=t.id) }}">Edit template</a>
+</form>
+<div class="card">
+  <label class="field-label" for="subject">Subject</label>
+  <div class="linkbox"><input id="subject" type="text" value="{{ subject }}"><button class="btn" type="button" data-copy="subject">Copy</button></div>
+  <label class="field-label mt" for="body">Message</label>
+  <textarea id="body" class="tall">{{ body }}</textarea>
+  <div class="actions mt">
+    <button class="btn primary" type="button" data-copy="body">Copy message</button>
+    {% if p.client_email %}<a class="btn" href="mailto:{{ p.client_email|urlencode }}?subject={{ subject|urlencode }}&amp;body={{ body|urlencode }}">Open in my email app</a>{% endif %}
+  </div>
+  <p class="muted mt"><small>Placeholders such as {review_link} are filled in on the page shown right after you create a review link, because the link itself is not stored.</small></p>
+</div>
+{% endblock %}

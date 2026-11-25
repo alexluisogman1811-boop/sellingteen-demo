@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error, aria_err %}
+{% block title %}{{ 'Add lead' if mode == 'new' else 'Edit lead' }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    {% if mode == 'edit' %}<a class="back-link" href="{{ url_for('leads.lead_detail', lead_id=lead.id) }}">← Back to lead</a>{% endif %}
+    <h1>{{ 'Add lead' if mode == 'new' else 'Edit lead' }}</h1>
+  </div>
+</div>
+
+{% if errors %}<div class="alert alert-error" role="alert">Please fix the highlighted fields below.</div>{% endif %}
+
+<form class="card form-card" method="post" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <fieldset>
+    <legend>Customer</legend>
+    <div class="form-grid">
+      <div class="field span-2">
+        <label for="name">Customer name</label>
+        <input id="name" name="name" value="{{ lead.name }}" maxlength="120" autocomplete="off" aria-describedby="name-hint{% if errors.name %} name-error{% endif %}" {% if errors.name %}aria-invalid="true"{% endif %}>
+        <p class="hint" id="name-hint">Don't know their name yet? Leave it blank and add a phone number or email.</p>
+        {{ field_error(errors, 'name') }}
+      </div>
+      <div class="field">
+        <label for="phone">Phone</label>
+        <input id="phone" name="phone" type="tel" inputmode="tel" value="{{ lead.phone }}" maxlength="40" autocomplete="off" {{ aria_err(errors, 'phone') }}>
+        {{ field_error(errors, 'phone') }}
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" value="{{ lead.email }}" maxlength="254" autocomplete="off" {{ aria_err(errors, 'email') }}>
+        {{ field_error(errors, 'email') }}
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Enquiry</legend>
+    <div class="form-grid">
+      <div class="field">
+        <label for="source">Lead source <span class="req" aria-hidden="true">*</span></label>
+        <select id="source" name="source" required {{ aria_err(errors, 'source') }}>
+          <option value="" {% if not lead.source %}selected{% endif %} disabled>Choose a source…</option>
+          {% for s in sources %}<option value="{{ s }}" {% if lead.source == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+        </select>
+        {{ field_error(errors, 'source') }}
+      </div>
+      <div class="field">
+        <label for="service">Service / product interested in</label>
+        <input id="service" name="service" value="{{ lead.service }}" maxlength="160" placeholder="e.g. House cleaning" {{ aria_err(errors, 'service') }}>
+        {{ field_error(errors, 'service') }}
+      </div>
+      <div class="field span-2">
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" rows="4" maxlength="5000" placeholder="What did they ask about? Anything to remember?" {{ aria_err(errors, 'notes') }}>{{ lead.notes }}</textarea>
+        {{ field_error(errors, 'notes') }}
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Follow-up</legend>
+    <div class="form-grid">
+      <div class="field">
+        <label for="status-select">Status <span class="req" aria-hidden="true">*</span></label>
+        <select id="status-select" name="status" required {{ aria_err(errors, 'status') }}>
+          {% for s in statuses %}<option value="{{ s }}" {% if lead.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+        </select>
+        {{ field_error(errors, 'status') }}
+      </div>
+      <div class="field">
+        <label for="next_follow_up">Next follow-up date</label>
+        <input id="next_follow_up" name="next_follow_up" type="date" value="{{ lead.next_follow_up or '' }}" aria-describedby="fu-hint{% if errors.next_follow_up %} next_follow_up-error{% endif %}" {% if errors.next_follow_up %}aria-invalid="true"{% endif %}>
+        <p class="hint" id="fu-hint">When should you contact them next? Leave blank if no follow-up is needed.</p>
+        {{ field_error(errors, 'next_follow_up') }}
+      </div>
+    </div>
+  </fieldset>
+
+  <div class="form-actions">
+    <a class="btn btn-ghost" href="{{ url_for('leads.lead_detail', lead_id=lead.id) if mode == 'edit' else url_for('leads.lead_list') }}">Cancel</a>
+    <button type="submit" class="btn btn-primary" data-loading-text="Saving…">{{ 'Add lead' if mode == 'new' else 'Save changes' }}</button>
+  </div>
+</form>
+{% endblock %}

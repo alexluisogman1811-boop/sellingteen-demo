@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field %}
+{% block title %}{{ 'Edit template' if tpl else 'New template' }}{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <p class="crumb"><a href="{{ url_for('main.templates') }}">Reminder templates</a></p>
+  <h1>{{ 'Edit ' ~ tpl.name if tpl else 'New reminder template' }}</h1>
+</div></div>
+<div class="grid-2 wide-left">
+  <form method="post" class="card stack-form">
+    {{ csrf() }}
+    {{ field("name", "Template name", form, required=True, attrs='maxlength="200"') }}
+    {{ field("subject", "Email subject", form, required=True, attrs='maxlength="300"') }}
+    <div class="field">
+      <label for="f-body">Message body <span class="req">*</span></label>
+      <textarea id="f-body" name="body" rows="12" required maxlength="4000">{{ form.get('body') or '' }}</textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Save template</button>
+      <a class="btn btn-ghost" href="{{ url_for('main.templates') }}">Cancel</a>
+    </div>
+  </form>
+  <section class="card"><h2>Placeholders</h2>{% include "reminders/_placeholders.html" %}</section>
+</div>
+{% endblock %}

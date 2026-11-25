@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service · ProofPay{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>1. Who we are</h2>
+  <p>ProofPay ("the service") is provided by {{ operator }} ("we", "us").{% if support_email %} You can contact us at {{ support_email }}.{% endif %}</p>
+
+  <h2>2. What the service does</h2>
+  <p>ProofPay helps service businesses document completed jobs: you record the customer, job details, price, photos and the work done, and share a private job-report link with your customer. The report shows the work, photos, total, payment status and the payment instructions you enter. You mark a job paid yourself when the money arrives.</p>
+  <p><strong>ProofPay is not a payment processor.</strong> We do not collect, hold or transfer money between you and your customers, and we do not confirm that a payment happened. ProofPay is also not an accounting tool.</p>
+
+  <h2>3. AI job summaries</h2>
+  <p>The optional AI helper rewords the notes you write into a short summary. It is a draft: nothing reaches your customer until you review and save it, and you are responsible for what you save and share.</p>
+
+  <h2>4. Your account</h2>
+  <p>You must give a valid email address and keep your password private. You are responsible for what happens in your account. You must be allowed to enter into this agreement where you live.</p>
+
+  <h2>5. Your responsibilities</h2>
+  <ul>
+    <li>Only record jobs and customers you have a real business relationship with, and only upload photos you are allowed to take and share.</li>
+    <li>Keep job reports, prices and payment instructions accurate. Only share a job-report link with the customer it belongs to: anyone with the link can view that report.</li>
+    <li>Do not use the service to mislead customers, harass anyone, or break any law.</li>
+  </ul>
+
+  <h2>6. Plans, free trial and subscription</h2>
+  <p>New accounts get a free trial of Pro for {{ trial_days }} days. After the trial you can keep Pro with a paid subscription ({{ price }}), billed through our payment provider, or stay on the Free plan ({{ free_jobs }} active jobs and basic job reports). Subscriptions renew each month until you cancel. You can cancel at any time; Pro continues until the end of the period you paid for, then the account moves to the Free plan. See the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+
+  <h2>7. Your data</h2>
+  <p>Your jobs, customers and photos belong to you. We handle them as described in the <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>. If your account is closed, we may delete its data after 90 days.</p>
+
+  <h2>8. Availability and changes</h2>
+  <p>We work to keep the service available but cannot promise it will always be online or error-free. We may change features or these terms; we will update the date above and, for important changes, tell you by email or in the app.</p>
+
+  <h2>9. Limitation of liability</h2>
+  <p>The service is provided "as is". To the extent the law allows, we are not liable for indirect losses, lost profits, unpaid invoices, or disputes between you and your customers. Our total liability is limited to the amount you paid us in the last 3 months.</p>
+
+  <h2>10. Ending the agreement</h2>
+  <p>You can stop using the service at any time, and you can delete your account yourself on the Business page. We may suspend accounts that break these terms.</p>
+</article>
+{% endblock %}

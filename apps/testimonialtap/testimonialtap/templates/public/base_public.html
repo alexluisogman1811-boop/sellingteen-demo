@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="{% block robots %}noindex, nofollow{% endblock %}">
+  <title>{% block title %}Testimonials{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="public {% block body_class %}{% endblock %}">
+  <main class="public-wrap">
+    {% block content %}{% endblock %}
+  </main>
+  {% block footer %}<footer class="public-footer">Collected with TestimonialTap · by sellingteen ·
+    <a href="{{ url_for('legal.terms') }}">Terms</a> ·
+    <a href="{{ url_for('legal.privacy') }}">Privacy</a> ·
+    <a href="{{ url_for('legal.refunds') }}">Refunds</a></footer>{% endblock %}
+</body>
+</html>

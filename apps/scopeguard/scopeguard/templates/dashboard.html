@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Dashboard</h1><div class="meta">What needs your attention across all projects.</div></div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.client_new') }}">Add client</a>
+    <a class="btn primary" href="{{ url_for('main.project_new') }}">New project</a>
+  </div>
+</div>
+
+{% if not active and not completed %}
+<div class="card">
+  <h2>Welcome</h2>
+  <p>Start by adding a client and a project, then define deliverables, exclusions and milestones and publish scope version 1.</p>
+  <div class="actions">
+    <a class="btn primary" href="{{ url_for('main.client_new') }}">Add your first client</a>
+    <a class="btn" href="{{ url_for('main.settings') }}">Or load sample data</a>
+  </div>
+</div>
+{% endif %}
+
+<div class="stats">
+  <a class="stat" href="#active"><div class="n">{{ active|length }}</div><div class="l">Active projects{% if on_hold %} <span class="muted">(+{{ on_hold|length }} on hold)</span>{% endif %}</div></a>
+  <a class="stat" href="#pending"><div class="n">{{ pending|length }}</div><div class="l">Pending approvals</div></a>
+  <a class="stat" href="#requested"><div class="n">{{ requested|length }}</div><div class="l">Requested changes</div></a>
+  <a class="stat" href="#completed"><div class="n">{{ completed|length }}</div><div class="l">Completed projects</div></a>
+</div>
+
+<div class="grid-2">
+  <section class="card" id="pending">
+    <h2>Pending approvals</h2>
+    <ul class="plain">
+    {% for item in pending %}
+      <li><span>{{ badge('proposed', item.kind) }} <a href="{{ url_for('main.change_detail', project_id=item.project.id, cr_id=item.cr.id) if item.cr else url_for('main.project', project_id=item.project.id) }}">{{ item.project.name }}</a><br><small>{{ item.text }}</small></span></li>
+    {% else %}<li class="empty">Nothing is waiting for a client decision.</li>{% endfor %}
+    </ul>
+  </section>
+  <section class="card" id="requested">
+    <h2>Requested changes</h2>
+    <ul class="plain">
+    {% for item in requested %}
+      <li><span>{{ badge('changes_requested', item.kind) }} <a href="{{ url_for('main.change_detail', project_id=item.project.id, cr_id=item.cr.id) if item.cr else url_for('main.project', project_id=item.project.id) }}">{{ item.project.name }}</a><br><small>{{ item.text|truncate(140) }}</small></span></li>
+    {% else %}<li class="empty">No open change or revision requests.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+
+{% if drafts %}
+<div class="notice warn mt">
+  <strong>Unpublished scope edits:</strong>
+  {% for d in drafts %}<a href="{{ url_for('main.project', project_id=d.project.id, _anchor='scope') }}">{{ d.project.name }}</a> ({{ d.text|lower }}){{ ", " if not loop.last }}{% endfor %}
+</div>
+{% endif %}
+
+<section class="card mt" id="active">
+  <h2>Active projects</h2>
+  <div class="table-wrap">
+  <table class="stack-sm">
+    <thead><tr><th>Project</th><th>Client</th><th>Deadline</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for p in active %}
+      <tr><td><a href="{{ url_for('main.project', project_id=p.id) }}">{{ p.name }}</a>{% if p.is_demo %} {{ badge('info', 'Sample') }}{% endif %}</td>
+        <td>{{ p.client_name }}</td><td>{{ p.deadline or '—' }}</td><td>{{ badge(p.status) }}</td></tr>
+    {% else %}<tr><td colspan="4" class="empty">No active projects.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+{% if on_hold %}
+<section class="card" id="on-hold">
+  <h2>On hold</h2>
+  <ul class="plain">
+  {% for p in on_hold %}<li><span><a href="{{ url_for('main.project', project_id=p.id) }}">{{ p.name }}</a> {{ badge(p.status) }}</span><small>{{ p.client_name }}</small></li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="card" id="completed">
+  <h2>Completed projects</h2>
+  <ul class="plain">
+  {% for p in completed %}<li><a href="{{ url_for('main.project', project_id=p.id) }}">{{ p.name }}</a><small>{{ p.client_name }}</small></li>
+  {% else %}<li class="empty">No completed projects yet.</li>{% endfor %}
+  </ul>
+</section>
+{% endblock %}

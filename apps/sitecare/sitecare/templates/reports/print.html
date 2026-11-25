@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maintenance report · {{ r.website.domain }} · {{ r.period_label }}</title>
+{% include "reports/_print_css.html" %}
+{% if not download %}<script src="{{ url_for('static', filename='app.js') }}" defer></script>{% endif %}
+</head>
+<body>
+<div class="page">
+  {% if not download %}<div class="toolbar"><button type="button" data-print>Print / save as PDF</button></div>{% endif %}
+  <header>
+    <h1>Website maintenance report</h1>
+    <div class="meta">
+      <div><span class="muted">Website</span><br><strong>{{ r.website.name }}</strong> ({{ r.website.domain }})</div>
+      <div><span class="muted">Client</span><br>{{ r.website.client_name }}</div>
+      <div><span class="muted">Period</span><br>{{ r.start|nice_date }} - {{ r.end|nice_date }}</div>
+      <div><span class="muted">Generated</span><br>{{ r.today|nice_date }}</div>
+    </div>
+  </header>
+  <div class="totals">
+    <div><strong>{{ r.counts.completed }}</strong>Completed (manual records)</div>
+    <div><strong>{{ r.counts.overdue }}</strong>Overdue, not recorded</div>
+    <div><strong>{{ r.counts.issues }}</strong>Issues ({{ r.counts.issues_open }} open at period end)</div>
+    <div><strong>{{ r.counts.verified }}</strong>Verified automatically</div>
+  </div>
+  {% include "reports/_body.html" %}
+  <p class="notice"><strong>About these results.</strong> {{ r.notice }}</p>
+</div>
+</body>
+</html>

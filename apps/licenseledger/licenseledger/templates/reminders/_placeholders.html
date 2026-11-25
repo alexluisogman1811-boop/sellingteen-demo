@@ -1,0 +1,6 @@
+<dl class="dl compact placeholders">
+  {% for name, desc in placeholders.items() %}
+  <dt><code>{{ '{' ~ name ~ '}' }}</code></dt><dd>{{ desc }}</dd>
+  {% endfor %}
+</dl>
+<p class="help">There is deliberately no placeholder for the full license key.</p>

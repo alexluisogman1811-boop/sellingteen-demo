@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Know which leads to contact next{% endblock %}
+{% block main_class %}landing{% endblock %}
+{% block content %}
+<header class="landing-top">
+  <a class="brand" href="{{ url_for('leads.dashboard') }}" aria-label="LeadFollowUp AI, home">
+    <img src="{{ url_for('static', filename='favicon.svg') }}" alt="" width="28" height="28">
+    <span class="brand-text">LeadFollowUp <strong>AI</strong></span>
+  </a>
+  <nav class="landing-top-actions" aria-label="Account">
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('auth.login') }}">Log in</a>
+    <a class="btn btn-primary btn-sm" href="{{ url_for('auth.signup') }}">Sign up</a>
+  </nav>
+</header>
+
+<section class="hero" aria-labelledby="hero-h">
+  <h1 id="hero-h">See which leads to contact next, with the follow-up message written for you.</h1>
+  <p class="hero-sub">LeadFollowUp AI puts your overdue and due-today leads at the top, so nobody slips through the cracks. Open a lead and a short follow-up message is ready to review, edit and copy. Nothing is ever sent automatically: you send it yourself.</p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Sign up{% if config.BILLING_ENABLED %}, free for {{ config.TRIAL_DAYS }} days{% endif %}</a>
+    <a class="btn btn-secondary" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+</section>
+
+<section class="landing-section" aria-labelledby="who-h">
+  <h2 id="who-h">Who it's for</h2>
+  <p>Small businesses that get leads by phone, through their website, Facebook, LINE, WhatsApp and referrals, and lose customers because nobody remembers to follow up.</p>
+</section>
+
+<section class="landing-section" aria-labelledby="what-h">
+  <h2 id="what-h">What it does</h2>
+  <ul class="feature-grid">
+    <li class="card">
+      <h3>Who should I contact next?</h3>
+      <p>Your dashboard lists overdue leads first, then the ones due today, then what's coming up.</p>
+    </li>
+    <li class="card">
+      <h3>Messages written for you</h3>
+      <p>Get a Friendly, Professional or Short follow-up message written only from the details you saved for the lead. Edit it, then copy it with one click.</p>
+    </li>
+    <li class="card">
+      <h3>Contact history</h3>
+      <p>Record each call or message and set the next follow-up date in one form, so you always know what was said.</p>
+    </li>
+  </ul>
+</section>
+
+{% if config.BILLING_ENABLED %}
+<section class="landing-section pricing card" aria-labelledby="price-h">
+  <h2 id="price-h">Price</h2>
+  <p class="price-line"><strong>{{ config.PRICE_TEXT }}</strong> after a {{ config.TRIAL_DAYS }}-day free trial.</p>
+  <p class="muted small">See the <a href="{{ url_for('legal.terms') }}">Terms</a>, <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a> and <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+  <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Start {{ config.TRIAL_DAYS }}-day free trial</a>
+</section>
+{% endif %}
+{% endblock %}

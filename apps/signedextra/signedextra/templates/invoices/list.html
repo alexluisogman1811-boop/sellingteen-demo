@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}Invoices{% endblock %}
+{% block content %}
+<h1>Invoices</h1>
+<p class="small muted">To create an invoice, open a job and choose <strong>Create invoice</strong>.</p>
+<div class="card">
+  {% if invoices %}
+  <ul class="list">
+    {% for i in invoices %}
+    <li><a class="item" href="{{ url_for('invoices.invoice_detail', invoice_id=i.id) }}">
+      <span><span class="item-title">INV-{{ "%04d"|format(i.number) }} · {{ i.job_name }}</span><br><span class="small muted">{{ i.customer_name }} · {{ i.created_at|dt }}</span></span>
+      <span class="right">{{ badge(i.status) }}<br><span class="small">{{ i.total_cents|money }}</span></span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="empty">No invoices yet.</p>{% endif %}
+</div>
+{% endblock %}

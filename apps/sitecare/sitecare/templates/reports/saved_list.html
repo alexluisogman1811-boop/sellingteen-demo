@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Saved reports{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('main.reports_index') }}">Reports</a></p>
+    <h1>Saved reports</h1>
+  </div>
+</div>
+<form class="filters" method="get" role="search">
+  <label class="sr-only" for="q">Search saved reports</label>
+  <input id="q" type="search" name="q" value="{{ q }}" placeholder="Search title or client">
+  <label class="sr-only" for="fc">Client</label>
+  <select id="fc" name="client_id">
+    <option value="">All clients</option>
+    {% for c in clients %}<option value="{{ c.id }}" {% if client_id == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+  </select>
+  <button class="btn" type="submit">Filter</button>
+  {% if q or client_id %}<a class="btn btn-ghost" href="{{ url_for('main.saved_reports') }}">Clear</a>{% endif %}
+</form>
+<section class="card">
+  {% if reports %}
+  <div class="table-wrap">
+    <table class="table table-stack">
+      <thead><tr><th>Report</th><th>Client</th><th>Period</th><th>Saved</th><th>Shared</th></tr></thead>
+      <tbody>
+      {% for r in reports %}
+        <tr>
+          <td data-label="Report"><a href="{{ url_for('main.saved_report_detail', report_id=r.id) }}">{{ r.title }}</a>{% if r.website_name %}<br><span class="muted small">{{ r.website_name }} only</span>{% endif %}</td>
+          <td data-label="Client">{{ r.client_name }}</td>
+          <td data-label="Period" class="nowrap">{{ r.period_start|nice_date }} - {{ r.period_end|nice_date }}</td>
+          <td data-label="Saved" class="nowrap">{{ r.created_at }}</td>
+          <td data-label="Shared">{% if r.shared %}<span class="badge badge-warn">Link active</span>{% else %}<span class="muted">Private</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="empty">No saved reports{% if q or client_id %} match these filters{% endif %}. Open a client report and choose &ldquo;Save report&rdquo;.</p>{% endif %}
+</section>
+{% endblock %}

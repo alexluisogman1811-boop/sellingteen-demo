@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Choose a new password{% endblock %}
+{% block auth_content %}
+<div class="card auth-card">
+  <h1>Choose a new password</h1>
+  <form method="post" action="{{ url_for('auth.reset_password', token=token) }}" class="stack-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+      <label for="password">New password</label>
+      <input id="password" name="password" type="password" minlength="10" required autocomplete="new-password">
+      <p class="help">At least 10 characters.</p>
+    </div>
+    <div class="field">
+      <label for="confirm">Confirm new password</label>
+      <input id="confirm" name="confirm" type="password" minlength="10" required autocomplete="new-password">
+    </div>
+    <button class="btn btn-primary btn-block" type="submit">Save new password</button>
+  </form>
+</div>
+{% endblock %}

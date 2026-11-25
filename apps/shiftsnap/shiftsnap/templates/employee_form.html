@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error %}
+{% block title %}{{ 'Edit ' ~ employee.name if employee else 'Add employee' }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ 'Edit ' ~ employee.name if employee else 'Add employee' }}</h1></div>
+{% if errors %}<div class="flash flash-error" role="alert">Please fix the highlighted fields.</div>{% endif %}
+<form method="post" class="card form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="form-grid">
+    <label><span>Name <span class="req">*</span></span>
+      <input name="name" value="{{ values.get('name', '') }}" maxlength="100" required autofocus
+             class="{{ 'invalid' if errors.name }}">
+      {{ field_error(errors, 'name') }}</label>
+    <label>Role
+      <input name="role" value="{{ values.get('role', '') }}" maxlength="50" list="roles" placeholder="e.g. Cashier"
+             class="{{ 'invalid' if errors.role }}">
+      {{ field_error(errors, 'role') }}</label>
+    <label>Email
+      <input name="email" type="email" value="{{ values.get('email', '') }}" maxlength="254"
+             class="{{ 'invalid' if errors.email }}">
+      {{ field_error(errors, 'email') }}</label>
+    <label>Phone
+      <input name="phone" type="tel" value="{{ values.get('phone', '') }}" maxlength="30"
+             class="{{ 'invalid' if errors.phone }}">
+      {{ field_error(errors, 'phone') }}</label>
+  </div>
+  <label>Notes
+    <textarea name="notes" rows="2" maxlength="500">{{ values.get('notes', '') }}</textarea>
+    {{ field_error(errors, 'notes') }}</label>
+  <datalist id="roles">{% for r in roles %}<option value="{{ r }}">{% endfor %}</datalist>
+
+  <fieldset class="availability">
+    <legend>Availability</legend>
+    <label class="check">
+      <input type="checkbox" name="track_availability" value="1" id="track-availability"
+             {{ 'checked' if values.get('track_availability') == '1' }}>
+      Record availability (shifts outside it will show a warning)
+    </label>
+    <div class="avail-days" id="avail-days">
+      <p class="muted small">Tick the days they can work. An end time earlier than the start means the window runs past midnight.
+        Use 00:00–00:00 for “any time”.</p>
+      {% for wd in range(7) %}
+      <div class="avail-row">
+        <label class="check"><input type="checkbox" name="avail_{{ wd }}_on" value="1"
+          {{ 'checked' if values.get('avail_%d_on' % wd) == '1' }}> {{ WEEKDAYS[wd] }}</label>
+        <input type="time" name="avail_{{ wd }}_start" value="{{ values.get('avail_%d_start' % wd, '09:00') }}" aria-label="{{ WEEKDAYS[wd] }} from">
+        <span>to</span>
+        <input type="time" name="avail_{{ wd }}_end" value="{{ values.get('avail_%d_end' % wd, '17:00') }}" aria-label="{{ WEEKDAYS[wd] }} until">
+        {{ field_error(errors, 'avail_%d' % wd) }}
+      </div>
+      {% endfor %}
+    </div>
+  </fieldset>
+
+  <div class="form-actions">
+    <button class="btn" type="submit">{{ 'Save changes' if employee else 'Add employee' }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.employees') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

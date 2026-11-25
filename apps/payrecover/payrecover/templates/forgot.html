@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Forgot password{% endblock %}
+{% block content %}
+<div class="auth">
+  <h1>Forgot your password?</h1>
+  {% if sent %}
+  <div class="flash flash-success" role="status">{{ message }}</div>
+  {% else %}
+  <p class="muted">Enter the email you signed up with. We'll email you a link to choose a new password.</p>
+  <form method="post" action="{{ url_for('auth.forgot_password') }}" class="card form">
+    {{ csrf() }}
+    <label>Email <input type="email" name="email" required autocomplete="email" autofocus></label>
+    <button class="btn btn-primary btn-block" type="submit">Send reset link</button>
+  </form>
+  {% endif %}
+  <p class="center"><a href="{{ url_for('auth.login') }}">Back to log in</a></p>
+</div>
+{% endblock %}

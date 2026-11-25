@@ -1,0 +1,7 @@
+{% extends "public/base_public.html" %}
+{% block title %}What clients say{% if profile.business_name %} about {{ profile.business_name }}{% endif %}{% endblock %}
+{% block content %}
+<h1 class="wall-title">What clients say{% if profile.business_name %} about {{ profile.business_name }}{% endif %}</h1>
+{% if profile.website %}<p class="center small"><a href="{{ profile.website }}" rel="noopener">{{ profile.website|replace('https://', '')|replace('http://', '') }}</a></p>{% endif %}
+{% include "public/_cards.html" %}
+{% endblock %}

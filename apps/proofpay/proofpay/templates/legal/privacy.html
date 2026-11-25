@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy · ProofPay{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Your account:</strong> your email address, a secure hash of your password (never the password itself), and the business details you enter (name, trade, phone, email, and how customers can pay you).</li>
+    <li><strong>What you enter about your jobs and customers:</strong> customer name and optional email and phone, job title, description, address, price, due date, work notes, summary, payment status, and the photos you upload. Photo location and camera data (EXIF) is removed when a photo is saved.</li>
+    <li><strong>Basic technical logs</strong> (time, page, IP address) to keep the service secure and working. Customer job-report links are removed from logs.</li>
+  </ul>
+
+  <h2>What your customers see</h2>
+  <p>Each job has a private report link that you share. Anyone with the link sees that job's title, address, work completed, summary, photos, total, payment status and your business's payment instructions. It never shows your other jobs or the customer's own contact details. Report pages ask search engines not to index them.</p>
+
+  <h2>AI job summaries</h2>
+  <p>If you use the optional AI helper and it is connected to an AI provider, only the job title and the notes you write are sent to that provider to produce a draft. Prices, payment status and customer contact details are never sent.</p>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't sell your data or your customers' data.</li>
+    <li>We don't contact your customers or take payments from them.</li>
+    <li>We don't use advertising or tracking cookies. We use cookies only to keep you logged in and protect forms.</li>
+    <li>We never see your card details. Subscription payments are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>Why we use it</h2>
+  <p>Only to run the service for you: to show your jobs and customer reports, keep your account secure, manage your subscription, and answer your questions.</p>
+
+  <h2>Where it is stored</h2>
+  <p>On the servers that host ProofPay, protected by your login. Each business can only see its own data.</p>
+
+  <h2>Your customers' information</h2>
+  <p>You add your customers' details and photos of their property, so you are responsible for having a good reason to keep them (for example, they hired you) and for following privacy laws where you operate. Deleting a job deletes its photos.</p>
+
+  <h2>Your choices</h2>
+  <p>You can edit or delete jobs and photos at any time. You can download all your data yourself (Business page, "Export all my data"), and you can delete your whole account and all its data yourself (Business page, "Delete my account"). It is removed straight away, photos included. If you can't log in{% if support_email %}, email {{ support_email }} from your account email{% else %}, contact us{% endif %} and we will do it within 30 days.</p>
+
+  <h2>Email</h2>
+  <p>We only email you when you ask for a password reset link. We never send marketing email.</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }}{% if support_email %} · {{ support_email }}{% endif %}</p>
+</article>
+{% endblock %}

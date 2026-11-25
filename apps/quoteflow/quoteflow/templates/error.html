@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Page not found' if code == 404 else 'Something went wrong' }} — QuoteFlow AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<div class="card error-card">
+  <h1>{{ 'Page not found' if code == 404 else 'Something went wrong' }}</h1>
+  <p class="muted">{{ message }}</p>
+  <div class="actions">
+    <a href="{{ url_for('dashboard') if g.user else url_for('landing') }}" class="btn">{{ 'Go to dashboard' if g.user else 'Go to home page' }}</a>
+  </div>
+</div>
+{% endblock %}

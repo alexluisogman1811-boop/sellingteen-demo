@@ -1,0 +1,29 @@
+{% macro status_badge(status) -%}
+  <span class="badge badge-{{ status }}">{{ status|capitalize }}</span>
+{%- endmacro %}
+
+{% macro demo_badge(row) -%}
+  {% if row.is_demo %}<span class="badge badge-demo" title="Sample data, not a real testimonial">DEMO</span>{% endif %}
+{%- endmacro %}
+
+{% macro permission_badge(t) -%}
+  {% if t.permission_granted %}
+    <span class="badge badge-perm" title="{{ t.permission_note }}">Permission: {{ 'client' if t.permission_source == 'submitter' else 'recorded by you' }}</span>
+  {% else %}
+    <span class="badge badge-noperm">No permission</span>
+  {% endif %}
+{%- endmacro %}
+
+{% macro public_state(t) -%}
+  {% if t.status == 'approved' and t.permission_granted %}
+    <span class="badge badge-live">Public</span>
+  {% endif %}
+{%- endmacro %}
+
+{% macro copy_text(t) -%}
+“{{ t.feedback }}” — {{ t.customer_name }}{% if t.business %}, {{ t.business }}{% endif %}{% if t.rating %} ({{ t.rating }}/5){% endif %}
+{%- endmacro %}
+
+{% macro field_error(errors, name) -%}
+  {% if errors.get(name) %}<p class="field-error" id="err-{{ name }}">{{ errors[name] }}</p>{% endif %}
+{%- endmacro %}

@@ -1,0 +1,79 @@
+{# Shared report document used by the owner preview and the public share page. #}
+<article class="report-doc">
+  <header class="report-header">
+    {% if logo_url %}<img class="report-logo" src="{{ logo_url }}" alt="{{ business.name }} logo">{% endif %}
+    <div class="report-biz">
+      <div class="report-biz-name">{{ business.name or "Job Report" }}</div>
+      <div class="report-biz-contact">
+        {% for item in [business.contact_name, business.phone, business.email] if item %}<span>{{ item }}</span>{% endfor %}
+      </div>
+      {% if business.address %}<div class="report-biz-contact">{{ business.address }}</div>{% endif %}
+    </div>
+  </header>
+
+  <div class="report-title-block">
+    <div class="report-kicker">Job Completion Report</div>
+    <h1 class="report-title">{{ job.title }}</h1>
+    <span class="badge badge-job-{{ job.status }}">{{ JOB_STATUSES[job.status] }}</span>
+  </div>
+
+  <dl class="report-details">
+    <div><dt>Customer</dt><dd>{{ job.customer_name }}</dd></div>
+    {% if job.address %}<div><dt>Service address</dt><dd>{{ job.address }}</dd></div>{% endif %}
+    {% if job.job_date %}<div><dt>Job date</dt><dd>{{ job.job_date|date }}</dd></div>{% endif %}
+    {% if job.service_type %}<div><dt>Service type</dt><dd>{{ job.service_type }}</dd></div>{% endif %}
+    {% if job.technician %}<div><dt>Technician</dt><dd>{{ job.technician }}</dd></div>{% endif %}
+    {% if show_customer_contact and job.customer_phone %}<div><dt>Customer phone</dt><dd>{{ job.customer_phone }}</dd></div>{% endif %}
+    {% if show_customer_contact and job.customer_email %}<div><dt>Customer email</dt><dd>{{ job.customer_email }}</dd></div>{% endif %}
+  </dl>
+
+  {% if content.summary %}
+  <section class="report-section">
+    <h2>Job Summary</h2>
+    <p>{{ content.summary }}</p>
+  </section>
+  {% endif %}
+
+  {% for key, title in [("reported_issue", "Reported Issue"), ("findings", "Findings"),
+                        ("work_completed", "Work Completed"), ("materials", "Materials / Parts"),
+                        ("testing", "Testing / Verification"), ("customer_notes", "Customer Notes"),
+                        ("follow_up", "Recommended Follow-Up")] %}
+    {% if content[key] %}
+    <section class="report-section">
+      <h2>{{ title }}</h2>
+      <ul>{% for item in content[key] %}<li>{{ item }}</li>{% endfor %}</ul>
+    </section>
+    {% endif %}
+  {% endfor %}
+
+  {% for stage, label in PHOTO_STAGES.items() %}
+    {% if grouped[stage] %}
+    <section class="report-section">
+      <h2>{{ label }} Photos <span class="report-count">({{ grouped[stage]|length }})</span></h2>
+      <div class="report-photos">
+        {% for p in grouped[stage] %}
+        <a href="{{ photo_url(p) }}" target="_blank" rel="noopener"><img src="{{ photo_url(p) }}" alt="{{ label }} photo {{ loop.index }}" loading="lazy"></a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  {% endfor %}
+
+  {# Closing block: only details the owner entered in their business profile. #}
+  {% set reach = [business.phone, business.email]|select|list %}
+  {% if reach or business.name %}
+  <section class="report-closing">
+    {% if reach %}
+    <p><strong>Questions about this work?</strong>
+      Contact {{ business.contact_name ~ ", " if business.contact_name }}{{ business.name or "us" }}:
+      {% for item in reach %}<span class="nowrap">{{ item }}</span>{{ " · " if not loop.last }}{% endfor %}</p>
+    {% endif %}
+    {% if business.name %}<p class="report-thanks">Thank you for choosing {{ business.name }}.</p>{% endif %}
+  </section>
+  {% endif %}
+
+  <footer class="report-footer">
+    <div><strong>Status:</strong> {{ JOB_STATUSES[job.status] }}</div>
+    <div><strong>Report generated:</strong> {{ report.generated_at|datetime }}</div>
+  </footer>
+</article>

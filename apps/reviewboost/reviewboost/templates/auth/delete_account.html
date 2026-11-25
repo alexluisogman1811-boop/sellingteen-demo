@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Delete account{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <a class="small back" href="{{ url_for('auth.settings') }}">← Back to your account</a>
+  <h1>Delete your account?</h1>
+  <p>This permanently deletes <strong>{{ g.business.name }}</strong> and everything in it:</p>
+  <ul>
+    <li>{{ counts.customers }} customer{{ '' if counts.customers == 1 else 's' }} and their messages</li>
+    <li>{{ counts.templates }} message template{{ '' if counts.templates == 1 else 's' }}</li>
+    <li>Your login{% if not temp_demo %} ({{ g.business.email }}){% endif %}</li>
+  </ul>
+  <p class="muted">This can't be undone. If you're paying for ReviewBoost, cancel the subscription with the payment provider too.</p>
+
+  {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('auth.delete_account') }}" novalidate>
+    {{ csrf() }}
+    {% if temp_demo %}
+    <div class="field">
+      <label for="confirm">Type DELETE to confirm</label>
+      <input id="confirm" name="confirm" type="text" autocomplete="off" required>
+    </div>
+    {% else %}
+    <div class="field">
+      <label for="confirm">Type DELETE (or your email) to confirm</label>
+      <input id="confirm" name="confirm" type="text" autocomplete="off" required>
+    </div>
+    <div class="field">
+      <label for="password">Enter your password to confirm</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+    </div>
+    {% endif %}
+    <div class="message-actions">
+      <button class="btn btn-danger" type="submit">Delete my account</button>
+      <a class="btn btn-secondary" href="{{ url_for('auth.settings') }}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Your account:</strong> shop name, email address, and a secure hash of your password (never the password itself).</li>
+    <li><strong>What you enter about your stock:</strong> products, prices, quantities, stock movements with their reasons and notes, CSV files you import, and supplier details (which can include a contact's name, email and phone).</li>
+    <li><strong>Basic technical logs</strong> (time, page, IP address) to keep the service secure and working.</li>
+  </ul>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't sell your data.</li>
+    <li>We don't send marketing email. If you ask for a "forgot password" link, we email it only to your login email.</li>
+    <li>We don't connect to your shop, marketplace or accounting systems.</li>
+    <li>We don't use advertising or tracking cookies. We use one cookie to keep you logged in.</li>
+    <li>We never see your card details. Payments are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>Why we use it</h2>
+  <p>Only to run the service for you: to show your inventory, keep your account secure, manage your subscription, and answer your questions.</p>
+
+  <h2>Where it is stored</h2>
+  <p>On the server that hosts StockPing, protected by your login. Each shop can only see its own data.</p>
+
+  <h2>Your suppliers' information</h2>
+  <p>You add your suppliers' contact details, so you are responsible for having a good reason to keep them and for following privacy laws where you operate (such as Thailand's PDPA or similar laws). You can edit a supplier at any time, and delete one that no product uses.</p>
+
+  <h2>Your choices</h2>
+  <p>You can export all your data as CSV files at any time from your Account page, even after your trial ends. You can also delete your whole account and all its data yourself from the Account page ("Delete my account"). This removes it straight away and can't be undone.</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }}{% if support_email %} · {{ support_email }}{% endif %}</p>
+</article>
+{% endblock %}

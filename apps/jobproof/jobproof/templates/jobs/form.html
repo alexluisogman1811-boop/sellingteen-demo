@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ "New job" if mode == "new" else "Edit job" }} – JobProof AI{% endblock %}
+{% block container_class %}medium{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    {% if mode == "edit" %}<a class="back" href="{{ url_for('jobs.detail', job_id=job.id) }}">← Back to job</a>{% endif %}
+    <h1>{{ "New job" if mode == "new" else "Edit job" }}</h1>
+  </div>
+</div>
+<form method="post" class="card form-card" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <fieldset>
+    <legend>Customer</legend>
+    <label for="customer_name">Customer name <span class="req">*</span></label>
+    <input id="customer_name" name="customer_name" required maxlength="120" value="{{ job.customer_name }}">
+    <div class="grid-2">
+      <div>
+        <label for="customer_phone">Customer phone</label>
+        <input id="customer_phone" name="customer_phone" type="tel" maxlength="40" value="{{ job.customer_phone }}">
+      </div>
+      <div>
+        <label for="customer_email">Customer email</label>
+        <input id="customer_email" name="customer_email" type="email" maxlength="254" value="{{ job.customer_email }}">
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Job</legend>
+    <label for="title">Job title <span class="req">*</span></label>
+    <input id="title" name="title" required maxlength="160" value="{{ job.title }}" placeholder="e.g. Kitchen Sink Repair">
+    <label for="address">Job address</label>
+    <input id="address" name="address" maxlength="300" value="{{ job.address }}" placeholder="Where the work was done">
+    <div class="grid-2">
+      <div>
+        <label for="service_type">Service type</label>
+        <input id="service_type" name="service_type" list="service-types" maxlength="60" value="{{ job.service_type }}" placeholder="Plumbing, HVAC, Cleaning…">
+        <datalist id="service-types">{% for s in service_types %}<option value="{{ s }}">{% endfor %}</datalist>
+      </div>
+      <div>
+        <label for="job_date">Job date</label>
+        <input id="job_date" name="job_date" type="date" value="{{ job.job_date }}">
+      </div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <label for="technician">Technician / worker</label>
+        <input id="technician" name="technician" maxlength="120" value="{{ job.technician }}">
+      </div>
+      <div>
+        <label for="status">Job status</label>
+        <select id="status" name="status">
+          {% for key, label in JOB_STATUSES.items() %}
+          <option value="{{ key }}" {{ 'selected' if job.status == key }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>What did you do?</legend>
+    <label for="notes">Job notes</label>
+    <p class="hint">Write it however you like – short phrases are fine. We'll turn it into a professional report and only use what you write here.</p>
+    <textarea id="notes" name="notes" rows="7" maxlength="10000" placeholder="Customer reported leaking pipe under kitchen sink. Replaced damaged connection, tightened fittings, tested water flow, no leaks.">{{ job.notes }}</textarea>
+    <label for="materials">Materials / parts used <span class="hint">(optional – one per line or comma-separated)</span></label>
+    <textarea id="materials" name="materials" rows="2" maxlength="2000" placeholder="1/2&quot; compression connector, plumber's tape">{{ job.materials }}</textarea>
+  </fieldset>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-large">{{ "Create job" if mode == "new" else "Save changes" }}</button>
+    <a class="btn btn-secondary btn-large" href="{{ url_for('jobs.detail', job_id=job.id) if mode == 'edit' else url_for('dashboard.index') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

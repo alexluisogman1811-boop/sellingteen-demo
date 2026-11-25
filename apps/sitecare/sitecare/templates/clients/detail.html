@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ client.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('main.clients_list') }}">Clients</a></p>
+    <h1>{{ client.name }}</h1>
+    <p class="muted">{{ client.contact_name }}{% if client.contact_name and client.contact_email %} · {% endif %}{{ client.contact_email }}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.client_edit', client_id=client.id) }}">Edit</a>
+    <a class="btn" href="{{ url_for('main.client_report', client_id=client.id) }}">Report</a>
+    <a class="btn" href="{{ url_for('main.saved_reports', client_id=client.id) }}">Saved reports</a>
+    <a class="btn" href="{{ url_for('main.tasks_list', view='history', client_id=client.id) }}">Activity</a>
+    <a class="btn btn-primary" href="{{ url_for('main.website_new', client_id=client.id) }}">Add website</a>
+  </div>
+</div>
+{% if client.notes %}<section class="card"><h2>Notes</h2><p class="prewrap">{{ client.notes }}</p></section>{% endif %}
+<section class="card">
+  <div class="card-head"><h2>Websites</h2></div>
+  {% if sites %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Website</th><th class="hide-sm">Platform</th><th>Status</th><th>Overdue</th><th class="hide-sm">Next due</th></tr></thead>
+      <tbody>
+      {% for s in sites %}
+        <tr>
+          <td><a href="{{ url_for('main.website_detail', website_id=s.id) }}">{{ s.name }}</a><br><span class="muted small">{{ s.domain }}</span></td>
+          <td class="hide-sm">{{ PLATFORMS.get(s.platform) }}</td>
+          <td>{{ m.site_status_badge(s.status) }}</td>
+          <td>{% if s.overdue %}<span class="badge badge-danger">{{ s.overdue }}</span>{% else %}0{% endif %}</td>
+          <td class="hide-sm">{{ s.next_due|nice_date or '-' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="empty">No websites for this client yet.</p>{% endif %}
+</section>
+<section class="card danger-zone">
+  <h2>Delete client</h2>
+  <p class="muted">Deletes this client, all of its websites, tasks, history, issues and evidence files. This cannot be undone.</p>
+  {{ m.post_button(url_for('main.client_delete', client_id=client.id), 'Delete client', 'btn btn-danger', 'Delete ' ~ client.name ~ ' and ALL of its websites and history? This cannot be undone.') }}
+</section>
+{% endblock %}

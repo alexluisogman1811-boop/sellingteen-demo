@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Delete account – JobProof AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<div class="card">
+  <p><a href="{{ url_for('account.settings') }}">← Back to your account</a></p>
+  <h1>Delete your account?</h1>
+  <p>This permanently deletes your login ({{ g.user.email }}){% if g.business and g.business.name %}, <strong>{{ g.business.name }}</strong>{% endif %} and everything in it:</p>
+  <ul>
+    <li>{{ counts.jobs }} job{{ '' if counts.jobs == 1 else 's' }}</li>
+    <li>{{ counts.photos }} photo{{ '' if counts.photos == 1 else 's' }} and your logo</li>
+    <li>{{ counts.reports }} report{{ '' if counts.reports == 1 else 's' }} – any share links you sent customers will stop working</li>
+  </ul>
+  <p class="muted">This can't be undone. You may want to <a href="{{ url_for('account.export') }}">download your data</a> first. If you pay for JobProof AI, cancel the subscription with the payment provider too.</p>
+  <form method="post" action="{{ url_for('account.delete') }}" class="form-card" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="confirm">Type DELETE (or your email address) to confirm</label>
+    <input id="confirm" name="confirm" type="text" autocomplete="off" required>
+    <label for="password">Your password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-danger-outline">Delete my account</button>
+      <a class="btn btn-secondary" href="{{ url_for('account.settings') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

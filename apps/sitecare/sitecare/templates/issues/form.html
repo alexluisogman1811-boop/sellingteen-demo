@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ 'Edit issue' if issue else 'Log issue' }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ 'Edit issue' if issue else 'Log issue' }}</h1></div>
+<form method="post" class="card form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if errors %}<p class="form-alert" role="alert">Please fix the highlighted fields.</p>{% endif %}
+  <div class="form-grid">
+    <div class="field{% if errors.get('website_id') %} has-error{% endif %}">
+      <label for="f-website_id">Website <span class="req" aria-hidden="true">*</span></label>
+      <select id="f-website_id" name="website_id" required>
+        <option value="">Choose a website</option>
+        {% for w in websites %}<option value="{{ w.id }}" {% if values.get('website_id')|string == w.id|string %}selected{% endif %}>{{ w.name }} ({{ w.domain }})</option>{% endfor %}
+      </select>
+      {{ m.field_error(errors, 'website_id') }}
+    </div>
+    {{ m.input('title', 'Issue title', values, errors, required=True, attrs='maxlength="160"') }}
+    {{ m.select('severity', 'Severity', SEVERITIES.items(), values, errors) }}
+    {{ m.select('status', 'Status', ISSUE_STATUSES.items(), values, errors) }}
+    {{ m.input('reported_on', 'Reported on', values, errors, type='date', required=True, attrs='max="' ~ today.isoformat() ~ '"') }}
+    <div class="field{% if errors.get('resolved_on') %} has-error{% endif %}" data-show-when="status=resolved,wont_fix">
+      <label for="f-resolved_on">Resolved on <span class="req" aria-hidden="true">*</span></label>
+      <input id="f-resolved_on" name="resolved_on" type="date" max="{{ today.isoformat() }}" value="{{ values.get('resolved_on') or '' }}">
+      {{ m.field_error(errors, 'resolved_on') }}
+    </div>
+    {% if checks %}
+    <div class="field field-wide">
+      <label for="f-occurrence_id">Found during (optional)</label>
+      <select id="f-occurrence_id" name="occurrence_id">
+        <option value="">Not linked to a maintenance check</option>
+        {% for o in checks %}<option value="{{ o.id }}" {% if values.get('occurrence_id')|string == o.id|string %}selected{% endif %}>{{ o.completed_on }} · {{ o.title }} ({{ RESULTS.get(o.result) }})</option>{% endfor %}
+      </select>
+      <p class="hint">Links the issue to the recorded check that found it; shown on the monthly report.</p>
+    </div>
+    {% endif %}
+    {{ m.textarea('description', 'Description', values, errors, maxlength=4000, hint='What happened, where, how it was noticed. No passwords or keys.') }}
+    {{ m.textarea('resolution_notes', 'Resolution notes', values, errors, maxlength=4000, hint='Required when marking as resolved.') }}
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">{{ 'Save changes' if issue else 'Log issue' }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.website_detail', website_id=issue.website_id) if issue else url_for('main.issues_list') }}">Cancel</a>
+  </div>
+</form>
+{% if issue %}
+<section class="card danger-zone">
+  <h2>Delete issue</h2>
+  {{ m.post_button(url_for('main.issue_delete', issue_id=issue.id), 'Delete issue', 'btn btn-danger', 'Delete this issue permanently?') }}
+</section>
+{% endif %}
+{% endblock %}

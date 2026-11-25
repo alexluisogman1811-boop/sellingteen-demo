@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Completion report · Job #{{ job.id }} · {{ company_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="report-body">
+<div class="report-toolbar no-print">
+  {% if not public %}<a class="btn btn-small" href="{{ url_for('main.job_detail', job_id=job.id) }}">← Back to job</a>{% endif %}
+  <button class="btn btn-small btn-primary" type="button" data-print>Print / save as PDF</button>
+</div>
+
+<article class="report">
+  <header class="report-header">
+    <div>
+      <div class="report-company">{{ company_name }}</div>
+      <h1>Job completion report</h1>
+      <div class="muted">Reference: Job #{{ job.id }} · {{ job.title }}</div>
+    </div>
+    <span class="badge badge-{{ job.status }}">{{ STATUS_LABELS[job.status] }}</span>
+  </header>
+
+  {% if job.status != 'completed' %}
+  <p class="notice">This job is currently marked “{{ STATUS_LABELS[job.status] }}”. The information below may still change.</p>
+  {% endif %}
+
+  <section class="report-section">
+    <dl class="report-grid">
+      <div><dt>Customer</dt><dd>{{ job.customer_name }}</dd></div>
+      <div><dt>Property</dt><dd>{{ job.property_name }}</dd></div>
+      {% if job.property_address %}<div><dt>Address</dt><dd class="prewrap">{{ job.property_address }}</dd></div>{% endif %}
+      <div><dt>Appointment</dt><dd>{{ job.appointment_date|nice_date }}{% if job.start_time %}, {{ job.start_time }}{% if job.end_time %}–{{ job.end_time }}{% endif %}{% endif %}</dd></div>
+      <div><dt>Assigned worker</dt><dd>{{ job.assigned_worker or 'Not recorded' }}</dd></div>
+      <div><dt>Work started (recorded in app)</dt><dd>{% if started %}{{ started.created_at }} · {{ started.actor }}{% else %}Not recorded{% endif %}</dd></div>
+      {% if submitted %}<div><dt>Submitted for review</dt><dd>{{ submitted.created_at }} · {{ submitted.actor }}</dd></div>{% endif %}
+      {% if approved %}<div><dt>Approved by (service team)</dt><dd>{{ approved.actor }} · {{ approved.created_at }}</dd></div>
+      {% elif job.status == 'completed' and job.reviewed_by %}<div><dt>Approved by (service team)</dt><dd>{{ job.reviewed_by }} · {{ job.completed_at }}</dd></div>{% endif %}
+    </dl>
+  </section>
+
+  <section class="report-section">
+    <h2>Checklist results</h2>
+    <p class="report-summary">
+      <span class="sum sum-done">{{ summary.done }} done</span>
+      <span class="sum sum-incomplete">{{ summary.incomplete }} not completed</span>
+      {% if summary.pending %}<span class="sum sum-pending">{{ summary.pending }} not checked</span>{% endif %}
+      <span class="muted">of {{ summary.total }} task{{ '' if summary.total == 1 else 's' }}</span>
+    </p>
+    {% if summary.incomplete %}
+    <p class="small report-exceptions">
+      {{ summary.incomplete }} task{{ '' if summary.incomplete == 1 else 's' }} recorded as not completed, with reasons below.
+      {% if exceptions_confirmed %}Exceptions confirmed by {{ exceptions_confirmed.actor }} on {{ exceptions_confirmed.created_at }}.{% endif %}
+    </p>
+    {% endif %}
+    {% if checklist %}
+    <table class="report-table">
+      <thead><tr><th>Task</th><th>Result</th><th>Notes</th></tr></thead>
+      <tbody>
+      {% for it in checklist %}
+        <tr class="row-{{ it.state }}">
+          <td>{{ it.label }}{% if not it.required %} <span class="muted small">(optional)</span>{% endif %}</td>
+          <td class="result result-{{ it.state }}">{{ ITEM_STATES[it.state] }}</td>
+          <td>
+            {% if it.state == 'incomplete' %}<div><strong>Reason:</strong> {{ it.reason }}</div>{% endif %}
+            {% if it.note %}<div>{{ it.note }}</div>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="muted">No checklist tasks were recorded.</p>{% endif %}
+  </section>
+
+  {% if job.report_notes %}
+  <section class="report-section">
+    <h2>Notes</h2>
+    <p class="prewrap">{{ job.report_notes }}</p>
+  </section>
+  {% endif %}
+
+  <section class="report-section">
+    <h2>Photos</h2>
+    {% if photo_groups %}
+      {% for label, group in photo_groups.items() %}
+      <div class="photo-set">
+        <h3>{{ label }}</h3>
+        <div class="photo-pair">
+          {% for kind in ('before', 'after') %}
+          <div>
+            <h4>{{ kind|capitalize }}</h4>
+            {% for p in group[kind] %}
+            <figure>
+              {% if p.missing %}
+              <div class="photo-missing">Photo unavailable</div>
+              {% else %}
+              <img src="{{ url_for('main.shared_photo', token=token, photo_id=p.id) if public else url_for('main.photo', photo_id=p.id) }}" alt="{{ kind }} photo: {{ label }}" loading="lazy" width="{{ p.width }}" height="{{ p.height }}">
+              {% endif %}
+              {% if p.caption %}<figcaption>{{ p.caption }}</figcaption>{% endif %}
+            </figure>
+            {% else %}<p class="muted small">No {{ kind }} photo.</p>{% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}<p class="muted">No photos were uploaded.</p>{% endif %}
+  </section>
+
+  <footer class="report-footer">
+    <p>Report generated {{ generated_at }}.</p>
+    <p>This report summarises information recorded by the service team, including the names and times entered
+       in ProofOfWork. Appointment times are as scheduled; work times come from actions recorded in the app.
+       “Approved” means approved by the service team, not by the customer. Photos and notes were supplied by the team. It is not a digital signature, legal
+       certification, or independent verification of the work, its location or its timing.</p>
+  </footer>
+</article>
+</body>
+</html>

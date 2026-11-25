@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Bookings{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div><h1>Bookings</h1><p class="muted">{{ total }} result{{ '' if total == 1 else 's' }} · times in {{ settings.timezone }}</p></div>
+  <div class="actions">
+    <a class="btn btn-primary" href="{{ url_for('admin.booking_new') }}">+ New appointment</a>
+    <a class="btn" href="{{ url_for('admin.export_csv', **query) }}">Export CSV</a>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Appointment views">
+  {% for key, label in views.items() %}
+  <a class="tab{% if filters.view == key %} active{% endif %}{% if key == 'past' and view_counts[key] %} attention{% endif %}"
+     href="{{ url_for('admin.bookings', filtered=1, view=key) }}" {% if filters.view == key %}aria-current="page"{% endif %}>
+    {{ label }} <span class="tab-count">{{ view_counts[key] }}</span></a>
+  {% endfor %}
+  <a class="tab{% if not filters.view %} active{% endif %}" href="{{ url_for('admin.bookings', filtered=1) }}"
+     {% if not filters.view %}aria-current="page"{% endif %}>All</a>
+</nav>
+{% if filters.view == 'past' %}<p class="hint">These appointments have ended but are still pending or confirmed. Open each one and mark it completed or cancelled.</p>{% endif %}
+
+<form method="get" class="card filters" role="search">
+  <input type="hidden" name="filtered" value="1">
+  {% if filters.view %}<input type="hidden" name="view" value="{{ filters.view }}">{% endif %}
+  <div class="field"><label for="q">Customer or reference</label>
+    <input id="q" name="q" value="{{ filters.q }}" placeholder="Name, email or SS-…" maxlength="100"></div>
+  <div class="field"><label for="date_from">From</label><input id="date_from" type="date" name="date_from" value="{{ filters.date_from }}"></div>
+  <div class="field"><label for="date_to">To</label><input id="date_to" type="date" name="date_to" value="{{ filters.date_to }}"></div>
+  <div class="field"><label for="service_id">Service</label>
+    <select id="service_id" name="service_id"><option value="">All services</option>
+      {% for s in services %}<option value="{{ s.id }}" {% if filters.service_id == s.id|string %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+    </select></div>
+  <div class="field"><label for="status">Status</label>
+    <select id="status" name="status"><option value="">Any status</option>
+      <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Pending + confirmed</option>
+      {% for s in statuses %}<option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ s|capitalize }}</option>{% endfor %}
+    </select></div>
+  <div class="field filter-actions">
+    <button class="btn btn-primary" type="submit">Filter</button>
+    <a class="btn btn-ghost" href="{{ url_for('admin.bookings', filtered=1, view=filters.view) if filters.view else url_for('admin.bookings', filtered=1) }}">Clear filters</a>
+  </div>
+</form>
+
+{% if rows %}
+<div class="table-wrap">
+<table class="table responsive">
+  <thead><tr><th>Date &amp; time</th><th>Customer</th><th>Service</th><th>Status</th><th>Reference</th><th><span class="sr-only">Actions</span></th></tr></thead>
+  <tbody>
+  {% for b in rows %}
+    <tr>
+      <td data-label="When"><div>{{ b.start_utc|local('%a %d %b %Y') }}<br><strong>{{ b.start_utc|local('%H:%M') }}</strong>–{{ b.end_utc|local('%H:%M') }}</div></td>
+      <td data-label="Customer"><div>{{ b.customer_name }}<br><span class="small muted">{{ b.customer_email }}</span></div></td>
+      <td data-label="Service"><div>{{ b.service_name }}</div></td>
+      <td data-label="Status"><div>{{ status_badge(b.status) }}{% if b.status in ('pending', 'confirmed') and b.end_utc < now_iso %} <span class="badge badge-past">Not closed</span>{% endif %}</div></td>
+      <td data-label="Ref"><div><code>{{ b.reference }}</code></div></td>
+      <td><a class="btn btn-small" href="{{ url_for('admin.booking_detail', booking_id=b.id) }}">Open</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if pages > 1 %}
+<nav class="pager" aria-label="Pagination">
+  {% if page > 1 %}<a class="btn btn-ghost" href="{{ url_for('admin.bookings', page=page-1, **query) }}">← Previous</a>{% endif %}
+  <span class="muted">Page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a class="btn btn-ghost" href="{{ url_for('admin.bookings', page=page+1, **query) }}">Next →</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<div class="card empty">No bookings match these filters.</div>
+{% endif %}
+{% endblock %}

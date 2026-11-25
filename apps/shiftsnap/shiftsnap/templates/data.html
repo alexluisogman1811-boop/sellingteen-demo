@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Demo & data{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Demo &amp; data</h1></div>
+
+<section class="card">
+  <h2>Current data</h2>
+  <p>{{ counts.employees }} employee(s), {{ counts.shifts }} shift(s).
+    Demo mode is <strong>{{ 'ON' if demo_mode else 'off' }}</strong>.</p>
+  <p class="muted small">Everything is stored in a SQLite file on the computer running ShiftSnap. There is no cloud sync.
+    This only ever affects <strong>your business</strong>. Loading demo data or clearing data deletes your employees,
+    their shifts and their <strong>employee sign-ins</strong>. Managers' sign-ins (and the employee records of
+    managers) are kept, so nobody who manages the business is locked out.</p>
+</section>
+
+<section class="card">
+  <h2>{{ 'Reset demo data' if demo_mode else 'Load demo data' }}</h2>
+  <p>Loads 6 sample employees (names start with “Sample:”, emails use example.com) and about 25 shifts for this
+    week and next, including an overnight shift, unfilled shifts and one shift that triggers an availability warning.</p>
+  <form method="post" action="{{ url_for('main.data_load_demo') }}"
+        data-confirm="Replace ALL current employees and shifts with sample data?">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="check"><input type="checkbox" name="acknowledge" value="1" required>
+      I understand this <strong>deletes all current employees and shifts</strong>{{ ', including anything I added' if demo_mode }}.</label>
+    <button class="btn" type="submit">{{ 'Reset demo data' if demo_mode else 'Load demo data' }}</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Clear all data</h2>
+  <p>Deletes every employee and shift and turns demo mode off, so you can start with your real team.</p>
+  <form method="post" action="{{ url_for('main.data_clear') }}"
+        data-confirm="Permanently delete ALL employees and shifts?">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="check"><input type="checkbox" name="acknowledge" value="1" required>
+      I understand this permanently deletes all data.</label>
+    <button class="btn btn-danger" type="submit">Clear all data</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <p class="brand brand-large">Proof<span>Of</span>Work</p>
+  <h1>Sign in</h1>
+  <form method="post" action="{{ url_for('auth.login') }}" class="stack">
+    {{ csrf_field() }}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <label class="field"><span class="field-label">Email</span>
+      <input type="email" name="email" value="{{ email }}" autocomplete="username" required maxlength="254" autofocus></label>
+    <label class="field"><span class="field-label">Password</span>
+      <input type="password" name="password" autocomplete="current-password" required maxlength="200"></label>
+    <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+  </form>
+  {% if mail_enabled() %}<p class="muted small"><a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a></p>{% endif %}
+  <p class="muted small">Workers: your manager creates your login.</p>
+  <p class="muted small">New business? <a href="{{ url_for('auth.signup') }}">Create an account</a></p>
+</section>
+{% endblock %}

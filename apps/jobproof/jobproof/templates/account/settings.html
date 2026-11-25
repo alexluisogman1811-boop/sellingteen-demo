@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Your account – JobProof AI{% endblock %}
+{% block container_class %}medium{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Your account</h1>
+    <p class="muted">Signed in as {{ g.user.email }}. Business details are on the <a href="{{ url_for('profile.edit') }}">Business</a> page.</p>
+  </div>
+</div>
+
+<form method="post" action="{{ url_for('account.password') }}" class="card form-card" novalidate>
+  <h2>Change password</h2>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="current_password">Current password</label>
+  <input id="current_password" name="current_password" type="password" autocomplete="current-password" required>
+  <label for="new_password">New password <span class="hint">(at least 8 characters)</span></label>
+  <input id="new_password" name="new_password" type="password" autocomplete="new-password" minlength="8" required>
+  <label for="confirm_password">Repeat new password</label>
+  <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" required>
+  <div class="form-actions">
+    <button type="submit" class="btn">Change password</button>
+  </div>
+</form>
+
+<section class="card">
+  <h2>Export all my data</h2>
+  <p class="muted">Download a ZIP file of spreadsheets (CSV) with your account, business profile, jobs, photo list, reports and share links.</p>
+  <a class="btn btn-secondary" href="{{ url_for('account.export') }}">Download my data</a>
+</section>
+
+{% if config.BILLING_ENABLED %}
+<section class="card">
+  <h2>Subscription</h2>
+  <p class="muted">See your free trial or subscription status.</p>
+  <a class="btn btn-secondary" href="{{ url_for('billing.subscribe') }}">Subscription</a>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Delete my account</h2>
+  <p class="muted">Permanently delete your account, {{ counts.jobs }} job{{ '' if counts.jobs == 1 else 's' }}, {{ counts.photos }} photo{{ '' if counts.photos == 1 else 's' }} and {{ counts.reports }} report{{ '' if counts.reports == 1 else 's' }}. Share links stop working.</p>
+  <a class="btn btn-danger-outline" href="{{ url_for('account.delete') }}">Delete my account…</a>
+</section>
+{% endblock %}

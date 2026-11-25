@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Delete account · ProofPay{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>Delete my account</h1>
+  <p>This deletes your account and <strong>all</strong> its data straight away: your business details, customers, jobs, invoices and every photo. Customer job-report links stop working. This can't be undone.</p>
+  <p class="muted">Want a copy first? <a href="{{ url_for('auth.export_data') }}">Download all my data</a> (ZIP of CSV files).</p>
+  <form method="post" action="{{ url_for('auth.delete_account') }}" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {{ field('confirm', 'Type DELETE (or your email) to confirm', '', errors, required=true, attrs='autocomplete="off"') }}
+    {{ field('password', 'Your password', '', errors, type='password', required=true, attrs='autocomplete="current-password"') }}
+    <button class="btn btn-danger" type="submit">Delete my account forever</button>
+    <a class="btn btn-ghost" href="{{ url_for('auth.settings') }}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

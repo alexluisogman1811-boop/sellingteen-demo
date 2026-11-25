@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Add person{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <h1>Add a team member</h1>
+  <form method="post" action="{{ url_for('auth.user_new') }}" class="stack">
+    {{ csrf_field() }}
+    <label class="field"><span class="field-label">Name</span>
+      <input type="text" name="name" value="{{ values.name }}" required maxlength="100"></label>
+    <label class="field"><span class="field-label">Email</span>
+      <input type="email" name="email" value="{{ values.email }}" required maxlength="254"></label>
+    <label class="field"><span class="field-label">Role</span>
+      <select name="role">
+        {% for key, label in roles.items() %}<option value="{{ key }}" {% if values.role == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select></label>
+    <label class="field"><span class="field-label">Temporary password</span>
+      <input type="password" name="password" required minlength="10" maxlength="200" autocomplete="new-password">
+      <span class="hint">At least 10 characters. Share it privately; they can change it under Account.</span></label>
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Create account</button>
+      <a class="btn" href="{{ url_for('auth.users') }}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

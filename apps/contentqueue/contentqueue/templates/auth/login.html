@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="narrow auth-box">
+  <form method="post" action="{{ url_for('auth.login', next=next_url) if next_url else url_for('auth.login') }}" class="card stack" novalidate>
+    {{ csrf() }}
+    <h1>Log in to ContentQueue</h1>
+    {% if error %}<p class="flash flash-error" role="alert">{{ error }}</p>{% endif %}
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" value="{{ email }}" autocomplete="email" required autofocus>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+    </div>
+    <button class="btn btn-primary" type="submit">Log in</button>
+    <p class="muted small">New here? <a href="{{ url_for('auth.signup') }}">Create a business account</a></p>
+    {% if mail_on() %}
+    <p class="help"><a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a></p>
+    {% else %}
+    <p class="help">Forgot your password? {% if config.SUPPORT_EMAIL %}Email {{ config.SUPPORT_EMAIL }} from your account email.{% else %}Contact support from your account email.{% endif %}</p>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

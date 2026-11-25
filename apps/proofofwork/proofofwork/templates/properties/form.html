@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "macros.html" import field, textarea %}
+{% block title %}{{ 'Edit property' if prop else 'New property' }}{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <p class="crumb"><a href="{{ url_for('main.customer_detail', customer_id=customer.id) }}">{{ customer.name }}</a></p>
+  <h1>{{ 'Edit property' if prop else 'New property' }}</h1>
+  <form method="post" action="{{ url_for('main.property_edit', property_id=prop.id) if prop else url_for('main.property_new', customer_id=customer.id) }}" class="stack">
+    {{ csrf_field() }}
+    {{ field('name', 'Property name', values.name, required=true, hint='e.g. "Head office" or "Flat 3B"') }}
+    {{ textarea('address', 'Address', values.address, rows=2, maxlength=500) }}
+    {{ textarea('access_notes', 'Access notes (internal, never shown on reports)', values.access_notes, rows=2, maxlength=2000) }}
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Save property</button>
+      <a class="btn" href="{{ url_for('main.customer_detail', customer_id=customer.id) }}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

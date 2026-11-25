@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error %}
+{% block title %}Sign-in for {{ employee.name }}{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Sign-in for {{ employee.name }}</h1>
+  {% if not employee.active %}
+  <div class="flash flash-warning">{{ employee.name }} is inactive, so they can't sign in until reactivated.</div>
+  {% endif %}
+  <p class="muted">Employees can see their own shifts and the team schedule (without other people's notes,
+    contact details or availability). They can't change anything except their own password.</p>
+
+  {% if user %}
+  <p>Username: <strong>{{ user.username }}</strong> · {{ 'Manager' if user.role == 'manager' else 'Employee' }} sign-in ·
+    Last sign-in: {{ user.last_login_at or 'never' }}</p>
+  <h2>Set a new temporary password</h2>
+  {% else %}
+  <h2>Create a sign-in</h2>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('main.employee_login', employee_id=employee.id) }}" class="form" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if not user %}
+    <label>Username
+      <input name="username" value="{{ username }}" maxlength="40" autocapitalize="none" spellcheck="false"
+             autocomplete="off" required class="{{ 'invalid' if errors.username }}">
+      {{ field_error(errors, 'username') }}
+      <span class="muted small">Usernames are unique across ShiftSnap, so add something of your own, e.g. maria.cafe.</span></label>
+    <fieldset class="role-choice">
+      <legend>What can they do?</legend>
+      <label class="check"><input type="radio" name="role" value="employee" {{ 'checked' if role != 'manager' }}>
+        Employee: sees their own shifts and the team schedule, read-only</label>
+      <label class="check"><input type="radio" name="role" value="manager" {{ 'checked' if role == 'manager' }}>
+        Manager: can change employees, shifts and sign-ins, and sees everyone's details</label>
+      {{ field_error(errors, 'role') }}
+    </fieldset>
+    {% endif %}
+    <label>Temporary password <span class="muted small">(at least 10 characters)</span>
+      <input type="password" name="password" autocomplete="new-password" minlength="10" required
+             class="{{ 'invalid' if errors.password }}">
+      {{ field_error(errors, 'password') }}</label>
+    <p class="muted small">Tell the employee this password in person. ShiftSnap does not send it to them,
+      and they must choose their own password when they first sign in.</p>
+    <div class="form-actions">
+      <button class="btn" type="submit">{{ 'Set temporary password' if user else 'Create sign-in' }}</button>
+      <a class="btn btn-ghost" href="{{ url_for('main.employees') }}">Cancel</a>
+    </div>
+  </form>
+
+  {% if user %}
+  <form method="post" action="{{ url_for('main.employee_login_revoke', employee_id=employee.id) }}" class="danger-zone"
+        data-confirm="Remove {{ employee.name }}'s sign-in? They will be signed out immediately.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-danger" type="submit">Remove sign-in</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}

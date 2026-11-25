@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service – JobProof AI{% endblock %}
+{% block container_class %}medium{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>1. Who we are</h2>
+  <p>JobProof AI ("the service") is provided by {{ operator }} ("we", "us").{% if support_email %} You can contact us at {{ support_email }}.{% endif %}</p>
+
+  <h2>2. What the service does</h2>
+  <p>JobProof AI turns the notes and photos you enter for a job into a customer report. You can preview the report, download it as a PDF, and create a link to share it with your customer. The report is written only from the details you enter; <strong>you are responsible for checking a report before you share it.</strong> You decide which reports to share and with whom.</p>
+
+  <h2>3. Your account</h2>
+  <p>You must give a valid email address and keep your password private. You are responsible for what happens in your account. You must be allowed to enter into this agreement where you live.</p>
+
+  <h2>4. Your responsibilities</h2>
+  <ul>
+    <li>Only upload photos and enter information you have the right to use, and only about work you actually did.</li>
+    <li>Respect the privacy of your customers and anyone shown in your photos, and follow the law where you operate.</li>
+    <li>Do not use the service to mislead customers, upload illegal content, or break any law.</li>
+  </ul>
+
+  <h2>5. Share links</h2>
+  <p>Anyone who has a report's share link can view that report, its photos and its PDF without logging in. Links stay active until you turn them off or delete the job. Only send links to the people who should see the report.</p>
+
+  <h2>6. Free trial and subscription</h2>
+  <p>New accounts get a free trial of {{ trial_days }} days. After the trial, using the service requires a paid subscription ({{ price }}), billed through our payment provider. Subscriptions renew each month until you cancel. You can cancel at any time; access continues until the end of the period you paid for. Report links you already shared keep working for your customers even if your trial or subscription ends. See the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+
+  <h2>7. Your data</h2>
+  <p>Your jobs, photos and reports belong to you. We handle them as described in the <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>. If your account ends, we may delete its data after 90 days.</p>
+
+  <h2>8. Availability and changes</h2>
+  <p>We work to keep the service available but cannot promise it will always be online or error-free. We may change features or these terms; we will update the date above and, for important changes, tell you by email or in the app.</p>
+
+  <h2>9. Limitation of liability</h2>
+  <p>The service is provided "as is". To the extent the law allows, we are not liable for indirect losses, lost profits, or the content of reports you choose to share. Our total liability is limited to the amount you paid us in the last 3 months.</p>
+
+  <h2>10. Ending the agreement</h2>
+  <p>You can stop using the service at any time. We may suspend accounts that break these terms.</p>
+</article>
+{% endblock %}

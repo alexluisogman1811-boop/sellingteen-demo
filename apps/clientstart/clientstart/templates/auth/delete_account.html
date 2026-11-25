@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block title %}Delete account{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Delete your account?</h1></div></div>
+<section class="card danger-zone narrow-form">
+  <p>This permanently deletes <strong>{{ g.account.name }}</strong> and everything in it:</p>
+  <ul>
+    <li>{{ counts.clients }} client{{ '' if counts.clients == 1 else 's' }} and their portal links (the links stop working)</li>
+    <li>{{ counts.tasks }} checklist item{{ '' if counts.tasks == 1 else 's' }}, with all comments and history</li>
+    <li>{{ counts.uploads }} uploaded file{{ '' if counts.uploads == 1 else 's' }}</li>
+    <li>{{ counts.onboarding_templates }} template{{ '' if counts.onboarding_templates == 1 else 's' }} and your reminder messages</li>
+    <li>Your login ({{ g.account.email }})</li>
+  </ul>
+  <p class="muted">This can't be undone. <a href="{{ url_for('owner.export_all') }}">Export all your data</a> first if you want to keep a copy. If you pay for ClientStart, cancel the subscription with the payment provider too.</p>
+  {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('auth.delete_account') }}" class="form">
+    {{ csrf() }}
+    <label>Type <strong>DELETE</strong> (or your email) to confirm
+      <input name="confirm" autocomplete="off" required></label>
+    <label>Your password <input type="password" name="password" required autocomplete="current-password"></label>
+    <button class="btn btn-danger" type="submit">Delete my account</button>
+    <a class="btn" href="{{ url_for('auth.account') }}">Cancel</a>
+  </form>
+</section>
+{% endblock %}

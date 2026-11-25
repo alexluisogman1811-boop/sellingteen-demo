@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "_macros.html" import input %}
+{% block title %}Account{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Account</h1></div>
+<div class="grid-2">
+  <form method="post" action="{{ url_for('auth.account') }}" class="card form" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="profile">
+    <h2>Your shop</h2>
+    {{ input("shop_name", "Shop name", form, errors, required=true, maxlength=100) }}
+    <div class="field">
+      <label>Login email</label>
+      <p class="static-value" id="account-email">{{ g.account.email }}</p>
+    </div>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Save shop name</button></div>
+  </form>
+  <form method="post" action="{{ url_for('auth.account') }}" class="card form" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="password">
+    <h2>Change password</h2>
+    {% for name, label, auto in (('current_password', 'Current password', 'current-password'), ('new_password', 'New password (at least 8 characters)', 'new-password')) %}
+    <div class="field{% if errors.get(name) %} has-error{% endif %}">
+      <label for="f-{{ name }}">{{ label }}</label>
+      <input id="f-{{ name }}" name="{{ name }}" type="password" autocomplete="{{ auto }}" maxlength="200"{% if errors.get(name) %} aria-invalid="true" aria-describedby="e-{{ name }}"{% endif %}>
+      {% if errors.get(name) %}<p class="error" id="e-{{ name }}">{{ errors[name] }}</p>{% endif %}
+    </div>
+    {% endfor %}
+    <div class="form-actions"><button class="btn" type="submit">Change password</button></div>
+  </form>
+</div>
+{% if config.BILLING_ENABLED and g.access %}
+<section class="card">
+  <h2>Subscription</h2>
+  <p>
+    {% if g.access.state == 'trial' %}Free trial: {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.
+    {% elif g.access.state == 'paid' %}Active until {{ g.access.until.isoformat() }}.
+    {% elif g.access.state == 'ended' %}Ended. Your data is saved.{% endif %}
+    <a href="{{ url_for('billing.subscribe') }}">Subscription details →</a>
+  </p>
+</section>
+{% endif %}
+<div class="grid-2">
+  <section class="card">
+    <h2>Export all my data</h2>
+    <p>Download everything in your account (products, stock history, suppliers and account details) as CSV files in one ZIP file.</p>
+    <p><a class="btn" href="{{ url_for('auth.export_data') }}">Download all my data (ZIP)</a></p>
+  </section>
+  <section class="card">
+    <h2>Delete my account</h2>
+    <p>Permanently delete your shop's account and all of its data. This can't be undone.</p>
+    <p><a class="btn btn-danger" href="{{ url_for('auth.delete_account') }}">Delete my account…</a></p>
+  </section>
+</div>
+{% endblock %}

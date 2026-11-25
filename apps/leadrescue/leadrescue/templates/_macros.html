@@ -1,0 +1,25 @@
+{% macro field(f, class_='') %}
+<div class="field {{ class_ }} {{ 'has-error' if f.errors }}">
+  {{ f.label() }}
+  {% if f.type == 'TextAreaField' %}{{ f(rows=4) }}{% else %}{{ f() }}{% endif %}
+  {% if f.description %}<small class="hint">{{ f.description }}</small>{% endif %}
+  {% for e in f.errors %}<small class="error">{{ e }}</small>{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro status_badge(lead) %}
+<span class="badge status-{{ lead.status }}">{{ lead.status_label }}</span>
+{% endmacro %}
+
+{% macro demo_badge(lead) %}
+{% if lead.is_demo %}<span class="badge badge-demo" title="Fictional sample data">DEMO</span>{% endif %}
+{% endmacro %}
+
+{% macro follow_badge(lead, today) %}
+{% set st = follow_up_state(lead, today) %}
+{% if st == 'overdue' %}<span class="badge fu-overdue">Overdue · {{ lead.next_follow_up_date|nice_date }}</span>
+{% elif st == 'today' %}<span class="badge fu-today">Due today</span>
+{% elif st == 'upcoming' %}<span class="badge fu-upcoming">{{ lead.next_follow_up_date|nice_date }}</span>
+{% elif st == 'none' %}<span class="badge fu-none">No follow-up set</span>
+{% endif %}
+{% endmacro %}

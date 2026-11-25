@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, due_badge, contact_line %}
+{% block title %}{{ lead_name(lead) }}{% endblock %}
+{% block content %}
+{% set from_dashboard = request.args.get('compose') == '1' or request.args.get('from') == 'dashboard' %}
+<div class="lead-head">
+  <a class="back-link" href="{{ url_for('leads.dashboard') if from_dashboard else url_for('leads.lead_list') }}">← {{ 'Dashboard' if from_dashboard else 'All leads' }}</a>
+  <div class="lead-head-main">
+    <div>
+      <h1>{{ lead_name(lead) }}</h1>
+      <div class="head-badges">{{ status_badge(lead.status) }} {{ due_badge(lead) }}
+        {% if lead.next_follow_up and followup_state(lead) != 'closed' %}<span class="muted small">{{ lead.next_follow_up|nicedate }}</span>{% endif %}
+      </div>
+      <p class="last-contact muted small">
+        {% if last_contact %}
+          Last contact: <strong>{{ last_contact.contact_date|nicedate }}</strong> by {{ last_contact.method }}
+        {% else %}
+          No contact recorded yet.
+        {% endif %}
+      </p>
+    </div>
+  </div>
+  <nav class="action-bar" aria-label="Lead actions">
+    <a class="btn btn-primary" href="{{ url_for('leads.lead_detail', lead_id=lead.id, compose=1) }}#message" data-compose>Generate follow-up</a>
+    <a class="btn btn-secondary" href="#history" data-focus="act-body">Record contact</a>
+    <a class="btn btn-secondary" href="#followup">Reschedule</a>
+    <a class="btn btn-secondary" href="{{ url_for('leads.lead_edit', lead_id=lead.id) }}">Edit</a>
+    <a class="btn btn-danger-outline" href="{{ url_for('leads.lead_delete', lead_id=lead.id) }}">Delete</a>
+  </nav>
+</div>
+
+<div class="detail-grid">
+  <div class="detail-main">
+    <section class="card" aria-labelledby="info-h">
+      <h2 id="info-h">Customer</h2>
+      <dl class="info-list">
+        <div><dt>Name</dt><dd>{{ lead.name or 'Not recorded' }}</dd></div>
+        <div><dt>Contact</dt><dd>{{ contact_line(lead) }}</dd></div>
+        <div><dt>Service interested in</dt><dd>{{ lead.service or 'Not recorded' }}</dd></div>
+        <div><dt>Lead source</dt><dd>{{ lead.source }}</dd></div>
+        <div><dt>Status</dt><dd>{{ lead.status }}</dd></div>
+        <div><dt>Next follow-up</dt><dd>{{ lead.next_follow_up|nicedate if lead.next_follow_up else 'Not set' }}</dd></div>
+        <div><dt>Created</dt><dd>{{ lead.created_at|localtime }}</dd></div>
+        <div><dt>Last updated</dt><dd>{{ lead.updated_at|localtime }}</dd></div>
+      </dl>
+      <div class="notes-block">
+        <h3>Notes</h3>
+        {% if lead.notes %}<p class="prewrap">{{ lead.notes }}</p>{% else %}<p class="muted">No notes yet. <a href="{{ url_for('leads.lead_edit', lead_id=lead.id) }}">Add notes</a></p>{% endif %}
+      </div>
+    </section>
+
+    <section class="card ai-card" id="message" aria-labelledby="ai-h" data-generate-url="{{ url_for('leads.lead_generate', lead_id=lead.id) }}" data-source="{{ lead.source }}">
+      <div class="card-head">
+        <h2 id="ai-h"><span class="step-num" aria-hidden="true">1</span> Follow-up message</h2>
+        {% if not ai_live %}<span class="badge badge-demo" title="AI_MOCK=1: messages come from built-in templates, no AI credits used">Demo mode</span>{% endif %}
+      </div>
+      <p class="muted small">Written only from the details saved for this lead. Nothing is sent: review it, edit it, and copy it into your own chat or email.</p>
+      <div class="ai-controls">
+        <fieldset class="segmented">
+          <legend class="sr-only">Message style</legend>
+          {% for s in styles %}
+          <input type="radio" id="style-{{ s }}" name="style" value="{{ s }}" {% if loop.first %}checked{% endif %}>
+          <label for="style-{{ s }}">{{ s|capitalize }}</label>
+          {% endfor %}
+        </fieldset>
+        <button type="button" class="btn btn-primary" id="generate-btn">Generate Follow-Up</button>
+      </div>
+      <div id="ai-error" class="alert alert-error" role="alert" hidden></div>
+      <div id="ai-notice" class="alert alert-info" role="status" hidden></div>
+      <div id="ai-output" class="ai-output" hidden>
+        <label for="ai-message">Your message <span class="muted small">(edit it before copying)</span></label>
+        <textarea id="ai-message" rows="7"></textarea>
+        <div class="ai-actions">
+          <button type="button" class="btn btn-primary" data-copy-target="ai-message" id="copy-btn">Copy message</button>
+        </div>
+        <p id="after-copy" class="after-copy" hidden>
+          Sent it? <a href="#history" data-focus="act-save">Record the contact below ↓</a>, it's already filled in.
+        </p>
+      </div>
+    </section>
+
+    <section class="card" id="history" aria-labelledby="history-h">
+      <h2 id="history-h"><span class="step-num" aria-hidden="true">2</span> Record contact &amp; next follow-up</h2>
+      <form method="post" action="{{ url_for('leads.lead_add_activity', lead_id=lead.id) }}" class="activity-form" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="activity-grid">
+          <div class="field">
+            <label for="act-date">Contact date</label>
+            <input id="act-date" type="date" name="contact_date" value="{{ today().isoformat() }}" max="{{ today().isoformat() }}" required>
+          </div>
+          <div class="field">
+            <label for="act-method">Method</label>
+            <select id="act-method" name="method">
+              {% for m in methods %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
+              <option value="{{ note_method }}">Note only (no contact)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="act-next">Next follow-up</label>
+            <input id="act-next" type="date" name="next_follow_up" value="{{ suggested_next }}" aria-describedby="act-next-hint">
+          </div>
+        </div>
+        <p class="hint" id="act-next-hint">Saving a contact replaces the current follow-up date (suggested: in 3 days). Clear it if no further follow-up is needed. Notes don't change the date.</p>
+        <div class="field">
+          <label for="act-body">What happened?</label>
+          <textarea id="act-body" name="body" rows="2" maxlength="2000" placeholder="e.g. Called, no answer. Sent a LINE message instead." required></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn {{ 'btn-secondary' if from_dashboard else 'btn-primary' }}" id="act-save" data-loading-text="Saving…">Save contact</button>
+          {% if from_dashboard %}
+          <button type="submit" name="then" value="dashboard" class="btn btn-primary" data-loading-text="Saving…">Save &amp; next lead →</button>
+          {% endif %}
+        </div>
+      </form>
+      <h3 class="history-title">Contact history</h3>
+      {% if history %}
+      <ol class="timeline">
+        {% for h in history %}
+        <li class="{{ 'is-note' if h.method == note_method }}">
+          <div class="timeline-meta">
+            <span class="badge method-badge">{{ h.method }}</span>
+            <time datetime="{{ h.contact_date or h.created_at }}">{{ h.contact_date|nicedate if h.contact_date else h.created_at|localtime }}</time>
+            {% if loop.first and h.method != note_method %}<span class="muted small">· most recent</span>{% endif %}
+          </div>
+          <p class="prewrap">{{ h.body }}</p>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <p class="muted small">No contact history yet. Record each call or message here so you remember what was said.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <aside class="detail-side">
+    <section class="card" aria-labelledby="status-h">
+      <h2 id="status-h">Status</h2>
+      <form method="post" action="{{ url_for('leads.lead_status', lead_id=lead.id) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="quick-status" class="sr-only">Change status</label>
+        <select id="quick-status" name="status">
+          {% for s in statuses %}<option value="{{ s }}" {% if lead.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="btn btn-secondary">Update</button>
+      </form>
+      <p class="hint">{% if lead.status in ('Won', 'Lost') %}This lead is closed. Change the status to reopen it.{% else %}Won and Lost leads stop showing in follow-ups.{% endif %}</p>
+    </section>
+
+    <section class="card" id="followup" aria-labelledby="fu-h">
+      <h2 id="fu-h">Reschedule follow-up</h2>
+      <p class="fu-current">{{ due_badge(lead) }}{% if lead.next_follow_up %} <span class="muted small">{{ lead.next_follow_up|nicedate }}</span>{% endif %}</p>
+      <form method="post" action="{{ url_for('leads.lead_followup', lead_id=lead.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="preset-row" role="group" aria-label="Quick follow-up dates">
+          <button type="submit" name="preset" value="today" class="chip">Today</button>
+          <button type="submit" name="preset" value="tomorrow" class="chip">Tomorrow</button>
+          <button type="submit" name="preset" value="3days" class="chip">In 3 days</button>
+          <button type="submit" name="preset" value="week" class="chip">Next week</button>
+          <button type="submit" name="preset" value="2weeks" class="chip">In 2 weeks</button>
+        </div>
+      </form>
+      <form method="post" action="{{ url_for('leads.lead_followup', lead_id=lead.id) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="fu-date" class="sr-only">Pick a date</label>
+        <input id="fu-date" type="date" name="next_follow_up" value="{{ lead.next_follow_up or '' }}" required>
+        <button type="submit" class="btn btn-secondary">Set date</button>
+      </form>
+      {% if lead.next_follow_up %}
+      <form method="post" action="{{ url_for('leads.lead_followup', lead_id=lead.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" name="preset" value="clear" class="btn-link">Clear follow-up date</button>
+      </form>
+      {% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

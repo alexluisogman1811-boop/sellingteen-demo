@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Delete my account{% endblock %}
+{% block content %}
+<section class="card narrow-wide">
+  <h1>Delete my account</h1>
+  <p>This deletes your account, all your projects, all testimonials your clients sent, and your activity history. Your submission links and public testimonial pages stop working. <strong>This cannot be undone.</strong></p>
+  <p class="small">Want a copy first? <a href="{{ url_for('admin.export_all') }}">Download all my data (ZIP of CSV files)</a>.</p>
+  {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('admin.delete_account') }}" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="confirm">Type <strong>DELETE</strong> (or your email address) to confirm</label>
+    <input id="confirm" name="confirm" autocomplete="off" maxlength="254" required>
+    <label for="password">Your password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" maxlength="200" required>
+    <button class="btn btn-danger" type="submit">Delete my account and all data</button>
+  </form>
+  <p class="small"><a href="{{ url_for('admin.profile') }}">Cancel</a></p>
+</section>
+{% endblock %}

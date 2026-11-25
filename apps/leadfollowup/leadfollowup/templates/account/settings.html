@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error, aria_err %}
+{% block title %}Account{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Account</h1>
+    <p class="muted">{{ g.user.business_name }} · {{ g.user.email }}</p>
+  </div>
+</div>
+
+<div class="account-grid">
+  <section class="card" aria-labelledby="pw-h">
+    <h2 id="pw-h">Change password</h2>
+    {% if errors %}<div class="alert alert-error" role="alert">Your password wasn't changed. Please fix the fields below.</div>{% endif %}
+    <form method="post" action="{{ url_for('account.change_password') }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field">
+        <label for="current_password">Current password</label>
+        <input id="current_password" name="current_password" type="password" required autocomplete="current-password" {{ aria_err(errors, 'current_password') }}>
+        {{ field_error(errors, 'current_password') }}
+      </div>
+      <div class="field">
+        <label for="new_password">New password</label>
+        <input id="new_password" name="new_password" type="password" required minlength="8" autocomplete="new-password" aria-describedby="new-pw-hint{% if errors.new_password %} new_password-error{% endif %}" {% if errors.new_password %}aria-invalid="true"{% endif %}>
+        <p class="hint" id="new-pw-hint">At least 8 characters.</p>
+        {{ field_error(errors, 'new_password') }}
+      </div>
+      <div class="field">
+        <label for="confirm_password">Confirm new password</label>
+        <input id="confirm_password" name="confirm_password" type="password" required autocomplete="new-password" {{ aria_err(errors, 'confirm_password') }}>
+        {{ field_error(errors, 'confirm_password') }}
+      </div>
+      <button type="submit" class="btn btn-primary" data-loading-text="Saving…">Change password</button>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="export-h">
+    <h2 id="export-h">Export all my data</h2>
+    <p>Download your account details, all your leads and their contact history as CSV files (in one ZIP file).</p>
+    <form method="post" action="{{ url_for('account.export') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-ghost">Download my data</button>
+    </form>
+  </section>
+
+  <section class="card danger-zone" aria-labelledby="del-h">
+    <h2 id="del-h">Delete account</h2>
+    <p>Permanently delete your account, all your leads and their contact history. This can't be undone.</p>
+    <a class="btn btn-danger-outline" href="{{ url_for('account.delete') }}">Delete my account…</a>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} · ContentQueue calendar</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="print-page">
+  <div class="print-toolbar no-print">
+    <a class="btn btn-sm" href="{{ url_for('main.calendar_view', view=view, date=anchor.isoformat(), **filter_args) }}">← Back to calendar</a>
+    <button class="btn btn-primary btn-sm" type="button" data-print>Print</button>
+  </div>
+  <h1 class="print-title">{{ title }}</h1>
+  <p class="print-sub">ContentQueue content plan · {{ total }} post{{ '' if total == 1 else 's' }}{% if filter_args %} · filtered{% endif %} · printed {{ today|nice_date }}</p>
+
+  {% if view == 'month' %}
+    <table class="print-cal">
+      <thead><tr>{% for name in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}<th>{{ name }}</th>{% endfor %}</tr></thead>
+      <tbody>
+        {% for week in weeks %}
+          <tr>
+            {% for day in week %}
+              <td class="{{ 'other-month' if day.month != anchor.month }}">
+                <div class="print-day">{{ day.day }}</div>
+                {% for p in by_day.get(day.isoformat(), []) %}
+                  <div class="print-item">{% if p.planned_time %}<b>{{ p.planned_time }}</b> {% endif %}{{ p.title }} <span class="print-meta">[{{ p.platform|platform_label }} · {{ p.status|status_label }}]</span></div>
+                {% endfor %}
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    {% for day in weeks[0] %}
+      <section class="print-weekday">
+        <h2>{{ day|nice_date('%A %d %B') }}</h2>
+        {% for p in by_day.get(day.isoformat(), []) %}
+          <div class="print-post">
+            <div><b>{{ p.planned_time or 'Any time' }}</b> — {{ p.title }} <span class="print-meta">[{{ p.platform|platform_label }} · {{ p.status|status_label }}{% if p.campaign_name %} · {{ p.campaign_name }}{% endif %}]</span></div>
+            {% if p.caption %}<p class="print-caption">{{ p.caption }}</p>{% endif %}
+            {% if p.hashtags %}<p class="print-meta">{{ p.hashtags }}</p>{% endif %}
+          </div>
+        {% else %}
+          <p class="print-meta">Nothing planned.</p>
+        {% endfor %}
+      </section>
+    {% endfor %}
+  {% endif %}
+</body>
+</html>

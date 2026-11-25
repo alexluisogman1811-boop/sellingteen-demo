@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ settings.business_name if biz else 'Online appointment booking' }}{% endblock %} · SlotSimple</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% set ep = request.endpoint or '' %}
+  {% set owner_page = current_admin and (ep.startswith('admin.') or ep.startswith('billing.')) %}
+  {% set booking_page = biz and request.blueprint == 'public' %}
+  {% if biz and biz.is_demo and (owner_page or booking_page) %}
+  <div class="demo-banner no-print" role="note">
+    <strong>Demo business</strong> — the customers and bookings shown are fictional sample data.
+  </div>
+  {% endif %}
+  <header class="site-header no-print">
+    <div class="container header-inner">
+      {% if owner_page %}
+        <a class="brand" href="{{ url_for('admin.dashboard') }}"><span class="logo" aria-hidden="true">◷</span> <span class="brand-name">{{ settings.business_name }}</span></a>
+        {% macro admin_nav(extra_class) %}
+          <nav class="nav {{ extra_class }}" aria-label="Admin">
+            <a href="{{ url_for('admin.dashboard') }}" {% if ep == 'admin.dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
+            <a href="{{ url_for('admin.bookings') }}" {% if ep.startswith('admin.booking') %}aria-current="page"{% endif %}>Bookings</a>
+            <a href="{{ url_for('admin.schedule') }}" {% if ep == 'admin.schedule' %}aria-current="page"{% endif %}>Daily schedule</a>
+            <a href="{{ url_for('admin.services') }}" {% if ep.startswith('admin.service') %}aria-current="page"{% endif %}>Services</a>
+            <a href="{{ url_for('admin.availability') }}" {% if ep == 'admin.availability' %}aria-current="page"{% endif %}>Availability</a>
+            <a href="{{ url_for('admin.settings_view') }}" {% if ep == 'admin.settings_view' %}aria-current="page"{% endif %}>Settings</a>
+            {% if demo_mode and current_admin.is_demo %}<a href="{{ url_for('admin.demo') }}" {% if ep == 'admin.demo' %}aria-current="page"{% endif %}>Demo</a>{% endif %}
+            <a href="{{ url_for('admin.account') }}" {% if ep == 'admin.account' %}aria-current="page"{% endif %}>Account</a>
+            <a href="{{ url_for('public.index', slug=current_admin.slug) }}" target="_blank" rel="noopener">Booking page ↗</a>
+            <form method="post" action="{{ url_for('admin.logout') }}" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="link-button" type="submit">Log out</button>
+            </form>
+          </nav>
+        {% endmacro %}
+        {{ admin_nav('nav-desktop') }}
+        <details class="nav-toggle">
+          <summary aria-label="Menu">☰</summary>
+          {{ admin_nav('nav-mobile') }}
+        </details>
+      {% elif booking_page %}
+        <a class="brand" href="{{ url_for('public.index') }}"><span class="logo" aria-hidden="true">◷</span> <span class="brand-name">{{ settings.business_name }}</span></a>
+        <nav class="nav nav-public">
+          <a href="{{ url_for('public.index') }}">Book</a>
+          <a href="{{ url_for('public.manage_lookup') }}">My booking</a>
+        </nav>
+      {% else %}
+        <a class="brand" href="{{ url_for('site.landing') }}"><span class="logo" aria-hidden="true">◷</span> <span class="brand-name">SlotSimple</span></a>
+        <nav class="nav nav-public">
+          {% if current_admin %}
+            <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+          {% elif ep not in ('admin.login', 'admin.signup') %}
+            <a href="{{ url_for('admin.login') }}">Log in</a>
+            <a href="{{ url_for('admin.signup') }}" class="nav-cta">Sign up</a>
+          {% endif %}
+        </nav>
+      {% endif %}
+    </div>
+  </header>
+
+  {% if owner_page and g.access and g.access.state == 'trial' and ep != 'billing.subscribe' %}
+  <div class="trial-bar no-print" role="note">
+    <div class="trial-bar-inner container">
+      <span><strong>Free trial:</strong> {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.</span>
+      <a class="trial-bar-link" href="{{ url_for('billing.subscribe') }}">Subscribe</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <main class="container main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flashes no-print">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}" role="{{ 'alert' if category in ('error', 'warning') else 'status' }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer no-print">
+    {% if booking_page %}
+    <div class="container small muted footer-business">
+      {{ settings.business_name }}
+      {% if settings.contact_phone %} · {{ settings.contact_phone }}{% endif %}
+      {% if settings.contact_email %} · {{ settings.contact_email }}{% endif %}
+      · Times shown in {{ settings.timezone }}
+    </div>
+    {% endif %}
+    <div class="container site-footer-inner small muted">
+      <span>SlotSimple · by sellingteen</span>
+      <nav aria-label="Legal">
+        <a href="{{ url_for('legal.terms') }}">Terms</a>
+        <a href="{{ url_for('legal.privacy') }}">Privacy</a>
+        <a href="{{ url_for('legal.refunds') }}">Refunds</a>
+        {% if current_admin and config.BILLING_ENABLED and not current_admin.is_demo %}<a href="{{ url_for('billing.subscribe') }}">Subscription</a>{% endif %}
+        {% if not current_admin %}<a href="{{ url_for('admin.login') }}">Business login</a>{% endif %}
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

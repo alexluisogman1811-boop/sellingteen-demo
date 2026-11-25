@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy{% endblock %}
+{% block content %}{{ self.legal() }}{% endblock %}
+{% block auth_content %}{{ self.legal() }}{% endblock %}
+{% block legal %}
+<article class="card legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Your account:</strong> business name, email address and a secure hash of your password (never the password itself).</li>
+    <li><strong>What you enter about your business:</strong> products, customers (name, email, company, notes), orders (reference, date,
+      amount, statuses, payment reference you type), licenses, renewals, delivery notes and reminder templates.</li>
+    <li><strong>License keys are never stored in readable form.</strong> We keep only a one-way hash of each key and its last 4 characters.</li>
+    <li><strong>No card numbers.</strong> The app refuses text that looks like a payment card number.</li>
+    <li><strong>Basic technical logs</strong> (time, page, IP address) to keep the service secure and working. Anything that looks like a license key is removed from logs.</li>
+  </ul>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't sell your data or your customers' data.</li>
+    <li>We don't send messages to your customers.</li>
+    <li>We don't use advertising or tracking cookies. We use one cookie to keep you logged in.</li>
+    <li>We never see your card details. Subscription payments are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>Why we use it</h2>
+  <p>Only to run the service for you: to show your records, keep your account secure, manage your subscription, and answer your questions.
+    If email is switched on, we use your email address only to send password reset links you ask for.</p>
+
+  <h2>Where it is stored</h2>
+  <p>On the server that hosts LicenseLedger, protected by your login. Each business can only see its own data.
+    When you use "Demo data &amp; reset", a backup copy of your account's data is saved on the server first.</p>
+
+  <h2>Your customers' information</h2>
+  <p>You add your customers' details, so you are responsible for having a good reason to keep them (for example, they bought from you)
+    and for following the privacy laws where you operate. You can edit or delete a customer at any time.</p>
+
+  <h2>Your choices</h2>
+  <p>You can download all your data at any time (Settings, "Export all my data"). You can also delete your whole account and all its data
+    yourself (Settings, "Delete my account"), including your reset backups. It is removed straight away. If you can't log in{% if support_email %},
+    email {{ support_email }} from your account email{% else %}, contact us{% endif %} and we will do it within 30 days.</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }}{% if support_email %} · {{ support_email }}{% endif %}</p>
+</article>
+{% endblock %}

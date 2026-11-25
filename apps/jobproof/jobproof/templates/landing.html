@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}JobProof AI – Professional job reports in seconds{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Turn your job photos and notes into a professional customer report in seconds.</h1>
+  <p class="lead">Built for plumbers, electricians, HVAC techs, cleaners, landscapers, painters and handymen.
+    Jot down what you did, snap before &amp; after photos, and send your customer a clean, branded report.</p>
+  <div class="hero-actions">
+    <a class="btn btn-large" href="{{ url_for('auth.signup') }}">{% if config.BILLING_ENABLED %}Start {{ config.TRIAL_DAYS }}-day free trial{% else %}Create free account{% endif %}</a>
+    <a class="btn btn-secondary btn-large" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+  {% if config.BILLING_ENABLED %}<p class="muted">{{ config.PRICE_TEXT }} after the {{ config.TRIAL_DAYS }}-day free trial.</p>{% endif %}
+</section>
+<section class="steps-overview">
+  <div class="card step-card"><span class="step-num">1</span><h3>Add the job</h3><p>Customer, address and your rough notes – no need to write it nicely.</p></div>
+  <div class="card step-card"><span class="step-num">2</span><h3>Upload photos</h3><p>Tag them Before, During or After.</p></div>
+  <div class="card step-card"><span class="step-num">3</span><h3>Generate report</h3><p>We turn your notes into a clear, professional report – no made-up details.</p></div>
+  <div class="card step-card"><span class="step-num">4</span><h3>Share or PDF</h3><p>Send a secure link or download a PDF for your customer.</p></div>
+</section>
+{% endblock %}

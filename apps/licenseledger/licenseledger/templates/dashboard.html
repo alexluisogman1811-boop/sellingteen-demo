@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% from "_macros.html" import license_table, badge, expiry, order_pills %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted">Licenses, renewals and recent activity at a glance.</p>
+  </div>
+  <div class="actions">
+    <a class="btn btn-primary" href="{{ url_for('main.license_new') }}">+ Issue license</a>
+  </div>
+</div>
+
+{% if totals.licenses == 0 %}
+<div class="card callout">
+  <h2>Your ledger is empty</h2>
+  <p>Add a <a href="{{ url_for('main.product_form') }}">product</a> and a
+    <a href="{{ url_for('main.customer_form') }}">customer</a>, then issue a license —
+    or <a href="{{ url_for('main.data') }}">import a CSV</a>. Want to look around first?
+    Load sample data from <a href="{{ url_for('main.settings') }}">Settings</a>.</p>
+</div>
+{% endif %}
+
+<section class="stats" aria-label="License counts">
+  <a class="stat stat-active" href="{{ url_for('main.licenses', status='active') }}">
+    <span class="stat-label">Active</span><span class="stat-value">{{ counts.active }}</span>
+    <span class="stat-sub">{{ totals.lifetime }} lifetime</span>
+  </a>
+  <a class="stat stat-soon" href="{{ url_for('main.licenses', expiry='expiring', window=window_days, sort='expiring') }}">
+    <span class="stat-label">Expiring ≤ {{ window_days }}d</span><span class="stat-value">{{ upcoming_total }}</span>
+    <span class="stat-sub">active with an end date</span>
+  </a>
+  <a class="stat stat-expired" href="{{ url_for('main.licenses', expiry='expired', sort='expiring') }}">
+    <span class="stat-label">Expired</span><span class="stat-value">{{ counts.expired }}</span>
+    <span class="stat-sub">need renewal or follow-up</span>
+  </a>
+  <a class="stat stat-muted" href="{{ url_for('main.licenses', status='revoked') }}">
+    <span class="stat-label">Revoked / replaced</span><span class="stat-value">{{ counts.revoked + counts.replaced }}</span>
+    <span class="stat-sub">{{ counts.suspended }} suspended</span>
+  </a>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Orders awaiting delivery</h2>
+    <span class="small">
+      <a href="{{ url_for('main.orders', delivery='outstanding', order_status='open', sort='oldest') }}">All outstanding</a> ·
+      <a href="{{ url_for('main.orders', payment_status='awaiting', order_status='open') }}">{{ awaiting_payment }} open order(s) without recorded payment</a>
+    </span>
+  </div>
+  {% if orders_outstanding %}
+  <ul class="list">
+    {% for o in orders_outstanding[:8] %}
+    <li>
+      <div>
+        <a href="{{ url_for('main.order_detail', order_id=o.id) }}"><strong>{{ o.order_ref }}</strong></a>
+        <span class="muted"> · {{ o.customer_name }} · {{ o.order_date }}</span>
+        <div class="pills">{{ order_pills(o) }}</div>
+      </div>
+      <a class="btn btn-sm" href="{{ url_for('main.order_detail', order_id=o.id) }}">Open</a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="empty">Every open order has been delivered.</p>{% endif %}
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head">
+      <h2>Upcoming expirations</h2>
+      <form method="get" class="inline-filter">
+        <label for="window" class="sr-only">Window</label>
+        <select id="window" name="window" data-autosubmit>
+          {% for w in windows %}<option value="{{ w }}" {{ 'selected' if w == window_days }}>Next {{ w }} days</option>{% endfor %}
+        </select>
+        <noscript><button class="btn btn-sm">Apply</button></noscript>
+      </form>
+    </div>
+    {% if upcoming %}
+    <ul class="list">
+      {% for lic in upcoming %}
+      <li>
+        <div>
+          <a href="{{ url_for('main.license_detail', license_id=lic.id) }}"><strong>{{ lic.customer_name }}</strong></a>
+          <span class="muted"> · {{ lic.product_name }}</span>
+          <div class="small">{{ expiry(lic) }}</div>
+        </div>
+        <a class="btn btn-sm" href="{{ url_for('main.license_reminder', license_id=lic.id) }}">Reminder</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="empty">Nothing expires in the next {{ window_days }} days.</p>{% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Recently expired</h2>
+      <a class="small" href="{{ url_for('main.licenses', expiry='expired', sort='expiring') }}">View all</a></div>
+    {% if recently_expired %}
+    <ul class="list">
+      {% for lic in recently_expired %}
+      <li>
+        <div>
+          <a href="{{ url_for('main.license_detail', license_id=lic.id) }}"><strong>{{ lic.customer_name }}</strong></a>
+          <span class="muted"> · {{ lic.product_name }}</span>
+          <div class="small">{{ expiry(lic) }}</div>
+        </div>
+        <a class="btn btn-sm" href="{{ url_for('main.license_reminder', license_id=lic.id) }}">Follow up</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="empty">No licenses expired in the last 30 days.</p>{% endif %}
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head"><h2>Recent licenses</h2><a class="small" href="{{ url_for('main.licenses') }}">All licenses</a></div>
+  {{ license_table(recent, empty="No licenses yet.") }}
+</section>
+
+<section class="card">
+  <div class="card-head"><h2>Recent activity</h2></div>
+  {% include "_events.html" %}
+</section>
+{% endblock %}

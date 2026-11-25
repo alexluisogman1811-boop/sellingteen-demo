@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}Team{% endblock %}
+{% block content %}
+<h1>Team</h1>
+{% if invite_link %}
+<div class="card linkbox">
+  <h2>Invite link (shown once)</h2>
+  <p class="small">Send this to the person by text or email. It works once and expires in 7 days.</p>
+  <input type="text" readonly value="{{ invite_link }}" id="invite-link" aria-label="Invite link">
+  <div class="row mt">
+    <button class="btn btn-primary" type="button" data-share="#invite-link" data-share-title="Join {{ g.company.name }} on SignedExtra">Share…</button>
+    <button class="btn btn-secondary" type="button" data-copy="#invite-link">Copy link</button>
+  </div>
+</div>
+{% endif %}
+{% if reset_link %}
+<div class="card linkbox">
+  <h2>Password-reset link for {{ reset_for }} (shown once)</h2>
+  <p class="small">Send it to {{ reset_for }} yourself (text or email). It works once and expires in 24 hours.
+    When they use it, they're signed out everywhere else.</p>
+  <input type="text" readonly value="{{ reset_link }}" id="reset-link" aria-label="Password-reset link">
+  <div class="row mt">
+    <button class="btn btn-primary" type="button" data-share="#reset-link" data-share-title="Reset your SignedExtra password">Share…</button>
+    <button class="btn btn-secondary" type="button" data-copy="#reset-link">Copy link</button>
+  </div>
+</div>
+{% endif %}
+{% if (invite_link or reset_link) and not public_base_configured() and config.PRODUCTION %}
+<div class="flash flash-error">The public web address (PUBLIC_BASE_URL) isn't set, so this link is incomplete. Ask your administrator.</div>
+{% endif %}
+
+<div class="card">
+  <table class="table stack">
+    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for u in users %}
+    <tr>
+      <td data-label="Name">{{ u.name }}</td>
+      <td data-label="Email">{{ u.email }}</td>
+      <td data-label="Role">{{ u.role|capitalize }}</td>
+      <td data-label="Status">{% if not u.active %}Deactivated{% elif not u.password_hash %}Invite pending{% else %}Active{% endif %}</td>
+      <td>
+        {% if g.user.role == 'owner' and u.id != g.user.id %}
+        <div class="row">
+          {% if u.active and not u.password_hash %}
+          <form method="post" action="{{ url_for('core.reinvite', user_id=u.id) }}">{{ csrf() }}<button class="btn btn-secondary btn-sm" type="submit">New invite link</button></form>
+          {% endif %}
+          {% if u.active and u.password_hash %}
+          <form method="post" action="{{ url_for('core.reset_link', user_id=u.id) }}" data-confirm="Create a one-time password-reset link for {{ u.name }}?">{{ csrf() }}<button class="btn btn-secondary btn-sm" type="submit">Password-reset link</button></form>
+          {% endif %}
+          <form method="post" action="{{ url_for('core.set_active', user_id=u.id) }}" data-confirm="{{ 'Deactivate' if u.active else 'Reactivate' }} {{ u.name }}?">
+            {{ csrf() }}<input type="hidden" name="active" value="{{ '0' if u.active else '1' }}">
+            <button class="btn btn-secondary btn-sm" type="submit">{{ "Deactivate" if u.active else "Reactivate" }}</button>
+          </form>
+        </div>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if g.user.role == 'owner' %}
+<div class="card narrow">
+  <h2>Invite someone</h2>
+  <form method="post" action="{{ url_for('core.invite') }}" novalidate>
+    {{ csrf() }}
+    {{ field(form, "name", "Name", required=True) }}
+    {{ field(form, "email", "Email", type="email", required=True) }}
+    <div class="field{% if form.errors.get('role') %} has-error{% endif %}">
+      <label for="f-role">Role</label>
+      <select id="f-role" name="role">
+        <option value="foreman" {{ "selected" if form.values.get("role") != "office" }}>Foreman: creates tickets, gets signatures</option>
+        <option value="office" {{ "selected" if form.values.get("role") == "office" }}>Office: prices, invoices, manages jobs</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" type="submit">Create invite link</button>
+  </form>
+  <p class="small muted mt">No email is sent automatically. You share the link yourself.</p>
+</div>
+{% endif %}
+{% endblock %}

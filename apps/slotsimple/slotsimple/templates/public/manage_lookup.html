@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Find my booking{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Find my booking</h1>
+  <p class="muted">Enter the reference shown when you booked and the email you used.</p>
+  {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" class="form">
+    {{ csrf() }}
+    <label for="reference">Booking reference</label>
+    <input id="reference" name="reference" placeholder="SS-XXXXX-XXXXX" maxlength="20" required
+           autocomplete="off" autocapitalize="characters" spellcheck="false" value="{{ reference }}"
+           aria-describedby="ref-hint">
+    <p class="hint" id="ref-hint">Dashes and spaces are optional, and upper or lower case both work. References never contain O, I, 0 or 1.</p>
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" maxlength="254" required autocomplete="email"
+           inputmode="email" autocapitalize="off" spellcheck="false">
+    <button class="btn btn-primary btn-block" type="submit">Find booking</button>
+  </form>
+</section>
+{% endblock %}

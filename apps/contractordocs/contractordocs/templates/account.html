@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Account{% endblock %}
+{% block content %}
+<h1>Account</h1>
+<div class="card narrow">
+  <h2>Your account</h2>
+  <dl>
+    <dt>Email</dt><dd>{{ g.user.email }}</dd>
+    <dt>Company</dt><dd>{{ g.user.company_name or '–' }}</dd>
+  </dl>
+</div>
+
+<div class="card narrow">
+  <h2>Change password</h2>
+  <form method="post" action="{{ url_for('main.change_password') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Current password <input name="current_password" type="password" required autocomplete="current-password"></label>
+    <label>New password <input name="new_password" type="password" required minlength="8" autocomplete="new-password"></label>
+    <label>Confirm new password <input name="confirm_password" type="password" required minlength="8" autocomplete="new-password"></label>
+    <button class="primary">Change password</button>
+  </form>
+  <p class="muted small">Changing your password signs you out on your other devices.</p>
+</div>
+
+<div class="card narrow">
+  <h2>Export all my data</h2>
+  <p class="muted">Download a ZIP file with your subcontractors, documents and reminders as CSV files, plus every file you uploaded.</p>
+  <a class="button" href="{{ url_for('main.export_data') }}">Download my data (ZIP)</a>
+</div>
+
+<div class="card narrow">
+  <h2>Delete account</h2>
+  <p class="muted">Permanently deletes your account, subcontractors, documents, uploaded files and reminders.</p>
+  <a class="button danger" href="{{ url_for('main.delete_account') }}">Delete my account…</a>
+</div>
+{% endblock %}

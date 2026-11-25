@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Book an appointment{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>{{ settings.business_name }}</h1>
+  {% if settings.about %}<p class="lead">{{ settings.about }}</p>{% endif %}
+  <ol class="steps" aria-label="How booking works">
+    <li class="active">Choose a service</li><li>Pick a time</li><li>Your details</li>
+  </ol>
+</section>
+
+<div class="layout-2">
+  <section aria-labelledby="services-h">
+    <h2 id="services-h">Services</h2>
+    {% if services %}
+    <div class="service-grid">
+      {% for s in services %}
+      <article class="card service-card">
+        <h3>{{ s.name }}</h3>
+        {% if s.description %}<p class="muted">{{ s.description }}</p>{% endif %}
+        <p class="meta"><span>⏱ {{ s.duration_minutes }} min</span><span class="price">{{ s.price_cents|money if s.price_cents else 'Free' }}</span></p>
+        <a class="btn btn-primary" href="{{ url_for('public.choose_time', service_id=s.id) }}">Book {{ s.name }}</a>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card empty">Online booking isn't available right now. Please contact us directly.</div>
+    {% endif %}
+  </section>
+
+  <aside class="card side" aria-labelledby="hours-h">
+    <h2 id="hours-h">Opening hours</h2>
+    <table class="hours">
+      {% for row in opening %}
+      <tr><th scope="row">{{ WEEKDAYS[row.weekday] }}</th>
+        <td>{% if row.is_open %}{{ row.open_time }} – {{ row.close_time }}{% else %}<span class="muted">Closed</span>{% endif %}</td></tr>
+      {% endfor %}
+    </table>
+    <p class="small muted">All times are {{ settings.timezone }} ({{ none|tzabbr }}).</p>
+    {% if settings.address or settings.contact_phone or settings.contact_email %}
+    <h2>Contact</h2>
+    <address class="small">
+      {% if settings.address %}{{ settings.address }}<br>{% endif %}
+      {% if settings.contact_phone %}{{ settings.contact_phone }}<br>{% endif %}
+      {% if settings.contact_email %}{{ settings.contact_email }}{% endif %}
+    </address>
+    {% endif %}
+    <p class="small"><a href="{{ url_for('public.manage_lookup') }}">Already booked? View or cancel your booking →</a></p>
+  </aside>
+</div>
+{% endblock %}

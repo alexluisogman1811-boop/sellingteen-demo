@@ -1,0 +1,129 @@
+{% from "macros.html" import csrf, status_badge, progress_bar, flashes, site_footer with context %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{{ client.project_name }} · Onboarding</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="portal">
+  <header class="topbar portal-top">
+    <span class="brand"><span class="logo">CS</span> {{ agency_name }}</span>
+    <span class="muted small">Secure onboarding portal</span>
+  </header>
+  <main class="container narrow">
+    {{ flashes(portal=True) }}
+    {% set todo_count = groups[0][2]|length %}
+    <section class="card portal-hero">
+      <p class="eyebrow">Welcome, {{ client.name }}</p>
+      <h1>{{ client.project_name }}</h1>
+      {% if client.status == 'completed' %}
+        <p class="flash flash-success">Onboarding complete — thank you! Nothing else is needed from you.</p>
+      {% elif not tasks %}
+        <p class="muted">There's nothing for you to do right now. We'll add anything we need here.</p>
+      {% elif todo_count %}
+        <p><strong>{{ todo_count }} item{{ 's' if todo_count != 1 }} need{{ 's' if todo_count == 1 }} your attention</strong>{% if client.start_date and client.start_date >= today %} before work begins on <strong>{{ client.start_date }}</strong>{% endif %}.
+          Your answers and files go straight to the team.</p>
+      {% else %}
+        <p>You're all caught up — the team is reviewing what you sent. We'll let you know if anything needs changing.</p>
+      {% endif %}
+      {% if tasks %}{{ progress_bar(client_progress) }}{% endif %}
+      <ol class="how-to small muted">
+        <li>Work through each item below — answer, upload, or mark it done.</li>
+        <li>The team reviews submissions and may ask for a quick change.</li>
+        <li>Questions? Use “Ask a question” on any item.</li>
+      </ol>
+    </section>
+
+    {% for key, heading, items in groups %}
+      {% if items %}
+      {% if key == 'done' %}<details class="group-done"><summary><h2 class="group-title">{{ heading }} <span class="count">{{ items|length }}</span></h2></summary>
+      {% else %}<h2 class="group-title">{{ heading }} <span class="count">{{ items|length }}</span></h2>{% endif %}
+
+      {% for t in items %}
+      {% set locked = t.status == 'done' or client.status != 'active' %}
+      <section class="card task-card {{ 'is-done' if t.status == 'done' }} {{ 'is-correction' if t.status == 'needs_correction' }}" id="task-{{ t.id }}">
+        <div class="task-head">
+          <div>
+            <p class="eyebrow">{{ {'task': 'To do', 'question': 'Question', 'file': 'File needed'}[t.kind] }}</p>
+            <h3 class="task-title">{{ t.title }}</h3>
+          </div>
+          <div class="badges">{{ status_badge(t.status) }}{% if is_overdue(t) %} <span class="badge st-overdue">Overdue</span>{% endif %}</div>
+        </div>
+        <p class="muted small">{% if t.due_date %}Due {{ t.due_date }} · {% endif %}{{ t.priority|capitalize }} priority</p>
+        {% if t.description %}<p class="pre">{{ t.description }}</p>{% endif %}
+
+        {% for c in comments.get(t.id, []) %}
+          <div class="comment {{ 'from-client' if c.author == 'client' }} {{ 'is-correction' if c.is_correction }}">
+            <div class="muted small">{{ 'You' if c.author == 'client' else agency_name }} · {{ c.created_at }}{% if c.is_correction %} · <strong>Please update</strong>{% endif %}</div>
+            <p class="pre">{{ c.body }}</p>
+          </div>
+        {% endfor %}
+
+        {% if t.kind == 'question' %}
+          {% if locked %}
+            <blockquote class="pre">{{ t.answer or '—' }}</blockquote>
+          {% else %}
+            <form method="post" action="{{ url_for('portal.answer', token=token, task_id=t.id) }}" class="form">
+              {{ csrf() }}
+              <label for="answer-{{ t.id }}">Your answer</label>
+              <textarea id="answer-{{ t.id }}" name="answer" rows="4" maxlength="5000" required>{{ t.answer }}</textarea>
+              <button class="btn btn-primary btn-block-sm" type="submit">{{ 'Update answer' if t.answer else 'Submit answer' }}</button>
+            </form>
+          {% endif %}
+        {% endif %}
+
+        {% if t.kind == 'file' %}
+          {% if files.get(t.id) %}
+          <ul class="list">
+            {% for f in files[t.id] %}
+            <li><a href="{{ url_for('portal.file_download', token=token, file_id=f.id) }}">{{ f.original_name }}</a>
+              <span class="muted small">{{ f.size_bytes|filesize }} · {{ f.created_at }}</span>
+              {% if not locked and f.uploaded_by == 'client' %}
+              <form method="post" action="{{ url_for('portal.file_delete', token=token, file_id=f.id) }}" class="inline">
+                {{ csrf() }}<button class="btn btn-sm btn-link confirm" data-confirm="Remove this file?" type="submit">Remove</button>
+              </form>
+              {% endif %}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+          {% if not locked %}
+          <form method="post" action="{{ url_for('portal.upload', token=token, task_id=t.id) }}" enctype="multipart/form-data" class="form">
+            {{ csrf() }}
+            <label for="file-{{ t.id }}">{{ 'Upload another file' if files.get(t.id) else 'Choose a file' }}</label>
+            <input id="file-{{ t.id }}" type="file" name="file" required data-max-bytes="{{ max_mb * 1024 * 1024 }}"
+                   accept="{% for e in allowed_ext %}.{{ e }}{{ ',' if not loop.last }}{% endfor %}">
+            <p class="hint">Allowed: {{ allowed_ext|join(', ') }} · max {{ max_mb }} MB per file</p>
+            <button class="btn btn-primary btn-block-sm" type="submit">Upload</button>
+          </form>
+          {% endif %}
+        {% endif %}
+
+        {% if t.kind == 'task' and not locked %}
+          <form method="post" action="{{ url_for('portal.complete', token=token, task_id=t.id) }}">
+            {{ csrf() }}<button class="btn btn-primary btn-block-sm" type="submit">Mark as done</button>
+          </form>
+        {% endif %}
+
+        <details class="add-box">
+          <summary class="small">Ask a question about this item</summary>
+          <form method="post" action="{{ url_for('portal.comment', token=token, task_id=t.id) }}" class="form">
+            {{ csrf() }}
+            <textarea name="body" rows="2" maxlength="4000" required aria-label="Message"></textarea>
+            <button class="btn btn-sm" type="submit">Send message</button>
+          </form>
+        </details>
+      </section>
+      {% endfor %}
+      {% if key == 'done' %}</details>{% endif %}
+      {% endif %}
+    {% endfor %}
+
+    <p class="muted small center">This private link was created for {{ client.company or client.name }}. Please don't share it.
+      {% if client.portal_expires_at %}It works until {{ client.portal_expires_at }}.{% endif %}</p>
+  </main>
+  {{ site_footer() }}
+</body>
+</html>

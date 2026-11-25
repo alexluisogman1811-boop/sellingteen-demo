@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Clients</h1>
+  <a class="btn primary" href="{{ url_for('main.client_new') }}">Add client</a>
+</div>
+<div class="card table-wrap">
+  <table class="stack-sm">
+    <thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Projects</th></tr></thead>
+    <tbody>
+    {% for c in clients %}
+      <tr><td><a href="{{ url_for('main.client_detail', client_id=c.id) }}">{{ c.name }}</a>{% if c.is_demo %} {{ badge('info', 'Sample') }}{% endif %}</td>
+        <td>{{ c.company or '—' }}</td><td>{{ c.email or '—' }}</td><td>{{ c.project_count }}</td></tr>
+    {% else %}<tr><td colspan="4" class="empty">No clients yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

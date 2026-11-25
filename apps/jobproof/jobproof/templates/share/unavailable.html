@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<div class="card center error-card">
+  <h1>{{ title }}</h1>
+  <p>{{ message }}</p>
+</div>
+{% endblock %}

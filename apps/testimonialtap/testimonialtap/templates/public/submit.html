@@ -1,0 +1,70 @@
+{% extends "public/base_public.html" %}
+{% from "_macros.html" import field_error %}
+{% block title %}Share your feedback{% endblock %}
+{% block content %}
+<section class="card public-card">
+  {% if project.is_demo %}
+  <div class="demo-banner" role="note"><strong>Demo form.</strong> Submissions here are marked as demo data and deleted when demo data is reset.</div>
+  {% endif %}
+  {% set business = business_name %}
+  <h1>Share your feedback{% if business %} with {{ business }}{% endif %}</h1>
+  {% if project.intro_message %}<p class="intro">{{ project.intro_message }}</p>
+  {% else %}<p class="intro">Thank you for taking a moment to share your experience. Your answers are sent privately for review.</p>{% endif %}
+
+  {% if errors %}
+  <div class="flash flash-error" role="alert">
+    {% if errors.form %}{{ errors.form }}{% else %}Please fix the highlighted fields below.{% endif %}
+  </div>
+  {% endif %}
+
+  <form method="post" novalidate data-submit-once>
+    <input type="hidden" name="form_stamp" value="{{ form_stamp }}">
+    <div class="hp" aria-hidden="true">
+      <label for="{{ honeypot_field }}">Leave this field empty</label>
+      <input id="{{ honeypot_field }}" name="{{ honeypot_field }}" tabindex="-1" autocomplete="off">
+    </div>
+
+    <label for="customer_name">Your name *</label>
+    <input id="customer_name" name="customer_name" required maxlength="{{ limits.customer_name }}" autocomplete="name"
+           value="{{ values.get('customer_name', '') }}" {% if errors.customer_name %}aria-invalid="true" aria-describedby="err-customer_name"{% endif %}>
+    {{ field_error(errors, 'customer_name') }}
+
+    <label for="business">Business or role <span class="muted">(optional)</span></label>
+    <input id="business" name="business" maxlength="{{ limits.business }}" autocomplete="organization"
+           value="{{ values.get('business', '') }}" {% if errors.business %}aria-invalid="true"{% endif %}>
+    {{ field_error(errors, 'business') }}
+
+    <label for="feedback">Your feedback *</label>
+    <textarea id="feedback" name="feedback" rows="6" required minlength="20" maxlength="{{ limits.feedback }}"
+              data-counter="feedback-count" {% if errors.feedback %}aria-invalid="true" aria-describedby="err-feedback"{% endif %}>{{ values.get('feedback', '') }}</textarea>
+    <p class="muted small" id="feedback-count" aria-live="polite">20–{{ limits.feedback }} characters</p>
+    {{ field_error(errors, 'feedback') }}
+
+    <fieldset class="rating">
+      <legend>Rating <span class="muted">(optional)</span></legend>
+      <div class="rating-options">
+        {% for r in ['5', '4', '3', '2', '1'] %}
+        <label class="rating-opt"><input type="radio" name="rating" value="{{ r }}" {% if values.get('rating') == r %}checked{% endif %}> {{ r }}★</label>
+        {% endfor %}
+        <label class="rating-opt"><input type="radio" name="rating" value="" {% if not values.get('rating') %}checked{% endif %}> No rating</label>
+      </div>
+    </fieldset>
+    {{ field_error(errors, 'rating') }}
+
+    <label for="website">Your website <span class="muted">(optional)</span></label>
+    <input id="website" name="website" maxlength="{{ limits.website }}" inputmode="url" placeholder="https://"
+           value="{{ values.get('website', '') }}" {% if errors.website %}aria-invalid="true"{% endif %}>
+    {{ field_error(errors, 'website') }}
+
+    <div class="consent">
+      <label class="checkbox">
+        <input type="checkbox" name="permission" value="yes" {% if values.get('permission') %}checked{% endif %}>
+        <span>{{ permission_statement }} <span class="muted">(optional — you can submit feedback without agreeing to publication)</span></span>
+      </label>
+    </div>
+
+    <button class="btn btn-primary btn-block" type="submit">Send feedback</button>
+    <p class="muted small">Your feedback is reviewed before anything is published. Nothing is shown publicly without your permission.</p>
+  </form>
+</section>
+{% endblock %}

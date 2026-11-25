@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted">{{ today.strftime('%A %d %B %Y') }} · {{ settings.timezone }}</p>
+  </div>
+  <div class="actions">
+    <a class="btn btn-primary" href="{{ url_for('admin.booking_new') }}">+ New appointment</a>
+    <a class="btn" href="{{ url_for('admin.schedule') }}">Today's schedule</a>
+    <a class="btn btn-ghost" href="{{ url_for('admin.export_csv', filtered=1, date_from=today.isoformat()) }}">Export upcoming CSV</a>
+  </div>
+</header>
+
+{% if stats.past_open %}
+<div class="notice">
+  <strong>{{ stats.past_open }} past appointment{{ '' if stats.past_open == 1 else 's' }} still open.</strong>
+  <a href="{{ url_for('admin.bookings', filtered=1, view='past') }}">Mark them completed or cancelled →</a>
+</div>
+{% endif %}
+
+<div class="notice share-link">
+  <strong>Your booking page:</strong> <a href="{{ booking_url }}" target="_blank" rel="noopener">{{ booking_url }}</a>
+  <span class="small muted">Share this link with customers.</span>
+</div>
+
+{% if needs_setup %}
+<div class="notice">
+  <strong>Finish setting up:</strong> customers can only book once you have at least one
+  <a href="{{ url_for('admin.services') }}">active service</a> and
+  <a href="{{ url_for('admin.availability') }}">weekly availability</a> inside your
+  <a href="{{ url_for('admin.settings_view') }}">opening hours</a>.
+</div>
+{% endif %}
+
+<div class="stats">
+  <a class="stat card" href="{{ url_for('admin.schedule') }}"><span class="stat-num">{{ stats.today }}</span><span>Today</span></a>
+  <a class="stat card" href="{{ url_for('admin.bookings', filtered=1, status='pending', date_from=today.isoformat()) }}"><span class="stat-num">{{ stats.pending }}</span><span>Awaiting confirmation</span></a>
+  <a class="stat card" href="{{ url_for('admin.bookings', filtered=1, status='active', date_from=today.isoformat(), date_to=week_last.isoformat()) }}"><span class="stat-num">{{ stats.week }}</span><span>Next 7 days</span></a>
+  <a class="stat card" href="{{ url_for('admin.services') }}"><span class="stat-num">{{ stats.services }}</span><span>Active services</span></a>
+</div>
+
+<div class="layout-2 even">
+  <section class="card">
+    <h2>Today</h2>
+    {% if todays %}
+    <ul class="timeline">
+      {% for b in todays %}
+      <li>
+        <span class="time">{{ b.start_utc|local('%H:%M') }}</span>
+        <a href="{{ url_for('admin.booking_detail', booking_id=b.id) }}">{{ b.customer_name }}</a>
+        <span class="muted small">{{ b.service_name }}</span> {{ status_badge(b.status) }}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="muted">No appointments today.</p>{% endif %}
+  </section>
+  <section class="card">
+    <h2>Awaiting confirmation</h2>
+    {% if pending %}
+    <ul class="timeline">
+      {% for b in pending %}
+      <li>
+        <span class="time">{{ b.start_utc|local('%d %b %H:%M') }}</span>
+        <a href="{{ url_for('admin.booking_detail', booking_id=b.id) }}">{{ b.customer_name }}</a>
+        <span class="muted small">{{ b.service_name }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="muted">Nothing waiting. 🎉</p>{% endif %}
+  </section>
+</div>
+{% endblock %}

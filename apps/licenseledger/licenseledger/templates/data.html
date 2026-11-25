@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Import / Export{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <h1>Import / Export</h1>
+  <p class="muted">Move records in and out as CSV. Exports never include license keys — only the last 4 characters.</p>
+</div></div>
+
+{% if report %}
+<section class="card report {{ 'report-fatal' if report.fatal }}">
+  <h2>{{ 'Validation result' if report.dry_run else 'Import result' }}</h2>
+  {% if report.fatal %}
+    <p class="flash flash-error">{{ report.fatal }}</p>
+  {% else %}
+    <p><strong>{{ summary }}</strong> out of {{ report.total_rows }} data row(s).</p>
+    {% if not report.dry_run %}
+    <p class="muted small">New records: {{ report.new_customers }} customer(s), {{ report.new_products }} product(s), {{ report.new_orders }} order(s).</p>
+    {% elif report.created %}
+    <p class="muted small">Looks good? Choose <em>Import valid rows</em> below with the same file to save them.</p>
+    {% endif %}
+
+    {% if report.issued %}
+    <div class="key-card">
+      <p class="warn"><strong>New license codes were generated for {{ report.issued|length }} row(s) without a key.</strong>
+        Copy them now — they will not be shown again.</p>
+      <div class="table-wrap">
+      <table class="table">
+        <thead><tr><th>Row</th><th>License</th><th>Customer</th><th>Product</th><th>Code</th></tr></thead>
+        <tbody>
+        {% for item in report.issued %}
+          <tr><td>{{ item.row }}</td><td><a href="{{ url_for('main.license_detail', license_id=item.license_id) }}">#{{ item.license_id }}</a></td>
+            <td>{{ item.customer }}</td><td>{{ item.product }}</td>
+            <td><code id="ik-{{ loop.index }}">{{ item.key }}</code> <button class="btn btn-sm" type="button" data-copy="#ik-{{ loop.index }}">Copy</button></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if report.duplicates %}
+    <h3>Duplicates skipped</h3>
+    <ul class="issues">{% for row, msg in report.duplicates %}<li><strong>Row {{ row }}:</strong> {{ msg }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if report.errors %}
+    <h3>Rows with errors</h3>
+    <ul class="issues issues-error">{% for row, msgs in report.errors %}<li><strong>Row {{ row }}:</strong> {{ msgs|join(' ') }}</li>{% endfor %}</ul>
+    {% endif %}
+  {% endif %}
+</section>
+{% endif %}
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Import licenses</h2>
+    <form method="post" action="{{ url_for('main.data_import') }}" enctype="multipart/form-data" class="stack-form">
+      {{ csrf() }}
+      <div class="field">
+        <label for="file">CSV file (UTF-8, max 2 MB, {{ '{:,}'.format(5000) }} rows)</label>
+        <input id="file" name="file" type="file" accept=".csv,text/csv" required>
+      </div>
+      <fieldset class="field">
+        <legend>Mode</legend>
+        <label class="radio"><input type="radio" name="mode" value="validate" checked> Validate only (nothing is saved)</label>
+        <label class="radio"><input type="radio" name="mode" value="import"> Import valid rows (skip duplicates and errors)</label>
+      </fieldset>
+      <button class="btn btn-primary" type="submit">Upload</button>
+    </form>
+    <h3>Columns</h3>
+    <p class="small">{% for c in columns %}<code class="{{ 'req-col' if c in required }}">{{ c }}</code> {% endfor %}</p>
+    <ul class="small muted">
+      <li>Required: {{ required|join(', ') }}; <code>customer_name</code> is required for new customers.</li>
+      <li><code>license_type</code>: lifetime, fixed, or manual. Dates: YYYY-MM-DD.</li>
+      <li>Missing customers, products and orders are created automatically.</li>
+      <li><code>license_key</code> is optional. If present it is hashed on import; if empty a new code is generated and shown once.</li>
+      <li>Duplicates: the same key, or the same customer + product + order + issue date as an existing or earlier row.</li>
+    </ul>
+    <p><a class="btn btn-sm" href="{{ url_for('main.import_template') }}">Download import template</a></p>
+  </section>
+
+  <section class="card">
+    <h2>Export</h2>
+    <ul class="list">
+      {% for entity in exports %}
+      <li><span>{{ entity|capitalize }}</span>
+        <a class="btn btn-sm" href="{{ url_for('main.data_export', entity=entity) }}">Download CSV</a></li>
+      {% endfor %}
+    </ul>
+    <p><a class="btn btn-sm btn-primary" href="{{ url_for('main.data_export_all') }}">Export all my data (ZIP)</a></p>
+    <p class="help">Exports never include full license keys (only the last 4 characters are kept).</p>
+    <p class="help">Cells that start with <code>=</code>, <code>+</code>, <code>-</code> or <code>@</code> are prefixed with
+      an apostrophe so spreadsheets don't run them as formulas.</p>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Import leads{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Import leads from CSV</h1></div>
+<div class="grid-2">
+  <section class="card">
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {{ form.hidden_tag() }}
+      {{ field(form.file) }}
+      <button class="btn btn-primary" type="submit">Import</button>
+    </form>
+    {% if errors %}
+    <div class="import-errors">
+      <h2>Fix these rows and try again{% if error_count > errors|length %} (first {{ errors|length }} of {{ error_count }}){% endif %}</h2>
+      <div class="table-scroll"><table class="table compact">
+        <thead><tr><th>Line</th><th>Problem</th></tr></thead>
+        <tbody>{% for line, msg in errors %}<tr><td>{{ line }}</td><td>{{ msg }}</td></tr>{% endfor %}</tbody>
+      </table></div>
+    </div>
+    {% endif %}
+  </section>
+  <section class="card">
+    <h2>How it works</h2>
+    <ul>
+      <li>Use a <strong>.csv</strong> file saved as UTF-8 (in Excel: <em>CSV UTF-8</em>), up to 1 MB and 2,000 rows.</li>
+      <li>Only <code>first_name</code> is required. Other columns: phone, email, address, city, state, zip_code, source, status, job_type, estimated_value, last_contact_date, next_follow_up_date, notes.</li>
+      <li>Dates: <code>YYYY-MM-DD</code> or <code>MM/DD/YYYY</code>.</li>
+      <li>If any row has a problem, <strong>nothing is imported</strong>, so you never end up with half an import.</li>
+    </ul>
+    <a class="btn" href="{{ url_for('leads.import_template') }}">Download template</a>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Choose a new password{% endblock %}
+{% block content %}
+<div class="auth">
+  <h1>Choose a new password</h1>
+  {% if invalid %}
+  <div class="flash flash-error" role="alert">This link has expired or was already used.</div>
+  <p class="center"><a href="{{ url_for('auth.forgot_password') }}">Ask for a new link</a></p>
+  {% else %}
+  {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('auth.reset_password', token=request.view_args.token) }}" class="card form" novalidate>
+    {{ csrf() }}
+    <label>New password <input type="password" name="password" required minlength="8" autocomplete="new-password" autofocus></label>
+    <p class="hint">At least 8 characters.</p>
+    <label>New password again <input type="password" name="confirm_password" required minlength="8" autocomplete="new-password"></label>
+    <button class="btn btn-primary btn-block" type="submit">Save new password</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

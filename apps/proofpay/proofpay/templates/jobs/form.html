@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, textarea %}
+{% block title %}{{ 'Edit job' if job else 'New job' }} · ProofPay{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ 'Edit job' if job else 'New job' }}</h1>
+  <a class="btn btn-ghost" href="{{ url_for('jobs.job_detail', ref=job.ref) if job else url_for('jobs.dashboard') }}">Cancel</a>
+</div>
+{% if errors %}<div class="flash flash-error" role="alert">Please fix the highlighted fields.</div>{% endif %}
+
+<form method="post" class="card form-grid" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <fieldset>
+    <legend>Customer</legend>
+    {% if not job and customers %}
+    <div class="field{% if errors.customer_ref %} has-error{% endif %}">
+      <label for="customer_ref">Existing customer <span class="opt">optional</span></label>
+      <select id="customer_ref" name="customer_ref" data-toggle-new-customer>
+        <option value="">+ New customer</option>
+        {% for c in customers %}
+          <option value="{{ c.ref }}" {% if form.customer_ref == c.ref %}selected{% endif %}>{{ c.name }}{% if c.email %} ({{ c.email }}){% endif %}</option>
+        {% endfor %}
+      </select>
+      {% if errors.customer_ref %}<p class="error-text">{{ errors.customer_ref }}</p>{% endif %}
+    </div>
+    {% endif %}
+    <div id="new-customer-fields">
+      {{ field('customer_name', 'Customer name', form.customer_name, errors, required=true, attrs='maxlength="120" autocomplete="off"') }}
+      <div class="row2">
+        {{ field('customer_email', 'Customer email', form.customer_email, errors, type='email', attrs='autocomplete="off"') }}
+        {{ field('customer_phone', 'Customer phone', form.customer_phone, errors, type='tel', attrs='maxlength="40" autocomplete="off"') }}
+      </div>
+      {% if job %}<p class="hint">Changes here update this customer's record.</p>{% endif %}
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Job</legend>
+    {{ field('title', 'Job title', form.title, errors, required=true, attrs='maxlength="160" placeholder="e.g. Kitchen sink leak repair"') }}
+    {{ textarea('description', 'Job description', form.description, errors, rows=3, placeholder='What the customer asked for') }}
+    {{ field('address', 'Job address', form.address, errors, attrs='maxlength="255"') }}
+    <div class="row2">
+      {{ field('price', 'Price ($)', form.price, errors, required=true, attrs='inputmode="decimal" placeholder="0.00"' ~ (' readonly' if job and job.is_paid else ''),
+          hint=('Locked because this job is marked paid.' if job and job.is_paid else '')) }}
+      {{ field('due_date', 'Payment due date', form.due_date, errors, type='date') }}
+    </div>
+    <div class="field{% if errors.status %} has-error{% endif %}">
+      <label for="status">Status</label>
+      {% if errors.status %}<p class="error-text">{{ errors.status }}</p>{% endif %}
+      <select id="status" name="status">
+        <option value="draft" {% if form.status == 'draft' %}selected{% endif %}>Draft</option>
+        <option value="in_progress" {% if form.status == 'in_progress' %}selected{% endif %}>In progress</option>
+        <option value="completed" {% if form.status == 'completed' %}selected{% endif %}>Completed</option>
+      </select>
+    </div>
+    {{ textarea('work_notes', 'Work completed', form.work_notes, errors, rows=4,
+        hint='One item per line. Shown to the customer as a checklist.',
+        placeholder='Replaced 3 outlets\nFixed loose wire in kitchen\nTested all connections') }}
+  </fieldset>
+
+  <div class="form-actions">
+    <button class="btn" type="submit">{{ 'Save changes' if job else 'Create job' }}</button>
+  </div>
+</form>
+{% endblock %}

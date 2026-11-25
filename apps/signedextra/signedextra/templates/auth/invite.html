@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}Join {{ company.name }}{% endblock %}
+{% block main_class %}narrow auth-page{% endblock %}
+{% block content %}
+<div class="auth-brand"><span class="brand-mark">SE</span> SignedExtra</div>
+<div class="card">
+  <h1>Join {{ company.name }}</h1>
+  <p>Hi {{ invited.name }}, choose a password to finish setting up your account (<strong>{{ invited.email }}</strong>).</p>
+  <form method="post" novalidate>
+    {{ csrf() }}
+    {{ field(form, "password", "Password", type="password", required=True, hint="At least 10 characters.", attrs='autocomplete="new-password"') }}
+    {{ field(form, "password_confirm", "Repeat password", type="password", required=True, attrs='autocomplete="new-password"') }}
+    <button class="btn btn-primary btn-block" type="submit">Set password</button>
+  </form>
+</div>
+{% endblock %}

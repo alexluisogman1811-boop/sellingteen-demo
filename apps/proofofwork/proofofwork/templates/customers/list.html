@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Customers{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Customers</h1>
+  {% if g.user.role == 'manager' %}<a class="btn btn-primary" href="{{ url_for('main.customer_new') }}">+ Customer</a>{% endif %}
+</div>
+<form method="get" action="{{ url_for('main.customers') }}" class="searchbar">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search customers" maxlength="100" aria-label="Search customers">
+  <button class="btn" type="submit">Search</button>
+</form>
+{% if customers %}
+<div class="card-list">
+  {% for c in customers %}
+  <a class="job-card" href="{{ url_for('main.customer_detail', customer_id=c.id) }}">
+    <div class="job-card-top"><strong>{{ c.name }}</strong></div>
+    <div class="muted small">{% if c.contact_name %}{{ c.contact_name }} · {% endif %}{{ c.property_count }} propert{{ 'y' if c.property_count == 1 else 'ies' }} · {{ c.job_count }} job{{ '' if c.job_count == 1 else 's' }}</div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">{{ 'No customers match your search.' if q else 'No customers yet.' }}</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, badge, when %}
+{% block title %}Invoice {{ inv.number }}{% endblock %}
+{% block content %}
+<a class="back" href="{{ url_for('routes.invoices') }}">← Invoices</a>
+<div class="invoice-head">
+  <div>
+    <p class="muted small">Invoice {{ inv.number }}</p>
+    <h1>{{ inv.amount_cents|money }} {{ badge(inv) }}</h1>
+    <p><a href="{{ url_for('routes.customer_detail', customer_id=inv.customer_id) }}">{{ inv.customer_name }}</a>{% if inv.customer_company %} · {{ inv.customer_company }}{% endif %}</p>
+    <p class="muted">{{ when(inv) }}</p>
+  </div>
+</div>
+
+{% if inv.followup_due %}
+<div class="callout callout-accent">
+  <div>
+    <strong>Follow-up recommended:</strong> {{ inv.next.stage.label }}
+    <div class="small muted">{{ inv.days_overdue|days }} overdue. We've drafted a message for you.</div>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('routes.followup', invoice_id=inv.id) }}">Write reminder</a>
+</div>
+{% elif inv.next and inv.status == 'sent' %}
+<div class="callout">
+  <div class="small">Next follow-up: <strong>{{ inv.next.stage.label }}</strong> on {{ inv.next.due_on|nice_date }}. Nothing to do until then.</div>
+</div>
+{% endif %}
+
+<div class="detail-grid">
+  <section class="card">
+    <h2>Timeline</h2>
+    <ol class="timeline">
+      {% for step in timeline %}
+      <li class="tl tl-{{ step.state }}">
+        <span class="tl-dot" aria-hidden="true"></span>
+        <div>
+          <div class="tl-label">{{ step.label }}</div>
+          <div class="tl-meta">
+            {% if step.detail %}{{ step.detail }}{% if step.date %} · {% endif %}{% endif %}{% if step.date %}{{ step.date|nice_date }}{% endif %}
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <div class="stack">
+    {% if inv.status != 'paid' %}
+    <section class="card" id="paid">
+      <h2>Customer paid?</h2>
+      <form method="post" action="{{ url_for('routes.invoice_mark_paid', invoice_id=inv.id) }}" class="form">
+        {{ csrf() }}
+        <label>Payment date <input type="date" name="paid_on" value="{{ today.isoformat() }}" max="{{ today.isoformat() }}" min="{{ inv.issue_date }}" required></label>
+        <button class="btn btn-good btn-block" type="submit">Mark as paid · {{ inv.amount_cents|money }}</button>
+        <p class="hint">Stops all follow-ups and adds this to your recovered revenue.</p>
+      </form>
+    </section>
+    {% endif %}
+
+    {% if inv.status == 'draft' %}
+    <section class="card">
+      <h2>Not sent yet</h2>
+      <p class="small muted">Once you've sent this invoice to your customer, mark it as sent so we can track it.</p>
+      <form method="post" action="{{ url_for('routes.invoice_mark_sent', invoice_id=inv.id) }}">
+        {{ csrf() }}
+        <button class="btn btn-block" type="submit">Mark invoice as sent</button>
+      </form>
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <h2>Details</h2>
+      <dl class="details">
+        <dt>Issued</dt><dd>{{ inv.issue_date|nice_date }}</dd>
+        <dt>Due</dt><dd>{{ inv.due_date|nice_date }}</dd>
+        {% if inv.paid_on %}<dt>Paid</dt><dd>{{ inv.paid_on|nice_date }}</dd>{% endif %}
+        <dt>Reminders sent</dt><dd>{{ inv.reminders_sent }}</dd>
+        {% if inv.customer_email %}<dt>Email</dt><dd><a href="mailto:{{ inv.customer_email }}">{{ inv.customer_email }}</a></dd>{% endif %}
+        {% if inv.customer_phone %}<dt>Phone</dt><dd><a href="tel:{{ inv.customer_phone }}">{{ inv.customer_phone }}</a></dd>{% endif %}
+      </dl>
+      {% if inv.notes %}<p class="notes">{{ inv.notes }}</p>{% endif %}
+    </section>
+
+    {% set sent_msgs = inv.history|selectattr('action', 'equalto', 'sent')|list %}
+    {% if sent_msgs %}
+    <section class="card">
+      <h2>Messages sent</h2>
+      {% for h in sent_msgs|reverse %}
+      <details class="sent-msg">
+        <summary>Reminder {{ h.stage }} · {{ h.on_date|nice_date }}</summary>
+        <pre>{{ h.message }}</pre>
+      </details>
+      {% endfor %}
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

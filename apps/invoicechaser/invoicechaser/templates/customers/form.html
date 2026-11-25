@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field_error, invalid %}
+{% block title %}{{ 'Edit customer' if customer else 'Add customer' }}{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>{{ 'Edit customer' if customer else 'Add a customer' }}</h1>
+  {% if not customer and request.args.get('then') == 'invoice' %}<p class="muted">Step 1 of 2. Next, you'll record the invoice you sent them.</p>{% endif %}
+  <form method="post" data-loading novalidate>
+    {{ csrf() }}
+    <label for="name">Customer or company name <span class="req">*</span></label>
+    <input id="name" name="name" value="{{ data.get('name', '') }}" maxlength="120" required autofocus {{ invalid(errors, 'name') }}>
+    {{ field_error(errors, 'name') }}
+    <label for="contact_name">Contact person <span class="optional">(optional)</span></label>
+    <input id="contact_name" name="contact_name" value="{{ data.get('contact_name', '') }}" maxlength="120" autocomplete="off" {{ invalid(errors, 'contact_name') }}>
+    <p class="hint">Who you address follow-ups to, e.g. “Hi Sarah”. If blank, we use the customer name.</p>
+    {{ field_error(errors, 'contact_name') }}
+    <label for="email">Email <span class="optional">(optional)</span></label>
+    <input id="email" name="email" type="email" value="{{ data.get('email', '') }}" maxlength="254" autocomplete="off" {{ invalid(errors, 'email') }}>
+    <p class="hint">Lets you open follow-ups straight in your email app.</p>
+    {{ field_error(errors, 'email') }}
+    <label for="phone">Phone <span class="optional">(optional)</span></label>
+    <input id="phone" name="phone" type="tel" value="{{ data.get('phone', '') }}" maxlength="40" autocomplete="off" {{ invalid(errors, 'phone') }}>
+    {{ field_error(errors, 'phone') }}
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit" data-loading-text="Saving…">{{ 'Save changes' if customer else ('Save and continue' if request.args.get('then') == 'invoice' else 'Add customer') }}</button>
+      <a class="btn btn-ghost" href="{{ url_for('customers.detail', customer_id=customer.id) if customer else url_for('customers.index') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

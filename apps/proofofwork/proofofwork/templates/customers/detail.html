@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "macros.html" import job_list with context %}
+{% block title %}{{ customer.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="crumb"><a href="{{ url_for('main.customers') }}">Customers</a></p>
+    <h1>{{ customer.name }}</h1>
+  </div>
+  {% if g.user.role == 'manager' %}
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.customer_edit', customer_id=customer.id) }}">Edit</a>
+    <a class="btn btn-primary" href="{{ url_for('main.job_new', customer_id=customer.id) }}">+ Job</a>
+  </div>
+  {% endif %}
+</div>
+
+<section class="panel">
+  <dl class="details">
+    {% if customer.contact_name %}<dt>Contact</dt><dd>{{ customer.contact_name }}</dd>{% endif %}
+    {% if customer.email %}<dt>Email</dt><dd><a href="mailto:{{ customer.email }}">{{ customer.email }}</a></dd>{% endif %}
+    {% if customer.phone %}<dt>Phone</dt><dd><a href="tel:{{ customer.phone }}">{{ customer.phone }}</a></dd>{% endif %}
+    {% if customer.notes %}<dt>Notes</dt><dd class="prewrap">{{ customer.notes }}</dd>{% endif %}
+  </dl>
+</section>
+
+<section class="panel">
+  <div class="section-head">
+    <h2>Properties</h2>
+    {% if g.user.role == 'manager' %}<a class="btn btn-small" href="{{ url_for('main.property_new', customer_id=customer.id) }}">+ Property</a>{% endif %}
+  </div>
+  {% if properties %}
+  <ul class="plain-list">
+    {% for p in properties %}
+    <li>
+      <div><strong>{{ p.name }}</strong>{% if p.address %}<div class="muted small">{{ p.address }}</div>{% endif %}
+        {% if p.access_notes %}<div class="small"><span class="tag">Access</span> {{ p.access_notes }}</div>{% endif %}</div>
+      <div class="actions">
+        <a class="btn btn-small" href="{{ url_for('main.jobs', property_id=p.id) }}">Jobs</a>
+        {% if g.user.role == 'manager' %}
+        <a class="btn btn-small" href="{{ url_for('main.property_edit', property_id=p.id) }}">Edit</a>
+        <form method="post" action="{{ url_for('main.property_delete', property_id=p.id) }}" class="inline" data-confirm="Delete this property?">
+          {{ csrf_field() }}<button class="btn btn-small btn-danger" type="submit">Delete</button>
+        </form>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty">No properties yet. Add one before creating jobs.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Recent jobs</h2>
+  {{ job_list(jobs, "No jobs for this customer yet.") }}
+</section>
+
+{% if g.user.role == 'manager' %}
+<section class="panel danger-zone">
+  <form method="post" action="{{ url_for('main.customer_delete', customer_id=customer.id) }}" data-confirm="Delete this customer and all their properties?">
+    {{ csrf_field() }}<button class="btn btn-danger" type="submit">Delete customer</button>
+    <span class="muted small">Only possible when the customer has no jobs.</span>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

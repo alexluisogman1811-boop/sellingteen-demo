@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% from "_macros.html" import job_badge, report_badge %}
+{% block title %}{{ job.title }} – JobProof AI{% endblock %}
+{% block content %}
+{% set has_notes = job.notes|trim|length > 0 %}
+<div class="page-head">
+  <div>
+    <a class="back" href="{{ url_for('jobs.index') }}">← All jobs</a>
+    <h1>{{ job.title }}</h1>
+    <p class="muted">{{ job.customer_name }}{% if job.job_date %} · {{ job.job_date|date }}{% endif %}</p>
+    <p>{{ job_badge(job.status) }} {{ report_badge(report_status) }}</p>
+  </div>
+  <div class="head-actions button-row">
+    <a class="btn btn-secondary" href="{{ url_for('jobs.edit', job_id=job.id) }}">Edit job</a>
+    {% if has_notes and not report %}
+    <form method="post" action="{{ url_for('reports.generate', job_id=job.id) }}" class="inline" data-busy="Generating report…">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn">Generate Report</button>
+    </form>
+    {% elif report %}
+    <a class="btn" href="{{ url_for('reports.preview', job_id=job.id) }}">View report</a>
+    {% endif %}
+  </div>
+</div>
+
+<ol class="stepper" aria-label="Progress">
+  <li class="done"><span>1</span> Job details</li>
+  <li class="{{ 'done' if has_notes }}"><span>2</span> Notes</li>
+  <li class="{{ 'done' if photos }}"><span>3</span> Photos</li>
+  <li class="{{ 'done' if report }}"><span>4</span> Report</li>
+  <li class="{{ 'done' if share }}"><span>5</span> Share / PDF</li>
+</ol>
+
+<div class="job-layout">
+  <div class="job-main-col {{ 'report-first' if report else 'photos-first' }}">
+    <section class="card" id="report">
+      <div class="card-head"><h2>Report</h2></div>
+      {% if not has_notes %}
+        <p>Add notes about the work first – the report is written from your notes.</p>
+        <a class="btn" href="{{ url_for('jobs.edit', job_id=job.id) }}#notes">Add notes</a>
+      {% elif not report %}
+        <p>Ready when you are. We'll turn your notes{% if photos %} and {{ photos|length }} photo{{ 's' if photos|length != 1 }}{% endif %} into a professional customer report.</p>
+        {% if not photos %}<p class="muted small">Tip: add before and after photos below first – customers love seeing the result.</p>{% endif %}
+        <form method="post" action="{{ url_for('reports.generate', job_id=job.id) }}" data-busy="Generating report…">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-large">Generate Report</button>
+        </form>
+      {% else %}
+        {% if stale %}
+        <div class="notice">You changed this job after the report was generated. Regenerate it to include your changes.</div>
+        {% endif %}
+        <p class="muted">Generated {{ report.generated_at|datetime }}{% if report.generation_count > 1 %} · version {{ report.generation_count }}{% endif %}.</p>
+        <div class="button-row">
+          <a class="btn" href="{{ url_for('reports.preview', job_id=job.id) }}">Preview report</a>
+          <form method="post" action="{{ url_for('reports.generate', job_id=job.id) }}" class="inline" data-busy="Generating…">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn {{ 'btn-warning' if stale else 'btn-secondary' }}">Regenerate report</button>
+          </form>
+          <a class="btn btn-secondary" href="{{ url_for('reports.pdf', job_id=job.id) }}">Download PDF</a>
+          {% if share %}
+            <a class="btn btn-secondary" href="{{ url_for('reports.preview', job_id=job.id) }}#share">Copy share link</a>
+          {% else %}
+          <form method="post" action="{{ url_for('reports.create_share', job_id=job.id) }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-secondary">Create share link</button>
+          </form>
+          {% endif %}
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="card" id="photos">
+      <div class="card-head"><h2>Photos <span class="muted small">({{ photos|length }})</span></h2></div>
+      {% with photo_messages = get_flashed_messages(with_categories=true, category_filter=["photo-success", "photo-error"]) %}
+        {% if photo_messages %}
+        <div class="flashes" role="status">
+          {% for category, message in photo_messages %}
+            <div class="flash flash-{{ category[6:] }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      {% endwith %}
+      <form method="post" action="{{ url_for('photos.upload', job_id=job.id) }}" enctype="multipart/form-data" class="upload-form" data-busy="Uploading…">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="upload-row">
+          <div>
+            <label for="stage">These photos are</label>
+            <select id="stage" name="stage">
+              {% for key, label in stages.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="upload-file">
+            <label for="photo-input">Choose photos <span class="hint">(JPG, PNG, WEBP · max 10 MB each)</span></label>
+            <input id="photo-input" name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple required>
+          </div>
+        </div>
+        <div class="upload-preview" id="upload-preview" aria-live="polite"></div>
+        <button type="submit" class="btn">Upload photos</button>
+      </form>
+
+      {% for key, label in stages.items() %}
+        {% set stage_photos = photos|selectattr("stage", "equalto", key)|list %}
+        {% if stage_photos %}
+        <h3 class="stage-title">{{ label }} <span class="muted small">({{ stage_photos|length }})</span></h3>
+        <ul class="photo-grid">
+          {% for p in stage_photos %}
+          <li class="photo-item">
+            <img src="{{ url_for('photos.file', file_key=p.file_key) }}" alt="{{ label }} photo {{ loop.index }}" loading="lazy">
+            <div class="photo-controls">
+              <form method="post" action="{{ url_for('photos.set_stage', file_key=p.file_key) }}" class="inline stage-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <label class="sr-only" for="stage-{{ p.file_key }}">Photo stage</label>
+                <select id="stage-{{ p.file_key }}" name="stage" data-autosubmit>
+                  {% for k, l in stages.items() %}<option value="{{ k }}" {{ 'selected' if k == p.stage }}>{{ l }}</option>{% endfor %}
+                </select>
+                <noscript><button type="submit" class="btn btn-small btn-secondary">Save</button></noscript>
+              </form>
+              <div class="photo-buttons">
+                <form method="post" action="{{ url_for('photos.move', file_key=p.file_key) }}" class="inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="direction" value="up">
+                  <button type="submit" class="icon-btn" title="Move earlier" aria-label="Move photo earlier" {{ 'disabled' if loop.first }}>↑</button>
+                </form>
+                <form method="post" action="{{ url_for('photos.move', file_key=p.file_key) }}" class="inline">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="direction" value="down">
+                  <button type="submit" class="icon-btn" title="Move later" aria-label="Move photo later" {{ 'disabled' if loop.last }}>↓</button>
+                </form>
+                <form method="post" action="{{ url_for('photos.delete', file_key=p.file_key) }}" class="inline" data-confirm="Delete this photo? This can't be undone.">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="icon-btn danger" title="Delete photo" aria-label="Delete photo">✕</button>
+                </form>
+              </div>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      {% endfor %}
+      {% if not photos %}<p class="muted">No photos yet. Upload a <strong>Before</strong> photo and an <strong>After</strong> photo to show your work.</p>{% endif %}
+    </section>
+  </div>
+
+  <aside class="job-side-col">
+    <section class="card">
+      <div class="card-head"><h2>Job details</h2><a href="{{ url_for('jobs.edit', job_id=job.id) }}">Edit</a></div>
+      <dl class="details">
+        <dt>Customer</dt><dd>{{ job.customer_name }}</dd>
+        {% if job.customer_phone %}<dt>Phone</dt><dd>{{ job.customer_phone }}</dd>{% endif %}
+        {% if job.customer_email %}<dt>Email</dt><dd>{{ job.customer_email }}</dd>{% endif %}
+        {% if job.address %}<dt>Address</dt><dd>{{ job.address }}</dd>{% endif %}
+        {% if job.service_type %}<dt>Service</dt><dd>{{ job.service_type }}</dd>{% endif %}
+        {% if job.job_date %}<dt>Date</dt><dd>{{ job.job_date|date }}</dd>{% endif %}
+        {% if job.technician %}<dt>Technician</dt><dd>{{ job.technician }}</dd>{% endif %}
+      </dl>
+      <form method="post" action="{{ url_for('jobs.set_status', job_id=job.id) }}" class="status-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="job-status">Job status</label>
+        <div class="inline-fields">
+          <select id="job-status" name="status">
+            {% for key, label in JOB_STATUSES.items() %}<option value="{{ key }}" {{ 'selected' if job.status == key }}>{{ label }}</option>{% endfor %}
+          </select>
+          <button type="submit" class="btn btn-secondary">Update</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Notes</h2><a href="{{ url_for('jobs.edit', job_id=job.id) }}#notes">Edit</a></div>
+      {% if has_notes %}<p class="notes-text">{{ job.notes }}</p>{% else %}<p class="muted">No notes yet.</p>{% endif %}
+      {% if job.materials %}<h3 class="small-head">Materials / parts</h3><p class="notes-text">{{ job.materials }}</p>{% endif %}
+    </section>
+
+    <section class="card danger-zone">
+      <form method="post" action="{{ url_for('jobs.delete', job_id=job.id) }}" data-confirm="Delete “{{ job.title }}”? Its photos, report and share link will be permanently removed.">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-danger-outline btn-block">Delete job</button>
+      </form>
+    </section>
+  </aside>
+</div>
+{% endblock %}

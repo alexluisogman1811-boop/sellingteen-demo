@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, errors as show_errors %}
+{% block title %}Record client decision{% endblock %}
+{% block content %}
+<div class="narrow">
+  <p><a href="{{ url_for('main.project', project_id=p.id) }}">← {{ p.name }}</a></p>
+  <h1>Record a client decision on {{ subject }}</h1>
+  <div class="notice warn">
+    Use this only when the client gave their decision outside ScopeGuard (for example by email or on a call).
+    The record will be clearly labelled as <strong>recorded by you on the client's behalf</strong>, and it cannot be edited or deleted afterwards.
+    Never record a decision the client did not actually make. Prefer sending a review link so the client records it themselves.
+  </div>
+  {{ show_errors(errors) }}
+  <form method="post" class="stack card">
+    {{ csrf() }}
+    <div class="field"><label for="decision">Decision</label>
+      <select id="decision" name="decision">
+        <option value="approved" {% if form.decision == 'approved' %}selected{% endif %}>Approved</option>
+        {% if allow_changes %}<option value="changes_requested" {% if form.decision == 'changes_requested' %}selected{% endif %}>Changes requested</option>{% endif %}
+        <option value="rejected" {% if form.decision == 'rejected' %}selected{% endif %}>Rejected</option>
+      </select></div>
+    <div class="row">
+      <div class="field"><label for="approver_name">Who made the decision</label><input id="approver_name" name="approver_name" type="text" required maxlength="120" value="{{ form.approver_name or p.client_name }}"></div>
+      <div class="field"><label for="approver_email">Their email</label><input id="approver_email" name="approver_email" type="email" maxlength="254" value="{{ form.approver_email or p.client_email or '' }}"></div>
+    </div>
+    <div class="field"><label for="evidence_note">Evidence</label>
+      <textarea id="evidence_note" name="evidence_note" required maxlength="2000" placeholder="e.g. Email from maya@example.com on 2026-05-12 14:05: “Looks good, go ahead.”">{{ form.evidence_note or '' }}</textarea>
+      <div class="hint">Where and when did the client decide? Keep the original message too.</div></div>
+    <div class="field"><label for="comment">Comment (optional)</label><textarea id="comment" name="comment" maxlength="2000">{{ form.comment or '' }}</textarea></div>
+    <label class="check"><input type="checkbox" name="confirm" value="1" required> I confirm the client actually made this decision and the evidence above is accurate.</label>
+    <button class="btn primary" type="submit">Save record</button>
+  </form>
+</div>
+{% endblock %}

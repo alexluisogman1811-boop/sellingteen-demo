@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Subscription{% endblock %}
+{% block content %}
+<section class="card narrow">
+  {% if access.state == 'ended' %}
+    <h1>{{ 'Your subscription has ended' if access.was_paid else 'Your free trial has ended' }}</h1>
+    <p class="muted">Your services, availability and bookings are saved, and your public booking page is still taking bookings. Subscribe to keep managing them in SlotSimple.</p>
+  {% elif access.state == 'paid' %}
+    <h1>You're subscribed</h1>
+    <p class="muted">Your account is active until {{ access.until|nice_date }}. Thank you!</p>
+  {% else %}
+    <h1>Subscribe to SlotSimple</h1>
+    <p class="muted">{% if access.days_left is defined %}You have {{ access.days_left }} day{{ '' if access.days_left == 1 else 's' }} left in your free trial.{% endif %} Subscribe any time to keep going after it.</p>
+  {% endif %}
+
+  {% if access.state != 'paid' %}
+  <div class="plan">
+    <p class="plan-price">{{ price }}</p>
+    <ul class="plan-list">
+      <li>Your own online booking page with services, opening hours and blocked dates</li>
+      <li>Double-booking protection, buffers and minimum notice</li>
+      <li>Dashboard to confirm, reschedule, cancel and search appointments, plus CSV export</li>
+    </ul>
+    {% if payment_link %}
+      <a class="btn btn-primary btn-block" href="{{ payment_link }}" target="_blank" rel="noopener noreferrer">Subscribe now</a>
+      <p class="muted small">You pay on our payment provider's secure page. Use the same email as your account: <strong>{{ current_admin.email }}</strong>. Your account is switched on within 24 hours of payment.</p>
+    {% else %}
+      <p class="notice">Online payment is opening soon.{% if support_email %} To subscribe now, email <strong>{{ support_email }}</strong> from <strong>{{ current_admin.email }}</strong>.{% endif %}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <p class="muted small">Questions? {% if support_email %}Email {{ support_email }}.{% endif %} See our <a href="{{ url_for('legal.terms') }}">Terms</a> and <a href="{{ url_for('legal.refunds') }}">Refund policy</a>.</p>
+  {% if access.state != 'ended' %}<a class="btn btn-ghost" href="{{ url_for('admin.dashboard') }}">Back to dashboard</a>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Business accounts:</strong> business name, email address, a secure hash of your password (never the password itself), and the settings you enter (contact details, address, timezone, opening hours, services and prices).</li>
+    <li><strong>Bookings:</strong> when someone books on a business's booking page, we store their name, email address, optional notes, the service, the date and time, and the booking's status and history.</li>
+    <li><strong>Basic technical logs</strong> (time, page, IP address) to keep the service secure and working.</li>
+  </ul>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't sell anyone's data.</li>
+    <li>We don't send emails, SMS messages or calendar invitations to customers. The only email SlotSimple can send is a password reset link to a business owner who asks for one, and only if email is switched on.</li>
+    <li>We don't use advertising or tracking cookies. We use one cookie to keep you logged in and to remember bookings you just made in your browser.</li>
+    <li>We never see card details. Payments for subscriptions are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>Why we use it</h2>
+  <p>Only to run the service: to show a business its bookings, let customers view or cancel their own booking (with the booking reference and email), keep accounts secure, manage subscriptions, and answer questions.</p>
+
+  <h2>Where it is stored</h2>
+  <p>On the server that hosts SlotSimple, protected by login. Each business can only see its own data. A customer can only see their own booking, and only with its reference and email.</p>
+
+  <h2>For businesses: your customers' information</h2>
+  <p>Your customers' booking details are collected on your behalf, so you are responsible for having a good reason to keep them and for following privacy laws where you operate (such as Thailand's PDPA, the GDPR, or similar laws).</p>
+
+  <h2>For customers who booked an appointment</h2>
+  <p>Your details are shared only with the business you booked with. To change or remove them, contact that business. You can cancel online with your reference and email until the business's cancellation cut-off.</p>
+
+  <h2>Your choices</h2>
+  <p>Business owners can download all their data (Account, then Export all my data) and delete their account and all its data at any time (Account, then Delete my account). You can also{% if support_email %} email {{ support_email }} from your account email{% else %} contact us{% endif %} and we will do it within 30 days.</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }}{% if support_email %} · {{ support_email }}{% endif %}</p>
+</article>
+{% endblock %}

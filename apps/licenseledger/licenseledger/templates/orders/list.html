@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_macros.html" import delete_button, order_pills %}
+{% block title %}Orders{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Orders</h1><p class="muted">{{ orders|length }} order{{ '' if orders|length == 1 else 's' }}. Order references and payment
+    status are recorded by you; LicenseLedger does not process or verify payments.</p></div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.data_export', entity='orders') }}">Export CSV</a>
+    <a class="btn btn-primary" href="{{ url_for('main.order_form') }}">+ Add order</a>
+  </div>
+</div>
+<form method="get" class="card filters" role="search">
+  <div class="field grow"><label for="q">Search</label>
+    <input id="q" name="q" type="search" value="{{ filters.q }}" placeholder="Order reference, customer name or email"></div>
+  <div class="field"><label for="order_status">Order status</label>
+    <select id="order_status" name="order_status"><option value="">Any</option>
+      {% for k, v in ORDER_STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if filters.order_status == k }}>{{ v }}</option>{% endfor %}
+    </select></div>
+  <div class="field"><label for="payment_status">Payment (owner-recorded)</label>
+    <select id="payment_status" name="payment_status"><option value="">Any</option>
+      {% for k, v in PAYMENT_STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if filters.payment_status == k }}>{{ v }}</option>{% endfor %}
+    </select></div>
+  <div class="field"><label for="delivery">Delivery</label>
+    <select id="delivery" name="delivery"><option value="">Any</option>
+      <option value="outstanding" {{ 'selected' if filters.delivery == 'outstanding' }}>Outstanding (pending or partial)</option>
+      {% for k, v in ORDER_DELIVERY_STATES.items() %}<option value="{{ k }}" {{ 'selected' if filters.delivery == k }}>{{ v }}</option>{% endfor %}
+    </select></div>
+  <div class="field"><label for="product_id">Product</label>
+    <select id="product_id" name="product_id"><option value="">Any product</option>
+      {% for p in products %}<option value="{{ p.id }}" {{ 'selected' if filters.product_id == p.id }}>{{ p.name }}</option>{% endfor %}
+    </select></div>
+  <div class="field"><label for="date_from">From</label><input id="date_from" name="date_from" type="date" value="{{ filters.date_from }}"></div>
+  <div class="field"><label for="date_to">To</label><input id="date_to" name="date_to" type="date" value="{{ filters.date_to }}"></div>
+  <div class="field"><label for="sort">Sort</label>
+    <select id="sort" name="sort">
+      {% for s in ('newest', 'oldest', 'customer', 'ref') %}<option value="{{ s }}" {{ 'selected' if filters.sort == s }}>{{ s|capitalize }}</option>{% endfor %}
+    </select></div>
+  <div class="field filter-buttons"><button class="btn btn-primary">Apply</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.orders') }}">Clear</a></div>
+</form>
+<section class="card">
+  {% if orders %}
+  <div class="table-wrap">
+  <table class="table stack">
+    <thead><tr><th>Reference</th><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for o in orders %}
+      <tr>
+        <td data-label="Reference"><a href="{{ url_for('main.order_detail', order_id=o.id) }}"><strong>{{ o.order_ref }}</strong></a></td>
+        <td data-label="Customer"><a href="{{ url_for('main.customer_detail', customer_id=o.customer_id) }}">{{ o.customer_name }}</a></td>
+        <td data-label="Date">{{ o.order_date }}</td>
+        <td data-label="Amount">{{ o.amount or '—' }}</td>
+        <td data-label="Status"><div class="pills">{{ order_pills(o) }}</div></td>
+        <td class="row-actions">
+          {% if o.order_status == 'open' %}<a class="btn btn-sm" href="{{ url_for('main.license_new', order_id=o.id) }}">Issue</a>{% endif %}
+          <a class="btn btn-sm" href="{{ url_for('main.order_form', order_id=o.id) }}">Edit</a>
+          {{ delete_button(url_for('main.order_delete', order_id=o.id), 'order') }}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}<p class="empty">No orders match these filters.</p>{% endif %}
+</section>
+{% endblock %}

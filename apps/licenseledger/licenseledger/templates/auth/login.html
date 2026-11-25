@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block auth_content %}
+<div class="card auth-card">
+  <div class="brand brand-lg"><span class="brand-mark">LL</span><span>LicenseLedger</span></div>
+  <h1>Log in</h1>
+  <form method="post" action="{{ url_for('auth.login') }}" class="stack-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="next" value="{{ next }}">
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" required autofocus autocomplete="username" value="{{ email }}">
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-block" type="submit">Log in</button>
+  </form>
+  {% if mail_on %}<p><a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a></p>{% endif %}
+  <p class="muted">New here? <a href="{{ url_for('auth.signup') }}">Start a free trial</a></p>
+</div>
+{% endblock %}

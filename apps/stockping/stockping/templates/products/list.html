@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, pagination %}
+{% block title %}Products{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Products <span class="muted">({{ total }})</span></h1>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.export_products', **request.args.to_dict()) }}">Export CSV</a>
+    <a class="btn btn-primary" href="{{ url_for('main.product_new') }}">+ New product</a>
+  </div>
+</div>
+
+{% set chip_args = request.args.to_dict() %}
+{% set _ = chip_args.pop('page', None) %}
+<nav class="chips" aria-label="Stock status">
+  {% for value, label, count in [('', 'All active', stats.active), ('attention', 'Needs reorder', stats.attention),
+                                 ('low', 'Low stock', stats.low_count), ('out', 'Out of stock', stats.out_count),
+                                 ('ok', 'In stock', stats.ok_count)] %}
+    {% set args = dict(chip_args, status=value) %}
+    <a class="chip chip-{{ value or 'all' }}{{ ' active' if filters.status == value }}" id="chip-{{ value or 'all' }}"
+       href="{{ url_for('main.product_list', **args) }}"{% if filters.status == value %} aria-current="true"{% endif %}>
+      {{ label }} <span class="chip-count">{{ count }}</span></a>
+  {% endfor %}
+</nav>
+
+{% set advanced = filters.category or filters.supplier_id or filters.include_archived %}
+<form class="filters card" method="get" action="{{ url_for('main.product_list') }}" role="search">
+  <div class="field grow">
+    <label for="q">Search name or SKU</label>
+    <input id="q" name="q" type="search" value="{{ filters.q }}" maxlength="100" autocomplete="off">
+  </div>
+  {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
+  <details class="more-filters"{% if advanced %} open{% endif %}>
+    <summary>More filters{% if advanced %} (active){% endif %}</summary>
+    <div class="filters">
+      <div class="field">
+        <label for="category">Category</label>
+        <select id="category" name="category">
+          <option value="">All</option>
+          {% for c in categories %}<option value="{{ c }}"{% if c == filters.category %} selected{% endif %}>{{ c }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="supplier">Supplier</label>
+        <select id="supplier" name="supplier">
+          <option value="">All</option>
+          {% for s in suppliers %}<option value="{{ s.id }}"{% if s.id == filters.supplier_id %} selected{% endif %}>{{ s.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <label class="check"><input type="checkbox" name="archived" value="1"{% if filters.include_archived %} checked{% endif %}> Include archived</label>
+    </div>
+  </details>
+  <div class="filter-buttons">
+    <button class="btn btn-primary" type="submit">Search</button>
+    <a class="btn" href="{{ url_for('main.product_list') }}">Clear</a>
+  </div>
+</form>
+
+{% if products %}
+<table class="table responsive products-table">
+  <thead><tr>
+    <th>Status</th><th>SKU</th><th>Name</th><th>Category</th><th>Supplier</th>
+    <th class="num">Qty</th><th class="num">Reorder at</th><th class="num">Price</th><th><span class="sr-only">Actions</span></th>
+  </tr></thead>
+  <tbody>
+  {% for p in products %}
+    <tr class="{{ 'row-status-' ~ p.status if p.is_active else 'archived' }}">
+      <td data-label="Status">{{ status_badge(p.status) }}</td>
+      <td data-label="SKU"><a href="{{ url_for('main.product_detail', product_id=p.id) }}">{{ p.sku }}</a></td>
+      <td data-label="Name">{{ p.name }}{% if not p.is_active %} <span class="badge">Archived</span>{% endif %}{% if p.is_demo %} <span class="badge badge-demo">Demo</span>{% endif %}</td>
+      <td data-label="Category">{{ p.category or '—' }}</td>
+      <td data-label="Supplier">{{ p.supplier_name or '—' }}</td>
+      <td data-label="Qty" class="num qty qty-{{ p.status }}"><strong>{{ p.quantity }}</strong></td>
+      <td data-label="Reorder at" class="num">{{ p.reorder_threshold }}</td>
+      <td data-label="Price" class="num">{{ p.price_cents|money }}</td>
+      <td class="row-actions">
+        {% if p.is_active %}
+        <a class="btn btn-small btn-in" href="{{ url_for('main.stock_movement', product_id=p.id, kind='in') }}" aria-label="Stock in {{ p.sku }}">+ In</a>
+        <a class="btn btn-small btn-out" href="{{ url_for('main.stock_movement', product_id=p.id, kind='out') }}" aria-label="Stock out {{ p.sku }}">− Out</a>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{{ pagination(page, pages) }}
+{% else %}
+<p class="empty">No products match these filters.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<section class="card auth-card">
+  <h1>Log in</h1>
+  <p class="muted">Each studio only ever sees its own clients, websites and reports.</p>
+  {% if error %}<p class="form-alert" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" class="stack" action="{{ url_for('auth.login') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="next" value="{{ next }}">
+    <label for="f-email">Email</label>
+    <input id="f-email" name="email" type="email" value="{{ email }}" autocomplete="email" required autofocus maxlength="254">
+    <label for="f-password">Password</label>
+    <input id="f-password" name="password" type="password" autocomplete="current-password" required maxlength="128">
+    <button class="btn btn-primary" type="submit">Log in</button>
+  </form>
+  {% if mail_on %}<p class="hint"><a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a></p>{% endif %}
+  <p class="hint">New here? <a href="{{ url_for('auth.signup') }}">Start your {{ config.TRIAL_DAYS }}-day free trial</a></p>
+</section>
+{% endblock %}

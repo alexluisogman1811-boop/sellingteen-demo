@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Choose a new password{% endblock %}
+{% block content %}
+<div class="auth-card card">
+  <div class="brand"><span class="brand-mark">LR</span> LeadRescue</div>
+  <h1>Choose a new password</h1>
+  <p class="muted small">For {{ email }}. This link works once.</p>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.password) }}
+    {{ field(form.confirm) }}
+    <button class="btn btn-primary btn-block" type="submit">Save new password</button>
+  </form>
+</div>
+{% endblock %}

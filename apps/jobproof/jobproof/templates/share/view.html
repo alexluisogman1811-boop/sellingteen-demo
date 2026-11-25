@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }} – {{ business.name or "Job report" }}{% endblock %}
+{% block head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block body_class %}public{% endblock %}
+{% block header %}{% endblock %}
+{% block footer %}{% endblock %}
+{% block container_class %}share-container{% endblock %}
+{% block content %}
+<div class="share-toolbar">
+  <span class="badge badge-job-{{ job.status }}">{{ "Work completed" if job.status == "completed" else JOB_STATUSES[job.status] }}</span>
+  <a class="btn btn-small btn-secondary" href="{{ url_for('share.pdf', token=token) }}">Download PDF</a>
+</div>
+{% set show_customer_contact = false %}
+{% include "_report_doc.html" %}
+<p class="powered">Report prepared with JobProof AI</p>
+{% endblock %}

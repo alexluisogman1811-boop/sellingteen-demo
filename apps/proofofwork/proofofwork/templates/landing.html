@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Job completion records for service teams{% endblock %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">ProofOfWork · For cleaning, repair and maintenance businesses</p>
+  <h1>Record completed work. Share a clean report with your customer.</h1>
+  <p class="lead">Your team checks off each task on their phone, adds before-and-after photos and notes, and records the reason
+    for anything that couldn't be done. ProofOfWork turns that into a printable completion report you can share by a link you can revoke.</p>
+  <div class="actions">
+    <a class="btn btn-primary btn-large" href="{{ url_for('auth.signup') }}">Start {{ trial_days }}-day free trial</a>
+    <a class="btn btn-large" href="{{ url_for('auth.login') }}">Sign in</a>
+  </div>
+</section>
+
+<section class="landing-grid">
+  <div class="panel">
+    <h2>For your workers on site</h2>
+    <ul class="benefits">
+      <li>Each task is marked <strong>Done</strong>, <strong>Not completed</strong> (a reason is required) or <strong>Not checked</strong>. There is no "mark all done" button.</li>
+      <li>Before and after photos, up to 8 at a time, with an area label so they're paired on the report. Location data is removed from photos.</li>
+      <li>Large phone photos are shrunk on the phone before uploading.</li>
+      <li>Report notes for the customer, and internal notes the customer never sees.</li>
+    </ul>
+  </div>
+  <div class="panel">
+    <h2>For managers</h2>
+    <ul class="benefits">
+      <li>Customers, properties and reusable checklist templates.</li>
+      <li>A job can't be completed until every required task is done or has a reason, and any exception must be explicitly confirmed, which is recorded with the person's name.</li>
+      <li>A history of who recorded, submitted, approved or shared each job.</li>
+      <li>Search, filters and CSV export.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Reports your customers can trust to be what you recorded</h2>
+  <ul class="benefits">
+    <li><strong>No AI.</strong> Nothing in a report is generated: every line comes from data your team saved and photos they uploaded.</li>
+    <li>Appointment times are shown as scheduled; work times come from actions recorded in the app. Approval is labelled as approval by your team, not by the customer.</li>
+    <li>Customer links show the report only: never internal notes, property access notes or job history. Revoke a link at any time.</li>
+    <li>A report is a record of what your team entered. It is not a signature, a certification or independent verification of the work.</li>
+  </ul>
+</section>
+
+<section class="panel center pricing" id="pricing">
+  <h2>Simple pricing</h2>
+  <p class="plan-price">{{ price }}</p>
+  <p class="muted">One plan per business, for your whole team.{% if config.BILLING_ENABLED %} Start with a {{ trial_days }}-day free trial, no card needed.{% endif %}</p>
+  <a class="btn btn-primary btn-large" href="{{ url_for('auth.signup') }}">Create your business account</a>
+</section>
+{% endblock %}

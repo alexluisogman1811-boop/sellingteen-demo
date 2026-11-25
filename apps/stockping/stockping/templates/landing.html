@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Simple stock tracking for small shops{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Know what's in stock, and what to reorder.</h1>
+  <p class="lead">StockPing is a simple inventory tracker for small shops. Keep your products and suppliers in one place, record stock in and out, and see what is running low, on your computer or your phone.</p>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">{% if billing %}Start your {{ trial_days }}-day free trial{% else %}Create an account{% endif %}</a>
+    <a class="btn" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+  {% if billing %}<p class="muted small">Then {{ price }}. No card needed to start.</p>{% endif %}
+</section>
+
+<section class="features" aria-label="What StockPing does">
+  <div class="card">
+    <h2>Products and suppliers</h2>
+    <p>SKU, name, category, supplier, cost, selling price, quantity and a reorder threshold for each product. Search by name or SKU and filter by category, supplier or stock status.</p>
+  </div>
+  <div class="card">
+    <h2>Stock in, stock out, adjustments</h2>
+    <p>Record each movement with a date and reason. Stock can't go below zero by mistake: corrections are made with an adjustment that needs a reason.</p>
+  </div>
+  <div class="card">
+    <h2>Low-stock alerts</h2>
+    <p>Low and out-of-stock items are marked clearly, counted on the dashboard, and collected in a printable reorder list grouped by supplier.</p>
+  </div>
+  <div class="card">
+    <h2>Full stock history</h2>
+    <p>Every change is kept with the quantity before and after, and can't be edited or deleted, so you can always see what happened.</p>
+  </div>
+  <div class="card">
+    <h2>CSV import and export</h2>
+    <p>Bring in your product list from a spreadsheet, with a preview that checks every row first. Export products and history any time.</p>
+  </div>
+  <div class="card">
+    <h2>Your own private account</h2>
+    <p>Each shop signs up for its own account and only ever sees its own products, suppliers and history.</p>
+  </div>
+</section>
+
+<section class="card good-to-know">
+  <h2>Good to know</h2>
+  <ul>
+    <li>StockPing does <strong>not</strong> connect to Shopify, Amazon or accounting software.</li>
+    <li>You add stock by hand or by importing a CSV file.</li>
+  </ul>
+</section>
+
+{% if billing %}
+<section class="card plan narrow" id="pricing">
+  <h2>Pricing</h2>
+  <p class="plan-price">{{ price }}</p>
+  <ul class="plan-list">
+    <li>{{ trial_days }}-day free trial with every feature</li>
+    <li>Unlimited products, suppliers and stock movements</li>
+    <li>Cancel any time. See the <a href="{{ url_for('legal.refunds') }}">refund policy</a>.</li>
+  </ul>
+  <a class="btn btn-primary btn-block" href="{{ url_for('auth.signup') }}">Start your free trial</a>
+</section>
+{% endif %}
+{% endblock %}

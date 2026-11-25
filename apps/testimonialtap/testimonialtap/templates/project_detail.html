@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% from "_macros.html" import demo_badge %}
+{% block title %}{{ project.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="crumbs"><a href="{{ url_for('admin.projects') }}">Projects</a> /</p>
+    <h1>{{ project.name }} {{ demo_badge(project) }}</h1>
+    {% if project.client_name %}<p class="muted">Client: {{ project.client_name }}</p>{% endif %}
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('admin.testimonials', project=project.id) }}">View testimonials</a>
+    <a class="btn" href="{{ url_for('admin.project_edit', project_id=project.id) }}">Edit</a>
+  </div>
+</div>
+
+{% if project.description %}<p class="notes">{{ project.description }}</p>{% endif %}
+
+<section class="stats small-stats">
+  {% for s in ['pending', 'approved', 'rejected', 'archived'] %}
+  <a class="stat" href="{{ url_for('admin.testimonials', project=project.id, status=s) }}"><span class="stat-n">{{ counts.get(s, 0) }}</span><span class="stat-l">{{ s|capitalize }}</span></a>
+  {% endfor %}
+  <div class="stat stat-live"><span class="stat-n">{{ publishable|length }}</span><span class="stat-l">Public</span></div>
+</section>
+
+{% if local_links %}
+<div class="flash flash-warning" role="note">
+  These links point to <code>{{ links.submit.split('/s/')[0] }}</code>, so they only work on this computer.
+  Before sharing them with clients, deploy the app and set <code>TESTIMONIALTAP_BASE_URL</code> to its public HTTPS address.
+</div>
+{% endif %}
+
+<section class="card">
+  <h2>1 · Collect: submission link</h2>
+  <p>Send this link to your client. Anyone with the link can submit; submissions stay <strong>pending</strong> and private until you review them.</p>
+  <div class="copy-row">
+    <input id="submit-link" readonly value="{{ links.submit }}" aria-label="Submission link">
+    <button type="button" class="btn btn-small" data-copy-target="submit-link">Copy</button>
+    <a class="btn btn-small" href="{{ links.submit }}" target="_blank" rel="noopener">Open</a>
+  </div>
+  <p class="small">
+    Status: <strong>{{ 'Accepting submissions' if project.accepting else 'Closed — the link shows a “not accepting” message' }}</strong>
+  </p>
+  <div class="actions">
+    <form method="post" action="{{ url_for('admin.project_toggle', project_id=project.id) }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-small" type="submit">{{ 'Close submissions' if project.accepting else 'Re-open submissions' }}</button>
+    </form>
+    <form method="post" action="{{ url_for('admin.project_rotate', project_id=project.id) }}" class="inline"
+          data-confirm="Generate a new submission link? The current link will stop working immediately.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="which" value="submit">
+      <button class="btn btn-small" type="submit">Generate new link</button>
+    </form>
+  </div>
+</section>
+
+<section class="card">
+  <h2>2 · Display: public page &amp; embed</h2>
+  <p>Shows <strong>only</strong> testimonials that are approved <strong>and</strong> have publication permission
+    ({{ publishable|length }} right now). Pending, rejected, archived and permission-less submissions are never shown.</p>
+
+  <label for="wall-link">Standalone public page</label>
+  <div class="copy-row">
+    <input id="wall-link" readonly value="{{ links.wall }}">
+    <button type="button" class="btn btn-small" data-copy-target="wall-link">Copy</button>
+    <a class="btn btn-small" href="{{ links.wall }}" target="_blank" rel="noopener">Open</a>
+  </div>
+
+  <label for="iframe-snippet">Embed (live, updates automatically)</label>
+  <textarea id="iframe-snippet" readonly rows="3" class="code">{{ iframe }}</textarea>
+  <button type="button" class="btn btn-small" data-copy-target="iframe-snippet">Copy embed code</button>
+
+  <label for="html-snippet">Static HTML snippet (a snapshot; regenerate after changes)</label>
+  <textarea id="html-snippet" readonly rows="6" class="code">{{ snippet }}</textarea>
+  <button type="button" class="btn btn-small" data-copy-target="html-snippet">Copy HTML</button>
+
+  <form method="post" action="{{ url_for('admin.project_rotate', project_id=project.id) }}" class="inline"
+        data-confirm="Generate a new public page link? Existing embeds and shared links will stop working.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="which" value="wall">
+    <button class="btn btn-small" type="submit">Generate new public link</button>
+  </form>
+</section>
+
+<section class="card danger-zone">
+  <h2>Delete project</h2>
+  <p>Deletes the project <strong>and all its testimonials</strong>. This cannot be undone — export first if you need a copy.</p>
+  <form method="post" action="{{ url_for('admin.project_delete', project_id=project.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="confirm_name">Type the project name to confirm</label>
+    <input id="confirm_name" name="confirm_name" autocomplete="off" maxlength="{{ limits.project_name }}">
+    <button class="btn btn-danger" type="submit">Delete project</button>
+  </form>
+</section>
+{% endblock %}

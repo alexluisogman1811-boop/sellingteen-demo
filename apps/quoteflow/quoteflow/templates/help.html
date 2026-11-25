@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Help & FAQ — QuoteFlow AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Help &amp; FAQ</h1>
+    <p class="muted" style="margin:4px 0 0">Can't find your answer? Email us at {% include "_support.html" %}.</p>
+  </div>
+</div>
+
+<div class="prose">
+  <h2>Getting started</h2>
+  <div class="faq">
+    <details open>
+      <summary>How do I create my first quote?</summary>
+      <p>After signing up, the setup steps ask for your business name, services and prices. Then go to <strong>New quote</strong>, paste a customer's message exactly as you received it, and click <strong>Generate Quote</strong>. Review the price and reply, edit anything you like, then click <strong>Copy Reply</strong> and paste it into your email or messaging app.</p>
+    </details>
+    <details>
+      <summary>Does QuoteFlow send replies to my customers?</summary>
+      <p>No. QuoteFlow never contacts your customers. You always review the reply and send it yourself.</p>
+    </details>
+    <details>
+      <summary>Can I change my business details later?</summary>
+      <p>Yes — everything is in <strong>Profile</strong>. Changes apply to new quotes; quotes you've already generated keep their original details.</p>
+    </details>
+  </div>
+
+  <h2>Prices and quotes</h2>
+  <div class="faq">
+    <details>
+      <summary>How is the price calculated?</summary>
+      <p>From your pricing rules only. For example, with a deep clean starting price of $200 that includes 2 bedrooms and 1 bathroom, an extra bedroom at $30 and an extra bathroom at $25, a 3-bed, 2-bath deep clean is $200 + $30 + $25 = <strong>$255</strong>. Add-ons the customer asks for are added on top. Each quote shows this breakdown under the price.</p>
+    </details>
+    <details>
+      <summary>Why does my quote say "From $…"?</summary>
+      <p>The customer didn't give enough detail (usually the number of bedrooms or bathrooms), so QuoteFlow shows your starting price and the reply asks them for the missing details.</p>
+    </details>
+    <details>
+      <summary>What does "Missing information" mean?</summary>
+      <p>Something needed for an accurate quote isn't in your profile — for example, a price for an add-on the customer asked for. QuoteFlow lists it instead of guessing. Add it in your Profile, and check the reply before sending.</p>
+    </details>
+    <details>
+      <summary>How do I add add-on services?</summary>
+      <p>In <strong>Profile → Pricing rules → Add-on services</strong>, put one per line as <code>Name: price</code>, for example <code>Inside oven: 45</code>.</p>
+    </details>
+    <details>
+      <summary>Why is there no time estimate?</summary>
+      <p>Time estimates come from the durations in your services list. Add them like "Deep clean – about 4–5 hours for a 2-bed home".</p>
+    </details>
+    <details>
+      <summary>A customer asked for something I don't offer. What happens?</summary>
+      <p>If it isn't in your services list, the reply politely says it's not something you offer, and it's flagged for you to check.</p>
+    </details>
+    <details>
+      <summary>Can I change the price or reply?</summary>
+      <p>Yes. Edit the price, duration, included services and reply, then click <strong>Save Quote</strong>. You can mark a quote as Sent to keep track.</p>
+    </details>
+    <details>
+      <summary>The AI made a mistake. What should I do?</summary>
+      <p>Edit the reply before sending — you're always in control. If it keeps happening, email us the example so we can improve it.</p>
+    </details>
+  </div>
+
+  <h2>Plans and billing</h2>
+  <div class="faq">
+    <details>
+      <summary>What's included in each plan?</summary>
+      <p><strong>Free:</strong> {{ plans.free.quota }} generated quotes per month. <strong>Pro:</strong> ${{ plans.pro.price }}/month for {{ plans.pro.quota }} generated quotes per month. Everything else is the same.</p>
+    </details>
+    <details>
+      <summary>When do my quotes reset?</summary>
+      <p>On the 1st of each month (UTC). Quotes that fail to generate don't count towards your limit.</p>
+    </details>
+    <details>
+      <summary>How do I upgrade, update my card, or cancel?</summary>
+      <p>Go to <strong>Account → Plan &amp; billing</strong>. Payments are handled securely by Stripe — we never see or store your card details. If you cancel, Pro stays active until the end of the period you've paid for.</p>
+    </details>
+    <details>
+      <summary>My payment failed. Will I lose access?</summary>
+      <p>Not straight away. Stripe retries the payment automatically, and you keep Pro while it does. Update your card from <strong>Plan &amp; billing</strong> to fix it.</p>
+    </details>
+  </div>
+
+  <h2>Privacy</h2>
+  <div class="faq">
+    <details>
+      <summary>What happens to the customer messages I paste in?</summary>
+      <p>They're sent to our AI provider to generate the quote and saved with the quote in your account. Only you can see your quotes. See our <a href="{{ url_for('privacy') }}">Privacy Policy</a> for details.</p>
+    </details>
+  </div>
+</div>
+{% endblock %}

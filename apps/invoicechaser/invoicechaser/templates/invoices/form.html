@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field_error, invalid %}
+{% block title %}{{ 'Edit invoice' if invoice else 'New invoice' }}{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>{{ 'Edit invoice ' ~ invoice.number if invoice else 'Record an invoice' }}</h1>
+  {% if not invoice %}<p class="muted">Enter the details of an invoice you've already sent. We'll track when it's due.</p>{% endif %}
+  {% if errors %}<div class="flash flash-error" role="alert">Please fix the highlighted fields below.</div>{% endif %}
+  <form method="post" data-loading novalidate>
+    {{ csrf() }}
+    <label for="customer_id">Customer <span class="req">*</span></label>
+    <select id="customer_id" name="customer_id" required {{ invalid(errors, 'customer_id') }}>
+      <option value="">Choose a customer…</option>
+      {% for c in customers %}<option value="{{ c.id }}" {{ 'selected' if data.get('customer_id') == c.id }}>{{ c.name }}</option>{% endfor %}
+    </select>
+    {{ field_error(errors, 'customer_id') }}
+    <p class="hint">Not in the list? <a href="{{ url_for('customers.new', then='invoice') }}">Add a new customer</a></p>
+    <div class="grid-2">
+      <div>
+        <label for="number">Invoice number <span class="req">*</span></label>
+        <input id="number" name="number" value="{{ data.get('number', '') }}" maxlength="40" required autocomplete="off" {{ invalid(errors, 'number') }}>
+        {{ field_error(errors, 'number') }}
+      </div>
+      <div>
+        <label for="amount">Amount ({{ g.user.currency }}) <span class="req">*</span></label>
+        <input id="amount" name="amount" inputmode="decimal" placeholder="{{ '0' if g.user.currency == 'JPY' else '0.00' }}" value="{{ data.get('amount', '') }}" required autocomplete="off" {{ invalid(errors, 'amount') }}>
+        {{ field_error(errors, 'amount') }}
+      </div>
+      <div>
+        <label for="issue_date">Issue date <span class="req">*</span></label>
+        <input id="issue_date" name="issue_date" type="date" min="2000-01-01" max="2100-12-31" value="{{ data.get('issue_date', '') }}" required {{ invalid(errors, 'issue_date') }}>
+        {{ field_error(errors, 'issue_date') }}
+      </div>
+      <div>
+        <label for="due_date">Due date <span class="req">*</span></label>
+        <input id="due_date" name="due_date" type="date" min="2000-01-01" max="2100-12-31" value="{{ data.get('due_date', '') }}" required {{ invalid(errors, 'due_date') }}>
+        <p class="hint quick-dates" data-due-shortcuts>Quick set:
+          <button type="button" class="link-btn" data-days="7">+7 days</button>
+          <button type="button" class="link-btn" data-days="14">+14</button>
+          <button type="button" class="link-btn" data-days="30">+30</button>
+        </p>
+        {{ field_error(errors, 'due_date') }}
+      </div>
+    </div>
+    <label for="notes">Private notes <span class="optional">(optional)</span></label>
+    <textarea id="notes" name="notes" rows="3" maxlength="1000" placeholder="Only you can see these. They're never included in follow-ups." {{ invalid(errors, 'notes') }}>{{ data.get('notes', '') }}</textarea>
+    {{ field_error(errors, 'notes') }}
+    {% if invoice and invoice.paid_at %}<p class="hint">This invoice is marked paid on {{ invoice.paid_at | date }}. Use “Mark as unpaid” on the invoice page to change that.</p>{% endif %}
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit" data-loading-text="Saving…">{{ 'Save changes' if invoice else 'Save invoice' }}</button>
+      <a class="btn btn-ghost" href="{{ url_for('invoices.detail', invoice_id=invoice.id) if invoice else url_for('invoices.index') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

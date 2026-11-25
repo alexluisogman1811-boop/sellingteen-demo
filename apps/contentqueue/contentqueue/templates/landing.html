@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Plan your social media posts{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Plan your social media posts in one place</h1>
+  <p class="hero-sub">ContentQueue is a content planning workspace for small businesses: collect ideas, draft
+    captions, plan posts on a calendar, and keep track of what you've published.</p>
+  <div class="head-actions hero-actions">
+    <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Start your {{ config.TRIAL_DAYS }}-day free trial</a>
+    <a class="btn" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+  <p class="hero-note"><strong>Planning only — ContentQueue never posts for you.</strong> It doesn't connect to
+    Instagram, TikTok, Facebook, LinkedIn, X or YouTube and never asks for your social media passwords.
+    “Scheduled” means planned inside ContentQueue; you publish on each platform yourself, then mark the post as published.</p>
+</section>
+
+<section class="grid-2 landing-features" aria-label="Features">
+  <article class="card">
+    <h2>Content calendar</h2>
+    <p>Month and week views. Click a day to plan a post, or drag a post to another day. On phones the calendar
+      becomes an agenda list, and there's a printable version.</p>
+  </article>
+  <article class="card">
+    <h2>A clear workflow</h2>
+    <p>Idea → Draft → In review → Scheduled (planned) → Published (confirmed by you) → Archived. Overdue posts
+      are flagged so nothing slips through.</p>
+  </article>
+  <article class="card">
+    <h2>Captions ready to copy</h2>
+    <p>Write captions with a live character count for each platform's limit, add hashtags, and copy the caption,
+      the hashtags or both with one click.</p>
+  </article>
+  <article class="card">
+    <h2>Templates and an idea bank</h2>
+    <p>Reusable caption templates with fill-in-the-blank fields, and an idea bank you can turn into posts later.
+      No AI service involved.</p>
+  </article>
+  <article class="card">
+    <h2>Campaigns and categories</h2>
+    <p>Group posts by campaign and content category, then search and filter by platform, status, campaign,
+      category or date.</p>
+  </article>
+  <article class="card">
+    <h2>Your content stays yours</h2>
+    <p>Each business only ever sees its own posts, captions and images. Export everything to CSV at any time.</p>
+  </article>
+</section>
+
+<section class="card pricing" id="pricing">
+  <h2>Pricing</h2>
+  <p class="plan-price">{{ config.PRICE_TEXT }}</p>
+  <p>Every new account starts with a {{ config.TRIAL_DAYS }}-day free trial with every feature. No card needed to start.</p>
+  <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Start free trial</a>
+  <p class="help">See our <a href="{{ url_for('legal.terms') }}">Terms</a>, <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>
+    and <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+</section>
+{% endblock %}

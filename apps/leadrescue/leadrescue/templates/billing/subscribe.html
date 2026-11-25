@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Subscription{% endblock %}
+{% block content %}
+<section class="card narrow">
+  {% if not billing_enabled %}
+    <h1>Subscription</h1>
+    <p class="muted">Billing is switched off on this server, so this workspace has full access.</p>
+  {% elif access.state == 'demo' %}
+    <h1>Demo workspace</h1>
+    <p class="muted">This is a demo workspace with fictional data. It never needs a subscription.</p>
+  {% elif access.state == 'ended' and not is_owner_view %}
+    <h1>{{ 'This workspace\'s subscription has ended' if access.was_paid else 'This workspace\'s free trial has ended' }}</h1>
+    <p>Please <strong>ask your owner</strong>{% if owner %}, {{ owner.full_name }},{% endif %} to subscribe. All of the workspace's leads and notes are saved.</p>
+    <p class="muted small">Only the workspace owner can subscribe for the team.</p>
+  {% else %}
+    {% if access.state == 'ended' %}
+      <h1>{{ 'Your subscription has ended' if access.was_paid else 'Your free trial has ended' }}</h1>
+      <p class="muted">Your leads, notes and history are saved. Subscribe to keep using LeadRescue, or download or delete your data below.</p>
+    {% elif access.state == 'paid' %}
+      <h1>You're subscribed</h1>
+      <p class="muted">This workspace is active until {{ access.until|nice_date }}. Thank you!</p>
+    {% else %}
+      <h1>Subscribe to LeadRescue</h1>
+      <p class="muted">{% if access.days_left is defined %}You have {{ access.days_left }} day{{ '' if access.days_left == 1 else 's' }} left in your free trial.{% endif %} Subscribe any time to keep going after it.</p>
+    {% endif %}
+
+    {% if access.state != 'paid' %}
+      {% if is_owner_view %}
+      <div class="plan">
+        <p class="plan-price">{{ price }}</p>
+        <ul class="plan-list">
+          <li>Your whole team in one workspace</li>
+          <li>Daily follow-up list, lead history and dashboard</li>
+          <li>Spreadsheet import and export</li>
+          <li>Follow-up message drafts you approve and send yourself</li>
+        </ul>
+        {% if payment_link %}
+          <a class="btn btn-primary btn-block" href="{{ payment_link }}" target="_blank" rel="noopener noreferrer">Subscribe now</a>
+          <p class="muted small">You pay on our payment provider's secure page. Use the same email as your LeadRescue login: <strong>{{ current_user.email }}</strong>. Your workspace is switched on within 24 hours of payment.</p>
+        {% else %}
+          <p class="notice">Online payment is opening soon.{% if support_email %} To subscribe now, email <strong>{{ support_email }}</strong> from <strong>{{ current_user.email }}</strong>.{% endif %}</p>
+        {% endif %}
+      </div>
+      {% else %}
+      <p class="muted">Only the workspace owner can subscribe.</p>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+
+  {% if is_owner_view %}
+  <p class="small"><a href="{{ url_for('data.page') }}">Export or delete your data</a></p>
+  {% endif %}
+  <p class="muted small">Questions? {% if support_email %}Email {{ support_email }}.{% endif %} See our <a href="{{ url_for('main.terms') }}">Terms</a> and <a href="{{ url_for('main.refunds') }}">Refund Policy</a>.</p>
+  {% if not access or access.state != 'ended' %}<a class="btn" href="{{ url_for('main.dashboard') }}">Back to dashboard</a>{% endif %}
+  {% if all_memberships|length > 1 %}<p class="muted small">You belong to other workspaces too: use the switcher at the top.</p>{% endif %}
+</section>
+{% endblock %}

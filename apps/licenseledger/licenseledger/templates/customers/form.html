@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field, textarea %}
+{% block title %}{{ 'Edit customer' if customer else 'Add customer' }}{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <p class="crumb"><a href="{{ url_for('main.customers') }}">Customers</a></p>
+  <h1>{{ 'Edit ' ~ customer.name if customer else 'Add a customer' }}</h1>
+</div></div>
+<form method="post" class="card form-grid">
+  {{ csrf() }}
+  {{ field("name", "Name", form, required=True, attrs='maxlength="200" autocomplete="off"') }}
+  {{ field("email", "Email", form, type="email", required=True, attrs='maxlength="254" autocomplete="off"') }}
+  {{ field("company", "Company", form, attrs='maxlength="200"') }}
+  <div class="span-2">{{ textarea("notes", "Internal notes", form) }}</div>
+  <div class="form-actions span-2">
+    <button class="btn btn-primary" type="submit">Save customer</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.customer_detail', customer_id=customer.id) if customer else url_for('main.customers') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Subscription · ProofPay{% endblock %}
+{% block content %}
+<section class="card narrow subscribe">
+  {% if access.state == 'free' %}
+    <h1>{{ 'Your Pro subscription has ended' if access.was_paid else 'Your free trial has ended' }}</h1>
+    <p class="muted">You're on the Free plan: {{ free_jobs }} active jobs and basic job reports. Your jobs, photos and customer job-report links are all kept and keep working. Upgrade to Pro to get everything back.</p>
+  {% elif access.state == 'paid' %}
+    <h1>You're on Pro</h1>
+    <p class="muted">Your Pro subscription is active until {{ access.until.strftime('%b') }} {{ access.until.day }}, {{ access.until.year }}. Thank you!</p>
+  {% elif access.state in ('demo', 'disabled') %}
+    <h1>Pro is included</h1>
+    <p class="muted">This account has every Pro feature. There's nothing to pay.</p>
+  {% else %}
+    <h1>Upgrade to ProofPay Pro</h1>
+    <p class="muted">{% if access.days_left is defined %}You have {{ access.days_left }} day{{ '' if access.days_left == 1 else 's' }} left in your {{ trial_days }}-day free trial of Pro.{% endif %} Subscribe any time to keep Pro after it. If you don't, your account moves to the Free plan; nothing is deleted.</p>
+  {% endif %}
+
+  {% if access.state in ('trial', 'free') %}
+  <div class="plan plan-hl">
+    <h3>Pro</h3>
+    <p class="plan-price">{{ price }}</p>
+    <ul class="checklist">
+      <li>Unlimited jobs</li>
+      <li>Unlimited photos</li>
+      <li>AI job summaries</li>
+      <li>Professional customer pages</li>
+    </ul>
+    {% if payment_link %}
+      <a class="btn btn-block" href="{{ payment_link }}" target="_blank" rel="noopener noreferrer">Subscribe now</a>
+      <p class="muted small">You pay on our payment provider's secure page. Use the same email as your account: <strong>{{ account_email }}</strong>. Pro is switched on within 24 hours of payment.</p>
+    {% else %}
+      <p class="notice">Online payment is opening soon.{% if support_email %} To subscribe now, email <strong>{{ support_email }}</strong> from <strong>{{ account_email }}</strong>.{% endif %}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <p class="muted small">Questions? {% if support_email %}Email {{ support_email }}.{% endif %} See our <a href="{{ url_for('legal.terms') }}">Terms</a> and <a href="{{ url_for('legal.refunds') }}">Refund policy</a>.</p>
+  <a class="btn btn-ghost" href="{{ url_for('jobs.dashboard') }}">Back to jobs</a>
+</section>
+{% endblock %}

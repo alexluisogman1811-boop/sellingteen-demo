@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Employees{% endblock %}
+{% macro emp_row(e) %}
+<tr class="{{ 'inactive' if not e.active }}">
+  <td data-label="Name"><strong>{{ e.name }}</strong>{% if not e.active %} <span class="tag">Inactive</span>{% endif %}
+    <div class="small muted">{% if e.id in logins %}Sign-in: {{ logins[e.id].username }}{% else %}No sign-in{% endif %}</div></td>
+  <td data-label="Role">{{ e.role or '—' }}</td>
+  <td data-label="Contact">
+    {% if e.email %}<a href="mailto:{{ e.email }}">{{ e.email }}</a><br>{% endif %}
+    {{ e.phone }}{% if not e.email and not e.phone %}<span class="muted">—</span>{% endif %}
+  </td>
+  <td data-label="Availability" class="small">
+    {% if not e.track_availability %}<span class="muted">Not recorded</span>
+    {% else %}
+      {% set a = avail.get(e.id, {}) %}
+      {% for wd in range(7) %}{% if wd in a %}<span class="avail-chip">{{ WEEKDAYS[wd][:3] }} {{ a[wd][0] }}–{{ a[wd][1] }}</span>{% endif %}{% else %}{% endfor %}
+      {% if not a %}<span class="muted">Unavailable all week</span>{% endif %}
+    {% endif %}
+  </td>
+  <td data-label="This week">{{ hours.get(e.id, 0)|hours }}</td>
+  <td class="actions">
+    <a href="{{ url_for('main.employee_edit', employee_id=e.id) }}">Edit</a>
+    <a href="{{ url_for('main.schedule', employee=e.id) }}">Shifts</a>
+    <a href="{{ url_for('main.employee_login', employee_id=e.id) }}">{{ 'Sign-in' if e.id in logins else 'Give sign-in' }}</a>
+    <form method="post" action="{{ url_for('main.employee_toggle_active', employee_id=e.id) }}"
+          {% if e.active %}data-confirm="Deactivate {{ e.name }}? They will no longer appear when assigning new shifts."{% endif %}>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="linkish" type="submit">{{ 'Deactivate' if e.active else 'Reactivate' }}</button>
+    </form>
+    <a class="danger" href="{{ url_for('main.employee_delete', employee_id=e.id) }}">Remove</a>
+  </td>
+</tr>
+{% endmacro %}
+{% block content %}
+<div class="page-head">
+  <h1>Employees</h1>
+  <a class="btn" href="{{ url_for('main.employee_new') }}">+ Add employee</a>
+</div>
+
+{% if not active and not inactive %}
+<section class="empty card">
+  <h2>No employees yet</h2>
+  <p>Add the people you schedule. You can record their contact details, role and the days and hours they're available.</p>
+  <a class="btn" href="{{ url_for('main.employee_new') }}">Add an employee</a>
+</section>
+{% else %}
+<section class="card">
+  <h2>Active <span class="muted small">· hours shown for week of {{ monday|dshort }}</span></h2>
+  {% if active %}
+  <table class="table responsive">
+    <thead><tr><th>Name</th><th>Role</th><th>Contact</th><th>Availability</th><th>This week</th><th></th></tr></thead>
+    <tbody>{% for e in active %}{{ emp_row(e) }}{% endfor %}</tbody>
+  </table>
+  {% else %}<p class="empty-inline">No active employees. Reactivate someone below or add a new employee.</p>{% endif %}
+</section>
+{% if inactive %}
+<section class="card">
+  <h2>Inactive</h2>
+  <p class="muted small">Inactive employees keep their history but can't be assigned new shifts.</p>
+  <table class="table responsive">
+    <thead><tr><th>Name</th><th>Role</th><th>Contact</th><th>Availability</th><th>This week</th><th></th></tr></thead>
+    <tbody>{% for e in inactive %}{{ emp_row(e) }}{% endfor %}</tbody>
+  </table>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

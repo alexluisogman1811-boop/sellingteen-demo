@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}{{ "Edit GC" if customer else "Add GC" }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>{{ "Edit " ~ customer.name if customer else "Add a general contractor" }}</h1>
+<div class="card">
+  <form method="post" novalidate>
+    {{ csrf() }}
+    {{ field(form, "name", "GC company name", required=True) }}
+    {{ field(form, "address", "Address") }}
+    {{ field(form, "notes", "Contract notes", type="textarea", hint="For example: T&M markup, notice clause, who can approve extra work.") }}
+    <div class="row">
+      <button class="btn btn-primary" type="submit">Save</button>
+      <a class="btn btn-secondary" href="{{ url_for('core.customer_detail', customer_id=customer.id) if customer else url_for('core.customers') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

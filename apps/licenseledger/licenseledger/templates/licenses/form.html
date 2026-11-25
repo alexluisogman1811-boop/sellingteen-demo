@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field, textarea %}
+{% block title %}{{ 'Edit license #%d'|format(lic.id) if lic else 'Issue license' }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ 'Edit license #%d'|format(lic.id) if lic else 'Issue a license' }}</h1>
+    <p class="muted">{% if lic %}Status changes, renewals and revocations are on the license page so they stay in the audit history.
+      {% else %}A unique code is generated securely and shown <strong>once</strong> after saving.{% endif %}</p>
+  </div>
+</div>
+
+{% if not products or not customers %}
+<div class="card callout">
+  <p>You need at least one product and one customer first.
+    <a href="{{ url_for('main.product_form') }}">Add a product</a> ·
+    <a href="{{ url_for('main.customer_form') }}">Add a customer</a></p>
+</div>
+{% endif %}
+
+{% if lic and lic.status in ('revoked', 'replaced') %}
+<form method="post" class="card stack-form" autocomplete="off">
+  {{ csrf() }}
+  <p class="flash flash-error">This license is {{ lic.status }}, so its terms are locked to keep the audit trail accurate.
+    Only internal notes can be changed.</p>
+  {{ textarea("notes", "Internal notes", form) }}
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Save notes</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.license_detail', license_id=lic.id) }}">Cancel</a>
+  </div>
+</form>
+{% else %}
+<form method="post" class="card form-grid" id="license-form" autocomplete="off">
+  {{ csrf() }}
+  <div class="field">
+    <label for="f-product_id">Product <span class="req">*</span></label>
+    <select id="f-product_id" name="product_id" required>
+      <option value="">Choose a product…</option>
+      {% for p in products %}
+      <option value="{{ p.id }}" data-type="{{ p.default_license_type }}" data-term="{{ p.default_term_days or '' }}"
+        {{ 'selected' if form.get('product_id')|string == p.id|string }}>{{ p.name }}{% if p.sku %} ({{ p.sku }}){% endif %}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="f-customer_id">Customer <span class="req">*</span></label>
+    <select id="f-customer_id" name="customer_id" required>
+      <option value="">Choose a customer…</option>
+      {% for c in customers %}
+      <option value="{{ c.id }}" {{ 'selected' if form.get('customer_id')|string == c.id|string }}>{{ c.name }} — {{ c.email }}</option>
+      {% endfor %}
+    </select>
+    <p class="help"><a href="{{ url_for('main.customer_form') }}">New customer</a></p>
+  </div>
+  <div class="field">
+    <label for="f-order_id">Order <span class="muted">(optional)</span></label>
+    <select id="f-order_id" name="order_id">
+      <option value="">No order</option>
+      {% for o in orders %}
+      <option value="{{ o.id }}" data-customer="{{ o.customer_id }}" {{ 'selected' if form.get('order_id')|string == o.id|string }}>{{ o.order_ref }} — {{ o.customer_name }}</option>
+      {% endfor %}
+    </select>
+    <p class="help">Must belong to the selected customer.</p>
+  </div>
+  <div class="field">
+    <label for="f-license_type">License type <span class="req">*</span></label>
+    <select id="f-license_type" name="license_type">
+      {% if not lic %}<option value="">Product default</option>{% endif %}
+      {% for t, label in LICENSE_TYPES.items() %}
+      <option value="{{ t }}" {{ 'selected' if form.get('license_type') == t }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <p class="help">Fixed term expires automatically. Manually managed only changes when you change it.</p>
+  </div>
+  {{ field("issue_date", "Issue date", form, type="date", required=True) }}
+  <div class="field" data-show-for="fixed manual">
+    <label for="f-expiration_date">Expiration date</label>
+    <input id="f-expiration_date" name="expiration_date" type="date" value="{{ form.get('expiration_date') or '' }}">
+    <p class="help">Leave blank on fixed-term licenses to use the term below.</p>
+  </div>
+  {% if not lic %}
+  <div class="field" data-show-for="fixed">
+    <label for="f-term_days">Term (days)</label>
+    <input id="f-term_days" name="term_days" type="number" min="1" max="36500" value="{{ form.get('term_days') or '' }}" placeholder="Product default">
+  </div>
+  <div class="field">
+    <label for="f-status">Initial status</label>
+    <select id="f-status" name="status">
+      {% for s in ('active', 'suspended', 'expired', 'revoked') %}
+      <option value="{{ s }}" {{ 'selected' if form.get('status', 'active') == s }}>{{ STATUS_LABELS[s] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <fieldset class="field span-2 keymode">
+    <legend>License code</legend>
+    <label class="radio"><input type="radio" name="key_mode" value="generate" {{ 'checked' if form.get('key_mode', 'generate') != 'existing' }}> Generate a new secure code</label>
+    <label class="radio"><input type="radio" name="key_mode" value="existing" {{ 'checked' if form.get('key_mode') == 'existing' }}> Record a key I already issued elsewhere</label>
+    <div class="field" data-key-existing>
+      <label for="f-existing_key">Existing key</label>
+      <input id="f-existing_key" name="existing_key" type="password" autocomplete="off" spellcheck="false" maxlength="128">
+      <p class="help">Stored as a one-way hash; it will not be shown again.</p>
+    </div>
+  </fieldset>
+  <label class="radio span-2"><input type="checkbox" name="allow_duplicate" value="1" {{ 'checked' if form.get('allow_duplicate') }}>
+    Additional seat — allow another license with the same product, customer, order and issue date</label>
+  {% endif %}
+  <div class="span-2">{{ textarea("notes", "Internal notes", form, help="Visible only to you. Never put license keys or passwords in notes.") }}</div>
+  <div class="form-actions span-2">
+    <button class="btn btn-primary" type="submit">{{ 'Save changes' if lic else 'Create license' }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.license_detail', license_id=lic.id) if lic else url_for('main.licenses') }}">Cancel</a>
+  </div>
+</form>
+{% endif %}
+{% endblock %}

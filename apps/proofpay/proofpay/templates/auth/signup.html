@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Sign up · ProofPay{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>Create your account</h1>
+  <p class="muted">Free to start. No card needed.</p>
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {{ field('business_name', 'Business name', form.business_name, errors, required=true, attrs='autocomplete="organization" maxlength="120"') }}
+    {{ field('email', 'Email', form.email, errors, type='email', required=true, attrs='autocomplete="email"') }}
+    {{ field('password', 'Password', '', errors, type='password', required=true, attrs='autocomplete="new-password" minlength="8"', hint='At least 8 characters.') }}
+    <button class="btn btn-block" type="submit">Create account</button>
+  </form>
+  <p class="muted small center">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+</div>
+{% endblock %}

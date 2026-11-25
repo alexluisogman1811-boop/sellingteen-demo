@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}{{ "Edit job" if job else "New job" }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>{{ "Edit job" if job else "New job" }}</h1>
+{% if not customers %}
+<div class="flash flash-info">Add a <a href="{{ url_for('core.customer_form') }}">general contractor</a> before creating a job.</div>
+{% else %}
+<div class="card">
+  <form method="post" novalidate>
+    {{ csrf() }}
+    <div class="field{% if form.errors.get('customer_id') %} has-error{% endif %}">
+      <label for="f-customer_id">GC <span class="req">*</span></label>
+      <select id="f-customer_id" name="customer_id" required>
+        <option value="">Choose…</option>
+        {% for c in customers %}<option value="{{ c.id }}" {{ "selected" if form.values.get("customer_id") == c.id|string }}>{{ c.name }}</option>{% endfor %}
+      </select>
+      {% if form.errors.get('customer_id') %}<p class="error-text">{{ form.errors.customer_id }}</p>{% endif %}
+    </div>
+    {{ field(form, "name", "Job name", required=True) }}
+    {{ field(form, "address", "Site address") }}
+    {{ field(form, "gc_reference", "GC job / PO number") }}
+    {{ field(form, "markup_pct", "Material markup % for this job", attrs='inputmode="decimal"', hint="Leave blank to use your company default (" ~ (g.company.default_markup_bp|qty) ~ "%).") }}
+    {{ field(form, "notice_hours", "Notice deadline in hours", attrs='inputmode="numeric"', hint="From the contract's notice clause. Leave blank to use your default (" ~ g.company.notice_hours ~ " h).") }}
+    {% if job %}
+    <div class="field">
+      <label for="f-status">Status</label>
+      <select id="f-status" name="status">
+        <option value="active" {{ "selected" if form.values.get("status") == "active" }}>Active</option>
+        <option value="closed" {{ "selected" if form.values.get("status") == "closed" }}>Closed</option>
+      </select>
+    </div>
+    {% endif %}
+    <div class="row">
+      <button class="btn btn-primary" type="submit">Save job</button>
+      <a class="btn btn-secondary" href="{{ url_for('core.job_detail', job_id=job.id) if job else url_for('core.jobs') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

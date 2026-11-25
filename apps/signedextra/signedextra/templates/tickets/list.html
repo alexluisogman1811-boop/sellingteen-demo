@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, ticket_no %}
+{% block title %}Tickets{% endblock %}
+{% block content %}
+<div class="spread">
+  <h1>Tickets</h1>
+  <form method="get" class="row">
+    <label for="f-status" class="sr-label">Filter by status</label>
+    <select id="f-status" name="status" data-autosubmit>
+      <option value="">All statuses</option>
+      {% for key, label in statuses.items() %}<option value="{{ key }}" {{ "selected" if status == key }}>{{ label }}</option>{% endfor %}
+    </select>
+    <noscript><button class="btn btn-secondary btn-sm" type="submit">Filter</button></noscript>
+  </form>
+</div>
+<div class="card">
+  {% if tickets %}
+  <ul class="list">
+    {% for t in tickets %}
+    <li><a class="item" href="{{ url_for('tickets.ticket_detail', ticket_id=t.id) }}">
+      <span><span class="item-title">{{ ticket_no(t) }} · {{ t.job_name }}</span><br>
+        <span class="small muted">{{ t.customer_name }} · {{ t.work_date }} · {{ t.description|truncate(60) }}</span></span>
+      <span class="right">{{ badge(t.status) }}{% if can_see_prices() %}<br><span class="small">{{ t.total_cents|money }}</span>{% endif %}</span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="empty">No tickets{% if status %} with this status{% endif %}.</p>{% endif %}
+</div>
+{% endblock %}

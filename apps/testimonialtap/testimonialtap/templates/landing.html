@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block robots %}index, follow{% endblock %}
+{% block title %}Collect and publish genuine client testimonials{% endblock %}
+{% block meta %}<meta name="description" content="TestimonialTap helps freelancers and small agencies request, collect, approve and display genuine client testimonials, publishing only what clients agreed to.">{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Collect client testimonials you're allowed to publish</h1>
+  <p class="hero-lead">TestimonialTap helps freelancers and small agencies <strong>request, collect, review, approve and display</strong>
+    genuine client testimonials, without publishing anything a client didn't agree to.</p>
+  <p class="actions">
+    <a class="btn btn-primary" href="{{ url_for('admin.signup') }}">Start your {{ trial_days }}-day free trial</a>
+    <a class="btn" href="{{ url_for('admin.login') }}">Log in</a>
+  </p>
+  <p class="muted small">No card needed to start. Then {{ price }}.</p>
+</section>
+
+<section class="grid-3" aria-label="How it works">
+  <article class="card">
+    <h2>1 · Send a link</h2>
+    <p>Create a project for each client or campaign. You get a unique submission link to send to your client yourself. TestimonialTap never emails anyone for you.</p>
+  </article>
+  <article class="card">
+    <h2>2 · Review what comes in</h2>
+    <p>Clients write their feedback, with an optional 1–5 rating. Every submission stays <strong>pending and private</strong> until you approve, reject or archive it.</p>
+  </article>
+  <article class="card">
+    <h2>3 · Publish with permission</h2>
+    <p>A testimonial appears publicly only when it is <strong>approved and the client gave permission</strong>. Permission is a separate, unticked checkbox, or something you record yourself with a note.</p>
+  </article>
+</section>
+
+<section class="card">
+  <h2>What you get</h2>
+  <ul class="feature-list">
+    <li>A public testimonials page and a live embed for your website, plus a copyable HTML snippet</li>
+    <li>Search and filters by project, status, permission, rating and date</li>
+    <li>Copy any testimonial, or export selected or filtered testimonials to CSV</li>
+    <li>Honest editing: fix typos while the client's original wording is kept, and ratings can't be changed</li>
+    <li>Spam protection on the public form, and a mobile-friendly design for you and your clients</li>
+    <li>Clearly labelled demo data to try everything first</li>
+  </ul>
+</section>
+
+<section class="card plan" id="pricing">
+  <h2>Pricing</h2>
+  <p class="plan-price">{{ price }}</p>
+  <p>Every account starts with a <strong>{{ trial_days }}-day free trial</strong> with every feature.
+    Your submission links and public testimonial pages keep working for your clients and visitors.</p>
+  <a class="btn btn-primary" href="{{ url_for('admin.signup') }}">Start free trial</a>
+  <p class="muted small">See the <a href="{{ url_for('legal.terms') }}">Terms</a>, <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>
+    and <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+</section>
+{% endblock %}

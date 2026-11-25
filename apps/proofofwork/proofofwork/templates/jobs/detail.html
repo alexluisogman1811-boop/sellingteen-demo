@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge %}
+{% block title %}{{ job.title }}{% endblock %}
+{% block content %}
+{% set is_manager = g.user.role == 'manager' %}
+{% set before_count = photos|selectattr('kind', 'equalto', 'before')|list|length %}
+{% set after_count = photos|selectattr('kind', 'equalto', 'after')|list|length %}
+<div class="page-head">
+  <div>
+    <p class="crumb"><a href="{{ url_for('main.jobs') }}">Jobs</a> · Job #{{ job.id }}</p>
+    <h1>{{ job.title }} {{ status_badge(job.status) }}</h1>
+  </div>
+  <div class="actions">
+    <a class="btn btn-small" href="{{ url_for('main.job_report', job_id=job.id) }}">View report</a>
+    {% if is_manager and not locked %}<a class="btn btn-small" href="{{ url_for('main.job_edit', job_id=job.id) }}">Edit details</a>{% endif %}
+  </div>
+</div>
+
+<section class="panel">
+  <dl class="details">
+    <dt>Customer</dt><dd><a href="{{ url_for('main.customer_detail', customer_id=job.customer_id) }}">{{ job.customer_name }}</a></dd>
+    <dt>Property</dt><dd>{{ job.property_name }}{% if job.property_address %}<div class="muted small prewrap">{{ job.property_address }}</div>{% endif %}</dd>
+    <dt>Appointment</dt><dd>{{ job.appointment_date|nice_date }}{% if job.start_time %}, {{ job.start_time }}{% if job.end_time %}–{{ job.end_time }}{% endif %}{% endif %}</dd>
+    <dt>Work started</dt><dd>{{ job.work_started_at or 'Not yet recorded' }}</dd>
+    <dt>Worker</dt><dd>{{ job.assigned_worker or 'Unassigned' }}</dd>
+    {% if job.template_name %}<dt>Template</dt><dd>{{ job.template_name }}</dd>{% endif %}
+    {% if job.reviewed_by %}<dt>Completed</dt><dd>{{ job.completed_at }} · approved by {{ job.reviewed_by }}</dd>{% endif %}
+  </dl>
+</section>
+
+<nav class="progress-strip" aria-label="Job sections">
+  <a href="#checklist"><strong>{{ job.items_done }}/{{ job.items_total }}</strong><span>tasks done</span></a>
+  <a href="#photos"><strong>{{ before_count }} · {{ after_count }}</strong><span>before · after</span></a>
+  <a href="#notes"><strong>{{ 'Yes' if job.report_notes else '—' }}</strong><span>report notes</span></a>
+  <a href="#finish"><strong>{{ issues|length if issues else '✓' }}</strong><span>{{ 'to fix' if issues else 'finish' }}</span></a>
+</nav>
+
+{% if locked %}
+<p class="notice">This job is {{ STATUS_LABELS[job.status]|lower }} and locked. {% if is_manager %}Reopen it below to make changes.{% else %}A manager can reopen it.{% endif %}</p>
+{% elif job.status == 'awaiting_review' and not is_manager %}
+<p class="notice">Submitted for review. If you change anything now, the job goes back to in progress and must be submitted again.</p>
+{% endif %}
+
+<section class="panel" id="checklist">
+  <div class="section-head">
+    <h2>Checklist</h2>
+    <span class="muted small">{{ job.items_done }} done · {{ job.items_incomplete }} not completed · {{ job.items_pending }} not checked</span>
+  </div>
+  {% if items %}
+  <form method="post" action="{{ url_for('main.job_checklist', job_id=job.id) }}" data-dirty-warn>
+    {{ csrf_field() }}
+    <ol class="checklist">
+    {% for it in items %}
+      {% set state = posted.get('state_%d' % it.id, it.state) %}
+      {% set reason = posted.get('reason_%d' % it.id, it.reason) %}
+      {% set note = posted.get('note_%d' % it.id, it.note) %}
+      <li class="item" data-state="{{ state }}" id="item-{{ it.id }}">
+        <input type="hidden" name="orig_state_{{ it.id }}" value="{{ it.state }}">
+        <input type="hidden" name="orig_reason_{{ it.id }}" value="{{ it.reason }}">
+        <input type="hidden" name="orig_note_{{ it.id }}" value="{{ it.note }}">
+        <div class="item-head">
+          <span class="item-label">{{ it.label }}</span>
+          {% if it.required %}<span class="tag tag-req">Required</span>{% else %}<span class="tag">Optional</span>{% endif %}
+        </div>
+        <fieldset class="seg seg-3" aria-label="Result for {{ it.label }}" {% if locked %}disabled{% endif %}>
+          {% for key in ('done', 'incomplete', 'pending') %}
+          <label class="seg-opt seg-{{ key }}"><input type="radio" name="state_{{ it.id }}" value="{{ key }}" {% if state == key %}checked{% endif %}> {{ item_states[key] }}</label>
+          {% endfor %}
+        </fieldset>
+        {% if posted and (state != it.state or reason != it.reason or note != it.note) %}
+        <p class="saved-diff small">Currently saved: <strong>{{ item_states[it.state] }}</strong>{% if it.reason %} — {{ it.reason }}{% endif %}{% if it.note %} · note: {{ it.note }}{% endif %}{% if it.updated_by %} (by {{ it.updated_by }}){% endif %}</p>
+        {% endif %}
+        <label class="field reason-field"><span class="field-label">Why wasn't it completed? <span class="req">*</span></span>
+          <input type="text" name="reason_{{ it.id }}" value="{{ reason }}" maxlength="1000" {% if locked %}disabled{% endif %} placeholder="e.g. Room locked, no access" enterkeyhint="done">
+          <span class="hint">Shown on the customer report.</span></label>
+        <details class="item-note" {% if note %}open{% endif %}>
+          <summary>{{ 'Note' if note else 'Add note' }} <span class="muted small">(shown on report)</span></summary>
+          <input type="text" name="note_{{ it.id }}" value="{{ note }}" maxlength="1000" aria-label="Note for {{ it.label }} (shown on report)" {% if locked %}disabled{% endif %} enterkeyhint="done">
+        </details>
+        {% if it.updated_by %}<div class="muted small">Last updated by {{ it.updated_by }} · {{ it.updated_at }}</div>{% endif %}
+      </li>
+    {% endfor %}
+    </ol>
+    {% if not locked %}<button class="btn btn-primary btn-block sticky-save" type="submit">Save checklist</button>{% endif %}
+  </form>
+  {% else %}
+  <p class="empty">No tasks yet. Add the tasks for this job below.</p>
+  {% endif %}
+
+  {% if not locked %}
+  <details class="subpanel">
+    <summary>Add a task</summary>
+    <form method="post" action="{{ url_for('main.job_item_add', job_id=job.id) }}" class="stack">
+      {{ csrf_field() }}
+      <label class="field"><span class="field-label">Task</span><input type="text" name="label" required maxlength="300"></label>
+      <label class="check"><input type="checkbox" name="required" value="1" checked> Required</label>
+      <button class="btn" type="submit">Add task</button>
+    </form>
+    {% if is_manager and items %}
+    <div class="remove-items">
+      <p class="muted small">Remove a task (recorded in the job history):</p>
+      {% for it in items %}
+      <form method="post" action="{{ url_for('main.job_item_delete', job_id=job.id, item_id=it.id) }}" class="inline" data-confirm="Remove this task?">
+        {{ csrf_field() }}<button class="btn btn-small btn-ghost" type="submit">✕ {{ it.label }}</button>
+      </form>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </details>
+  {% endif %}
+</section>
+
+<section class="panel" id="photos">
+  <div class="section-head">
+    <h2>Photos</h2>
+    <span class="muted small">{{ before_count }} before · {{ after_count }} after</span>
+  </div>
+  {% if not locked %}
+  {% set p_kind = posted.get('kind', 'before') %}
+  <form method="post" action="{{ url_for('main.photo_upload', job_id=job.id) }}" enctype="multipart/form-data" class="stack upload-form" data-photo-upload data-max-bytes="{{ config.MAX_PHOTO_BYTES }}" data-max-files="{{ max_photos }}">
+    {{ csrf_field() }}
+    <fieldset class="seg seg-kind" aria-label="Photo type">
+      <label class="seg-opt"><input type="radio" name="kind" value="before" {% if p_kind != 'after' %}checked{% endif %}> Before</label>
+      <label class="seg-opt"><input type="radio" name="kind" value="after" {% if p_kind == 'after' %}checked{% endif %}> After</label>
+    </fieldset>
+    <label class="field"><span class="field-label">Area / label <span class="req">*</span></span>
+      <input type="text" name="label" required maxlength="100" placeholder="e.g. Kitchen" list="photo-labels" value="{{ posted.get('label', '') }}" autocomplete="off">
+      <span class="hint">Use the same label for before and after so they are paired on the report.</span></label>
+    {% if photo_groups %}
+    <div class="chips" aria-label="Existing labels">
+      {% for label in photo_groups %}<button type="button" class="chip" data-fill-label="{{ label }}">{{ label }}</button>{% endfor %}
+    </div>
+    {% endif %}
+    <datalist id="photo-labels">{% for label in photo_groups %}<option value="{{ label }}">{% endfor %}</datalist>
+    <label class="field"><span class="field-label">Caption <span class="muted small">(optional, shown on report)</span></span>
+      <input type="text" name="caption" maxlength="300" value="{{ posted.get('caption', '') }}"></label>
+    <label class="file-drop">
+      <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" multiple required>
+      <span class="file-drop-text">📷 Take or choose photos</span>
+      <span class="hint">Up to {{ max_photos }} at once · JPEG, PNG or WebP · {{ config.MAX_PHOTO_BYTES // 1048576 }} MB each. Large photos are shrunk on your phone before upload. Location data is removed.</span>
+    </label>
+    <div class="previews" data-previews></div>
+    <button class="btn btn-primary btn-block" type="submit" data-upload-button>Upload photos</button>
+  </form>
+  {% endif %}
+  {% if photo_groups %}
+    {% for label, group in photo_groups.items() %}
+    <div class="photo-group">
+      <h3>{{ label }}{% if group.before and not group.after %} <span class="tag tag-warn">No after photo yet</span>{% endif %}</h3>
+      <div class="photo-grid">
+      {% for p in group.before + group.after %}
+        <figure class="photo">
+          {% if p.missing %}
+          <div class="photo-missing">Photo file missing on server</div>
+          {% else %}
+          <a href="{{ url_for('main.photo', photo_id=p.id) }}" target="_blank" rel="noopener"><img src="{{ url_for('main.photo', photo_id=p.id) }}" alt="{{ p.kind }} photo: {{ p.label }}" loading="lazy" width="{{ p.width }}" height="{{ p.height }}"></a>
+          {% endif %}
+          <figcaption>
+            <span class="tag tag-{{ p.kind }}">{{ p.kind|capitalize }}</span>
+            {% if p.caption %}<div class="small">{{ p.caption }}</div>{% endif %}
+            <div class="muted small">{{ p.uploaded_by }} · {{ p.created_at[11:16] }}</div>
+            {% if not locked %}
+            <form method="post" action="{{ url_for('main.photo_delete', job_id=job.id, photo_id=p.id) }}" class="inline" data-confirm="Delete this photo?">
+              {{ csrf_field() }}<button class="btn btn-small btn-ghost" type="submit">Delete</button>
+            </form>
+            {% endif %}
+          </figcaption>
+        </figure>
+      {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <p class="empty">No photos yet.</p>
+  {% endif %}
+</section>
+
+<section class="panel" id="notes">
+  <h2>Notes</h2>
+  {% set rn = posted.get('report_notes', job.report_notes) %}
+  {% set inn = posted.get('internal_notes', job.internal_notes) %}
+  {% if locked %}
+    {% if job.report_notes %}<div class="note-box note-report"><strong>Report notes</strong><p class="prewrap">{{ job.report_notes }}</p></div>{% endif %}
+    {% if job.internal_notes %}<div class="note-box"><strong>Internal notes</strong><p class="prewrap">{{ job.internal_notes }}</p></div>{% endif %}
+    {% if not job.report_notes and not job.internal_notes %}<p class="empty">No notes.</p>{% endif %}
+  {% else %}
+  <form method="post" action="{{ url_for('main.job_notes', job_id=job.id) }}" class="stack" data-dirty-warn>
+    {{ csrf_field() }}
+    <input type="hidden" name="orig_report_notes" value="{{ job.report_notes }}">
+    <input type="hidden" name="orig_internal_notes" value="{{ job.internal_notes }}">
+    <label class="field"><span class="field-label">Report notes <span class="tag tag-after">Shown to customer</span></span>
+      <textarea name="report_notes" rows="3" maxlength="5000" placeholder="Summary of the work for the customer">{{ rn }}</textarea></label>
+    <label class="field"><span class="field-label">Internal notes <span class="tag">Team only</span></span>
+      <textarea name="internal_notes" rows="2" maxlength="5000" placeholder="Never shown on reports">{{ inn }}</textarea></label>
+    <button class="btn" type="submit">Save notes</button>
+  </form>
+  {% endif %}
+</section>
+
+<section class="panel status-panel" id="finish">
+  <h2>{{ 'Finish job' if not locked else 'Status' }}</h2>
+  {% if issues and not locked %}
+  <div class="issues">
+    <strong>Before this job can be submitted or completed:</strong>
+    <ul>{% for issue in issues %}<li>{{ issue }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+  {% if unpaired and not locked %}
+  <p class="notice small">Before photo with no matching after photo: {{ unpaired|join(', ') }}. This won't block completion.</p>
+  {% endif %}
+  <form method="post" action="{{ url_for('main.job_status', job_id=job.id) }}" class="stack">
+    {{ csrf_field() }}
+    {% if job.items_incomplete and job.status in ('in_progress', 'awaiting_review') %}
+    <div class="check-warn">
+      <p class="small"><strong>Not completed:</strong></p>
+      <ul class="small">{% for it in items if it.state == 'incomplete' %}<li>{{ it.label }} — {{ it.reason }}</li>{% endfor %}</ul>
+      <label class="check"><input type="checkbox" name="confirm_exceptions" value="1">
+        I confirm these {{ job.items_incomplete }} task(s) were not completed and the reasons are correct. This is recorded with my name.</label>
+    </div>
+    {% endif %}
+    <div class="actions">
+      {% if job.status == 'scheduled' %}
+        <button class="btn btn-primary btn-large btn-block" name="action" value="start">Start job</button>
+      {% elif job.status == 'in_progress' %}
+        <button class="btn btn-primary btn-large btn-block" name="action" value="submit">Submit for review</button>
+        {% if is_manager %}<button class="btn btn-large btn-block" name="action" value="approve">Mark completed</button>{% endif %}
+      {% elif job.status == 'awaiting_review' %}
+        {% if is_manager %}
+        <button class="btn btn-primary btn-large btn-block" name="action" value="approve">Approve &amp; complete</button>
+        <button class="btn btn-block" name="action" value="return">Return to in progress</button>
+        {% else %}<p class="muted">Waiting for a manager to review.</p>{% endif %}
+      {% elif is_manager %}
+        <button class="btn btn-block" name="action" value="reopen">Reopen job</button>
+      {% endif %}
+    </div>
+  </form>
+  {% if is_manager and not locked %}
+  <form method="post" action="{{ url_for('main.job_status', job_id=job.id) }}" class="inline" data-confirm="Cancel this job?">
+    {{ csrf_field() }}<button class="btn btn-small btn-ghost" name="action" value="cancel">Cancel job</button>
+  </form>
+  {% endif %}
+</section>
+
+{% if is_manager %}
+<section class="panel" id="sharing">
+  <h2>Share report</h2>
+  <p class="muted small">Anyone with an active link can view this job's report without signing in. Internal notes, access notes and the job history are never included.</p>
+  {% if new_share_url %}
+  <div class="share-new" data-replace-url="{{ url_for('main.job_detail', job_id=job.id) }}#sharing">
+    <label class="field"><span class="field-label">New link — copy it now, it won't be shown again</span>
+      <input type="text" id="new-share-url" value="{{ new_share_url }}" readonly></label>
+    <button class="btn btn-small" type="button" data-copy="new-share-url">Copy link</button>
+  </div>
+  {% endif %}
+  <form method="post" action="{{ url_for('main.share_create', job_id=job.id) }}" class="inline-form">
+    {{ csrf_field() }}
+    <label class="field"><span class="field-label">Expires</span>
+      <select name="days">{% for days, label in expiry_choices.items() %}<option value="{{ days }}" {% if days == 30 %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <button class="btn" type="submit">Create share link</button>
+  </form>
+  {% if share_links %}
+  <ul class="plain-list">
+    {% for link in share_links %}
+    {% set expired = link.expires_at and link.expires_at <= now %}
+    <li>
+      <div>
+        <strong>…{{ link.token_hint }}</strong>
+        {% if link.revoked_at %}<span class="tag tag-off">Revoked</span>{% elif expired %}<span class="tag tag-off">Expired</span>{% else %}<span class="tag tag-on">Active</span>{% endif %}
+        <div class="muted small">Created {{ link.created_at }} by {{ link.created_by }} · {{ 'Expires ' ~ link.expires_at if link.expires_at else 'No expiry' }}{% if link.revoked_at %} · revoked {{ link.revoked_at }}{% endif %}</div>
+      </div>
+      {% if not link.revoked_at and not expired %}
+      <form method="post" action="{{ url_for('main.share_revoke', job_id=job.id, link_id=link.id) }}" class="inline" data-confirm="Revoke this link? It will stop working immediately.">
+        {{ csrf_field() }}<button class="btn btn-small btn-danger" type="submit">Revoke</button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <form method="post" action="{{ url_for('main.share_revoke_all', job_id=job.id) }}" data-confirm="Revoke every active link for this job?">
+    {{ csrf_field() }}<button class="btn btn-small btn-danger" type="submit">Revoke all links</button>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="panel" id="history">
+  <details>
+    <summary><h2 class="inline-h">History</h2> <span class="muted small">{{ events|length }} entr{{ 'y' if events|length == 1 else 'ies' }} · team only</span></summary>
+    {% if events %}
+    <ol class="history">
+      {% for e in events %}
+      <li><span class="muted small">{{ e.created_at }}</span> <strong>{{ event_labels.get(e.action, e.action) }}</strong> by {{ e.actor or 'system' }}{% if e.detail %}<div class="small prewrap">{{ e.detail }}</div>{% endif %}</li>
+      {% endfor %}
+    </ol>
+    {% else %}<p class="empty">No history recorded yet.</p>{% endif %}
+  </details>
+</section>
+
+{% if is_manager %}
+<section class="panel danger-zone">
+  <form method="post" action="{{ url_for('main.job_delete', job_id=job.id) }}" data-confirm="Permanently delete this job, its checklist, photos, history and share links?">
+    {{ csrf_field() }}<button class="btn btn-danger" type="submit">Delete job</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

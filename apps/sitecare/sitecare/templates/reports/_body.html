@@ -1,0 +1,133 @@
+{# Shared report content, used by the on-screen and printable views. Expects `r`. #}
+{% set c = r.counts %}
+{% set d = r.due_in_month %}
+
+<section class="r-section r-highlights">
+  <h2>At a glance</h2>
+  <ul class="highlights">
+    <li><strong>{{ c.completed }}</strong> task{{ '' if c.completed == 1 else 's' }} completed and recorded in {{ r.period_label }}
+      {%- if c.completed %} ({% for k, n in c.results.items() if n %}{{ RESULTS[k] }}: {{ n }}{{ ', ' if not loop.last }}{% endfor %}){% endif %}.</li>
+    <li><strong>{{ d.total }}</strong> task{{ '' if d.total == 1 else 's' }} were due this period: {{ d.completed }} completed, {{ d.skipped }} skipped, {{ d.pending }} not recorded yet.</li>
+    <li><strong>{{ c.overdue }}</strong> overdue (due but never recorded){% if r.period_open %}; <strong>{{ c.scheduled_later }}</strong> scheduled later in this period{% endif %}.</li>
+    <li><strong>{{ c.issues }}</strong> issue{{ '' if c.issues == 1 else 's' }} during the period: {{ c.issues_open }} open at period end, {{ c.issues_resolved_in_month }} resolved in period.</li>
+    <li class="verif-line">How results are known: <strong>{{ c.manual + c.manual_evidence }}</strong> manual record{{ '' if (c.manual + c.manual_evidence) == 1 else 's' }}
+      ({{ c.manual_evidence }} with evidence attached) · <strong>{{ c.verified }}</strong> verified automatically.</li>
+  </ul>
+</section>
+
+{% if r.attention.overdue or r.attention.issues or r.attention.problems %}
+<section class="r-section r-attention">
+  <h2>Needs attention</h2>
+  <ul>
+    {% for o in r.attention.overdue %}<li>Overdue: {{ o.title }} (due {{ o.due_date|nice_date }}), not recorded</li>{% endfor %}
+    {% for o in r.attention.problems %}<li>{{ RESULTS[o.result] }}: {{ o.title }} on {{ o.completed_on|nice_date }}{% if o.notes %}: {{ o.notes|truncate(120) }}{% endif %}</li>{% endfor %}
+    {% for i in r.attention.issues %}<li>{{ SEVERITIES[i.severity] }} issue open: {{ i.title }}</li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if r.categories %}
+<section class="r-section">
+  <h2>By activity</h2>
+  <div class="table-wrap"><table class="table table-stack">
+    <thead><tr><th>Activity</th><th>Completed</th><th>With problems</th><th>Overdue</th><th>Skipped</th></tr></thead>
+    <tbody>
+    {% for row in r.categories %}
+      <tr>
+        <td data-label="Activity"><strong>{{ row.label }}</strong></td>
+        <td data-label="Completed">{{ row.completed }}</td>
+        <td data-label="With problems">{{ row.problems }}</td>
+        <td data-label="Overdue">{{ row.overdue }}</td>
+        <td data-label="Skipped">{{ row.skipped }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endif %}
+
+<section class="r-section">
+  <h2>Completed work ({{ c.completed }})</h2>
+  {% if r.completed %}
+  <div class="table-wrap"><table class="table table-stack">
+    <thead><tr><th>Date</th><th>Task</th><th>Reported result</th><th>How recorded</th><th>Notes</th></tr></thead>
+    <tbody>
+    {% for o in r.completed %}
+      <tr>
+        <td data-label="Date" class="nowrap">{{ o.completed_on|nice_date }}</td>
+        <td data-label="Task">{{ o.title }}<br><span class="muted small">{{ CATEGORIES.get(o.category) }}</span></td>
+        <td data-label="Result"><span class="res res-{{ o.result }}">{{ RESULTS.get(o.result) }}</span></td>
+        <td data-label="How recorded">{{ VERIFICATION[o.verification] }}{% if o.attachment_count %} ({{ o.attachment_count }} file{{ '' if o.attachment_count == 1 else 's' }}){% endif %}{% if o.recorded_by %}<br><span class="muted small">by {{ o.recorded_by }}</span>{% endif %}</td>
+        <td data-label="Notes" class="prewrap">{{ o.notes or '-' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="empty">No completed work was recorded in {{ r.period_label }}.</p>{% endif %}
+</section>
+
+<section class="r-section">
+  <h2>Overdue - not recorded ({{ c.overdue }})</h2>
+  <p class="muted small">Due on or before {{ r.end|nice_date }} and still unrecorded on {{ r.today|nice_date }} (includes items carried over from earlier months).</p>
+  {% if r.overdue %}
+  <div class="table-wrap"><table class="table table-stack">
+    <thead><tr><th>Due</th><th>Task</th></tr></thead>
+    <tbody>
+    {% for o in r.overdue %}
+      <tr><td data-label="Due" class="nowrap">{{ o.due_date|nice_date }}</td><td data-label="Task">{{ o.title }}<br><span class="muted small">{{ CATEGORIES.get(o.category) }}</span></td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="empty">Nothing overdue.</p>{% endif %}
+</section>
+
+{% if r.period_open %}
+<section class="r-section">
+  <h2>Scheduled later in this period ({{ c.scheduled_later }})</h2>
+  {% if r.scheduled_later %}
+  <div class="table-wrap"><table class="table table-stack">
+    <thead><tr><th>Due</th><th>Task</th></tr></thead>
+    <tbody>
+    {% for o in r.scheduled_later %}
+      <tr><td data-label="Due" class="nowrap">{{ o.due_date|nice_date }}</td><td data-label="Task">{{ o.title }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="empty">Nothing else scheduled in this period.</p>{% endif %}
+</section>
+{% endif %}
+
+{% if r.skipped %}
+<section class="r-section">
+  <h2>Skipped ({{ c.skipped }})</h2>
+  <div class="table-wrap"><table class="table table-stack">
+    <thead><tr><th>Due</th><th>Task</th><th>Reason</th></tr></thead>
+    <tbody>
+    {% for o in r.skipped %}
+      <tr><td data-label="Due" class="nowrap">{{ o.due_date|nice_date }}</td><td data-label="Task">{{ o.title }}</td><td data-label="Reason">{{ o.notes or '-' }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endif %}
+
+<section class="r-section">
+  <h2>Issues ({{ c.issues }})</h2>
+  <p class="muted small">Issues open at any point during {{ r.period_label }}. Status is shown as it was at the end of the period.</p>
+  {% if r.issues %}
+  <div class="table-wrap"><table class="table table-stack">
+    <thead><tr><th>Reported</th><th>Issue</th><th>Severity</th><th>Status at period end</th><th>Resolution</th></tr></thead>
+    <tbody>
+    {% for i in r.issues %}
+      <tr>
+        <td data-label="Reported" class="nowrap">{{ i.reported_on|nice_date }}</td>
+        <td data-label="Issue">{{ i.title }}{% if i.found_task %}<br><span class="muted small">Found during: {{ i.found_task }} ({{ i.found_on|nice_date }})</span>{% endif %}{% if i.description %}<br><span class="muted small prewrap">{{ i.description }}</span>{% endif %}</td>
+        <td data-label="Severity">{{ SEVERITIES[i.severity] }}</td>
+        <td data-label="Status">{{ ISSUE_STATUSES[i.status_at_end] }}{% if i.resolved_on and not i.closed_after_period %}<br><span class="muted small">{{ i.resolved_on|nice_date }}</span>{% endif %}{% if i.closed_after_period %}<br><span class="muted small">closed later, {{ i.resolved_on|nice_date }}</span>{% endif %}</td>
+        <td data-label="Resolution" class="prewrap">{{ i.resolution_notes if (i.resolution_notes and not i.closed_after_period) else '-' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="empty">No issues during this period.</p>{% endif %}
+</section>

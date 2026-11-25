@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Schedule {{ day.isoformat() }}{% endblock %}
+{% block body_class %}printable{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <h1>Daily schedule</h1>
+    <p class="print-only"><strong>{{ settings.business_name }}</strong></p>
+    <p class="lead">{{ day.strftime('%A %d %B %Y') }} <span class="muted small">({{ settings.timezone }})</span></p>
+  </div>
+  <div class="actions no-print">
+    <a class="btn btn-ghost" href="{{ url_for('admin.schedule', date=prev_day.isoformat()) }}" aria-label="Previous day">‹</a>
+    <form method="get" class="inline-form"><input type="date" name="date" value="{{ day.isoformat() }}" aria-label="Date"><button class="btn" type="submit">Go</button></form>
+    <a class="btn btn-ghost" href="{{ url_for('admin.schedule', date=next_day.isoformat()) }}" aria-label="Next day">›</a>
+    <button class="btn btn-primary" type="button" data-print>Print</button>
+    <a class="btn btn-ghost" href="{{ url_for('admin.export_csv', filtered=1, date_from=day.isoformat(), date_to=day.isoformat()) }}">CSV</a>
+  </div>
+</header>
+
+{% if blocks %}
+<div class="notice">
+  <strong>Blocked:</strong>
+  {% for b in blocks %}{{ b.start_local.replace('T', ' ') }} → {{ b.end_local.replace('T', ' ') }}{% if b.reason %} ({{ b.reason }}){% endif %}{% if not loop.last %}; {% endif %}{% endfor %}
+</div>
+{% endif %}
+
+{% if rows %}
+<table class="table schedule-table responsive">
+  <thead><tr><th>Time</th><th>Customer</th><th>Service</th><th>Notes</th><th>Status</th><th>Ref</th></tr></thead>
+  <tbody>
+    {% for b in rows %}
+    <tr>
+      <td data-label="Time"><div><strong>{{ b.start_utc|local('%H:%M') }}</strong>–{{ b.end_utc|local('%H:%M') }}</div></td>
+      <td data-label="Customer"><div><a href="{{ url_for('admin.booking_detail', booking_id=b.id) }}">{{ b.customer_name }}</a><br><span class="small muted">{{ b.customer_email }}</span></div></td>
+      <td data-label="Service"><div>{{ b.service_name }} <span class="small muted">({{ b.duration_minutes }} min)</span></div></td>
+      <td data-label="Notes" class="prewrap"><div>{{ b.notes }}</div></td>
+      <td data-label="Status"><div>{{ status_badge(b.status) }}</div></td>
+      <td data-label="Ref"><div><code>{{ b.reference }}</code></div></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="small muted">{{ rows|length }} appointment{{ '' if rows|length == 1 else 's' }} (cancelled bookings hidden). Printed {{ printed_at|local('%d %b %Y %H:%M') }}.</p>
+{% else %}
+<div class="card empty">No appointments on this day.</div>
+{% endif %}
+{% endblock %}

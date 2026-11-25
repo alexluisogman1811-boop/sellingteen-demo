@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block title %}{{ 'New onboarding' if is_new else 'Edit client' }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>{{ 'New onboarding' if is_new else 'Edit client' }}</h1></div>
+  {% if not is_new %}<a class="btn" href="{{ url_for('owner.client_detail', client_id=client.id) }}">Cancel</a>{% endif %}
+</div>
+<form method="post" class="card form narrow-form">
+  {{ csrf() }}
+  <h2>Client</h2>
+  <div class="grid-2">
+    <label>Contact name * <input name="name" required maxlength="200" value="{{ client.name or '' }}"></label>
+    <label>Company <input name="company" maxlength="200" value="{{ client.company or '' }}"></label>
+    <label>Email <input type="email" name="email" maxlength="254" value="{{ client.email or '' }}"></label>
+    <label>Phone <input name="phone" maxlength="50" value="{{ client.phone or '' }}"></label>
+  </div>
+  <h2>Project</h2>
+  <div class="grid-2">
+    <label>Project name * <input name="project_name" required maxlength="200" value="{{ client.project_name or '' }}"></label>
+    <label>Project type <input name="project_type" maxlength="80" list="ptypes" value="{{ client.project_type or '' }}" placeholder="e.g. Website, Branding">
+      <datalist id="ptypes">{% for t in templates or [] %}<option value="{{ t.project_type }}">{% endfor %}</datalist></label>
+    <label>Start date <input type="date" name="start_date" value="{{ client.start_date or '' }}"></label>
+    {% if is_new %}
+    <label>Onboarding template
+      <select name="template_id">
+        <option value="">— Start with an empty checklist —</option>
+        {% for t in templates %}<option value="{{ t.id }}">{{ t.name }} ({{ t.project_type }}, {{ t.item_count }} items)</option>{% endfor %}
+      </select>
+      <span class="hint">{% if templates %}Copies the template's checklist. Due dates count from the start date (or today if blank).{% else %}No templates yet — <a href="{{ url_for('owner.templates') }}">create one</a> to reuse checklists across clients.{% endif %}</span>
+    </label>
+    {% endif %}
+  </div>
+  <label>Internal notes <textarea name="notes" rows="4" maxlength="5000" placeholder="Visible only to you, never in the client portal.">{{ client.notes or '' }}</textarea></label>
+  <div class="form-actions"><button class="btn btn-primary" type="submit">{{ 'Create onboarding' if is_new else 'Save changes' }}</button></div>
+</form>
+{% endblock %}

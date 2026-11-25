@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import input %}
+{% block title %}Sign up{% endblock %}
+{% block content %}
+<section class="card auth-card">
+  <h1>Create your shop's account</h1>
+  <p class="muted">{% if config.BILLING_ENABLED %}Free for {{ config.TRIAL_DAYS }} days, then {{ config.PRICE_TEXT }}. No card needed to start.{% else %}Start tracking your stock in a minute.{% endif %}</p>
+  <form method="post" action="{{ url_for('auth.signup') }}" class="form" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {{ input("shop_name", "Shop name", form, errors, required=true, maxlength=100) }}
+    {{ input("email", "Email", form, errors, type="email", required=true, maxlength=254) }}
+    <div class="field{% if errors.get('password') %} has-error{% endif %}">
+      <label for="f-password">Password <span class="req" aria-hidden="true">*</span></label>
+      <input id="f-password" name="password" type="password" required minlength="8" maxlength="200" autocomplete="new-password"{% if errors.get('password') %} aria-invalid="true" aria-describedby="e-password"{% endif %}>
+      <p class="help">At least 8 characters.</p>
+      {% if errors.get('password') %}<p class="error" id="e-password">{{ errors.password }}</p>{% endif %}
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Create account</button>
+    </div>
+  </form>
+  <p class="small">By creating an account you agree to the <a href="{{ url_for('legal.terms') }}">Terms</a> and <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>.</p>
+  <p>Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+</section>
+{% endblock %}

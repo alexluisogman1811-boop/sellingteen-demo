@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Import preview{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="muted small"><a href="{{ url_for('main.import_upload') }}">← Import / Export</a></p>
+    <h1>Import preview</h1>
+    <p class="muted">{{ filename }}</p>
+  </div>
+</div>
+
+{% for e in result.file_errors %}<div class="flash flash-error" role="alert">{{ e }}</div>{% endfor %}
+{% for w in result.warnings %}<div class="flash flash-info">{{ w }}</div>{% endfor %}
+
+{% if result.rows %}
+<section class="stats">
+  <div class="stat"><span class="stat-label">New products</span><span class="stat-value" id="count-new">{{ result.counts.new }}</span></div>
+  <div class="stat stat-low"><span class="stat-label">Duplicates (skipped)</span><span class="stat-value" id="count-duplicate">{{ result.counts.duplicate }}</span></div>
+  <div class="stat stat-out"><span class="stat-label">Rows with errors</span><span class="stat-value" id="count-error">{{ result.counts.error }}</span></div>
+</section>
+
+{% if result.can_import %}
+<form method="post" action="{{ url_for('main.import_confirm') }}" class="card confirm-bar">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="token" value="{{ token }}">
+  <p>Ready to create <strong>{{ result.counts.new }}</strong> product(s){% if result.counts.duplicate %} and skip {{ result.counts.duplicate }} existing SKU(s){% endif %}.</p>
+  <button class="btn btn-primary" type="submit">Confirm import</button>
+  <a class="btn" href="{{ url_for('main.import_upload') }}">Cancel</a>
+</form>
+{% elif result.counts.error %}
+<div class="flash flash-error" role="alert">Nothing was imported. Fix the {{ result.counts.error }} row(s) marked below, then upload the file again.</div>
+{% else %}
+<div class="flash flash-info">There are no new products to import.</div>
+{% endif %}
+
+<table class="table responsive">
+  <thead><tr><th>Line</th><th>SKU</th><th>Name</th><th class="num">Qty</th><th>Result</th><th>Details</th></tr></thead>
+  <tbody>
+  {% for r in result.rows %}
+    <tr class="row-{{ r.status }}">
+      <td data-label="Line">{{ r.line }}</td>
+      <td data-label="SKU">{{ r.sku or '—' }}</td>
+      <td data-label="Name">{{ r.name or '—' }}</td>
+      <td data-label="Qty" class="num">{{ r.data.quantity if r.data.quantity is defined else '—' }}</td>
+      <td data-label="Result"><span class="badge badge-imp-{{ r.status }}">{{ {'new': 'Will import', 'duplicate': 'Duplicate', 'error': 'Error'}[r.status] }}</span></td>
+      <td data-label="Details">
+        {% for e in r.errors %}<div class="error">{{ e }}</div>{% endfor %}
+        {% for n in r.notes %}<div class="muted small">{{ n }}</div>{% endfor %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+<p><a class="btn" href="{{ url_for('main.import_upload') }}">Upload another file</a></p>
+{% endblock %}

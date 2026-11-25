@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Subscription{% endblock %}
+{% block content %}
+<section class="card narrow-card">
+  {% if access.state == 'ended' %}
+    <h1>{{ 'Your subscription has ended' if access.was_paid else 'Your free trial has ended' }}</h1>
+    <p class="muted">Your clients, checklists and files are saved, and your clients' portal links keep working. Subscribe to keep using ClientStart.</p>
+  {% elif access.state == 'paid' %}
+    <h1>You're subscribed</h1>
+    <p class="muted">Your account is active until {{ access.until.isoformat() }}. Thank you!</p>
+  {% else %}
+    <h1>Subscribe to ClientStart</h1>
+    <p class="muted">{% if access.days_left is defined %}You have {{ access.days_left }} day{{ '' if access.days_left == 1 else 's' }} left in your free trial.{% endif %} Subscribe any time to keep going after it.</p>
+  {% endif %}
+
+  {% if access.state != 'paid' %}
+  <div class="plan">
+    <p class="plan-price">{{ price }}</p>
+    <ul class="plan-list">
+      <li>Unlimited clients and onboarding checklists</li>
+      <li>Private, expiring client portal links with file uploads</li>
+      <li>Reusable templates, progress tracking and CSV export</li>
+    </ul>
+    {% if payment_link %}
+      <a class="btn btn-primary btn-block" href="{{ payment_link }}" target="_blank" rel="noopener noreferrer">Subscribe now</a>
+      <p class="muted small">You pay on our payment provider's secure page. Use the same email as your account: <strong>{{ g.account.email }}</strong>. Your account is switched on within 24 hours of payment.</p>
+    {% else %}
+      <p class="notice">Online payment is opening soon.{% if support_email %} To subscribe now, email <strong>{{ support_email }}</strong> from <strong>{{ g.account.email }}</strong>.{% endif %}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <p class="muted small">Questions? {% if support_email %}Email {{ support_email }}.{% endif %} See our <a href="{{ url_for('legal.terms') }}">Terms</a> and <a href="{{ url_for('legal.refunds') }}">Refund policy</a>.</p>
+  {% if access.state != 'ended' %}<a class="btn" href="{{ url_for('owner.dashboard') }}">Back to dashboard</a>
+  {% else %}<p class="small">You can still <a href="{{ url_for('owner.export_clients') }}">export your onboardings</a> and <a href="{{ url_for('owner.tasks_export', client_status='all') }}">tasks</a> as CSV.</p>{% endif %}
+</section>
+{% endblock %}

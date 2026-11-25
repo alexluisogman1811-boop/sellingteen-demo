@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, field_error %}
+{% block title %}Idea bank{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Idea bank</h1><p class="muted">Capture ideas quickly, turn them into posts later.</p></div>
+  <div class="segmented" role="group" aria-label="Show ideas">
+    <a class="{{ 'active' if show == 'new' }}" href="{{ url_for('library.ideas', show='new') }}">New</a>
+    <a class="{{ 'active' if show == 'used' }}" href="{{ url_for('library.ideas', show='used') }}">Used</a>
+    <a class="{{ 'active' if show == 'all' }}" href="{{ url_for('library.ideas', show='all') }}">All</a>
+  </div>
+</div>
+
+<div class="grid-side">
+  <section>
+    {% for i in ideas %}
+      <article class="card item-card{% if i.status == 'used' %} is-used{% endif %}">
+        <div class="item-head">
+          <h2>{{ i.title }}</h2>
+          <div class="row-actions">
+            <a class="btn btn-sm btn-primary" href="{{ url_for('posts.new_post', idea_id=i.id) }}">Create post</a>
+            <form method="post" action="{{ url_for('library.toggle_idea', item_id=i.id) }}">{{ csrf() }}
+              <button class="btn btn-sm" type="submit">{{ 'Mark new' if i.status == 'used' else 'Mark used' }}</button>
+            </form>
+            <a class="btn btn-sm btn-ghost" href="{{ url_for('library.edit_idea', item_id=i.id) }}">Edit</a>
+            <form method="post" action="{{ url_for('library.delete_idea', item_id=i.id) }}" data-confirm="Delete this idea?">{{ csrf() }}
+              <button class="btn btn-sm btn-ghost" type="submit">Delete</button>
+            </form>
+          </div>
+        </div>
+        {% if i.notes %}<p class="pre">{{ i.notes }}</p>{% endif %}
+        <p class="muted small">{% if i.category_name %}{{ i.category_name }} · {% endif %}{{ 'Used' if i.status == 'used' else 'New' }} · added {{ i.created_at[:10]|nice_date('%d %b %Y') }}</p>
+      </article>
+    {% else %}
+      <div class="card empty-state"><p>No ideas here yet.</p></div>
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>Add an idea</h2>
+    <form method="post" class="stack" novalidate>
+      {{ csrf() }}
+      {% include "_idea_fields.html" %}
+      <button class="btn btn-primary" type="submit">Add idea</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

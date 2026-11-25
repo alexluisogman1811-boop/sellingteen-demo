@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block robots %}index, follow{% endblock %}
+{% block title %}Terms of Service{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>1. Who we are</h2>
+  <p>TestimonialTap ("the service") is provided by {{ operator }} ("we", "us").{% if support_email %} You can contact us at {{ support_email }}.{% endif %}</p>
+
+  <h2>2. What the service does</h2>
+  <p>TestimonialTap gives you submission links to send to your clients, collects the feedback they write, lets you review, approve, reject or archive it, and shows approved testimonials on public pages and embeds. A testimonial is only shown publicly when you have approved it <strong>and</strong> the client's permission to publish is recorded. <strong>TestimonialTap never sends messages for you.</strong> You decide whom to ask and how.</p>
+
+  <h2>3. Your account</h2>
+  <p>You must give a valid email address and keep your password private. You are responsible for what happens in your account. You must be allowed to enter into this agreement where you live.</p>
+
+  <h2>4. Your responsibilities</h2>
+  <ul>
+    <li>Only publish testimonials from real clients, in their own words, with their permission. Don't write, buy or invent testimonials, and don't change their meaning when editing.</li>
+    <li>Follow the advertising and consumer-protection rules where you operate about using testimonials and endorsements.</li>
+    <li>Only send submission links to people you have a real business relationship with, and don't use the service to send spam, harass anyone or break any law.</li>
+  </ul>
+
+  <h2>5. Free trial and subscription</h2>
+  <p>New accounts get a free trial of {{ trial_days }} days. After the trial, managing your account requires a paid subscription ({{ price }}), billed through our payment provider. Your submission links and public testimonial pages keep working for your clients and visitors. Subscriptions renew each month until you cancel. You can cancel at any time; access continues until the end of the period you paid for. See the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+
+  <h2>6. Your data</h2>
+  <p>Your projects and the testimonials your clients send belong to you. We handle them as described in the <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>. If your account ends, we may delete its data after 90 days.</p>
+
+  <h2>7. Availability and changes</h2>
+  <p>We work to keep the service available but cannot promise it will always be online or error-free. We may change features or these terms; we will update the date above and, for important changes, tell you by email or in the app.</p>
+
+  <h2>8. Limitation of liability</h2>
+  <p>The service is provided "as is". To the extent the law allows, we are not liable for indirect losses, lost profits, or the content you choose to publish. Our total liability is limited to the amount you paid us in the last 3 months.</p>
+
+  <h2>9. Ending the agreement</h2>
+  <p>You can stop using the service at any time. We may suspend accounts that break these terms.</p>
+</article>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field_error %}
+{% block title %}Sign up{% endblock %}
+{% block content %}
+<div class="auth">
+  <h1>Get paid faster</h1>
+  <p class="muted">PayRecover tracks your unpaid invoices and tells you exactly who to follow up with each day, with a ready-to-send reminder.</p>
+  <form method="post" action="{{ url_for('auth.signup') }}" class="card form" novalidate>
+    {{ csrf() }}
+    <label>Business name
+      <input name="business_name" value="{{ form.business_name }}" required maxlength="80" autocomplete="organization" placeholder="e.g. Rivera Plumbing" autofocus>
+    </label>
+    {{ field_error(errors, 'business_name') }}
+    <p class="hint">Used to sign off your reminder messages.</p>
+    <label>Email <input type="email" name="email" value="{{ form.email }}" required autocomplete="email"></label>
+    {{ field_error(errors, 'email') }}
+    <label>Password <input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+    {% if errors.password %}{{ field_error(errors, 'password') }}{% else %}<p class="hint">At least 8 characters.</p>{% endif %}
+    <button class="btn btn-primary btn-block" type="submit">Create account</button>
+    {% if config.BILLING_ENABLED %}<p class="hint center">{{ config.TRIAL_DAYS }}-day free trial, then {{ config.PRICE_TEXT }}. By signing up you agree to the <a href="{{ url_for('legal.terms') }}">Terms</a>.</p>{% endif %}
+  </form>
+  <p class="center">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error, aria_err %}
+{% block title %}Create account{% endblock %}
+{% block content %}
+<div class="auth-card">
+  <div class="auth-brand">
+    <img src="{{ url_for('static', filename='favicon.svg') }}" alt="" width="36" height="36">
+    <span>LeadFollowUp <strong>AI</strong></span>
+  </div>
+  <h1>Create your account</h1>
+  <p class="muted">Never forget to follow up with a lead again.</p>
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+      <label for="business_name">Business name</label>
+      <input id="business_name" name="business_name" value="{{ form.business_name or '' }}" required maxlength="100" autocomplete="organization" {{ aria_err(errors, 'business_name') }}>
+      {{ field_error(errors, 'business_name') }}
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" value="{{ form.email or '' }}" required autocomplete="email" {{ aria_err(errors, 'email') }}>
+      {{ field_error(errors, 'email') }}
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password" aria-describedby="password-hint{% if errors.password %} password-error{% endif %}" {% if errors.password %}aria-invalid="true"{% endif %}>
+      <p class="hint" id="password-hint">At least 8 characters.</p>
+      {{ field_error(errors, 'password') }}
+    </div>
+    <div class="field">
+      <label for="confirm_password">Confirm password</label>
+      <input id="confirm_password" name="confirm_password" type="password" required autocomplete="new-password" {{ aria_err(errors, 'confirm_password') }}>
+      {{ field_error(errors, 'confirm_password') }}
+    </div>
+    <button type="submit" class="btn btn-primary btn-block" data-loading-text="Creating account…">Create account</button>
+  </form>
+  <p class="hint signup-terms">Free for {{ config.TRIAL_DAYS }} days, then {{ config.PRICE_TEXT }}. By creating an account you agree to the <a href="{{ url_for('legal.terms') }}">Terms</a> and <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>.</p>
+  <p class="auth-switch">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+</div>
+{% endblock %}

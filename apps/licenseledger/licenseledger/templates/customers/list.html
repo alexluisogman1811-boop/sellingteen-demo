@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import delete_button %}
+{% block title %}Customers{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Customers</h1><p class="muted">{{ customers|length }} customer{{ '' if customers|length == 1 else 's' }}{% if q %} matching “{{ q }}”{% endif %}</p></div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.data_export', entity='customers') }}">Export CSV</a>
+    <a class="btn btn-primary" href="{{ url_for('main.customer_form') }}">+ Add customer</a>
+  </div>
+</div>
+<form method="get" class="card filters" role="search">
+  <div class="field grow"><label for="q">Search</label>
+    <input id="q" name="q" type="search" value="{{ q }}" placeholder="Name, email or company"></div>
+  <div class="field filter-buttons"><button class="btn btn-primary">Search</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.customers') }}">Clear</a></div>
+</form>
+<section class="card">
+  {% if customers %}
+  <div class="table-wrap">
+  <table class="table stack">
+    <thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Orders</th><th>Licenses</th><th></th></tr></thead>
+    <tbody>
+    {% for c in customers %}
+      <tr>
+        <td data-label="Name"><a href="{{ url_for('main.customer_detail', customer_id=c.id) }}"><strong>{{ c.name }}</strong></a></td>
+        <td data-label="Email">{{ c.email }}</td>
+        <td data-label="Company">{{ c.company or '—' }}</td>
+        <td data-label="Orders">{{ c.order_count }}</td>
+        <td data-label="Licenses">{{ c.license_count }}</td>
+        <td class="row-actions">
+          <a class="btn btn-sm" href="{{ url_for('main.customer_form', customer_id=c.id) }}">Edit</a>
+          {{ delete_button(url_for('main.customer_delete', customer_id=c.id), 'customer') }}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}<p class="empty">No customers found.</p>{% endif %}
+</section>
+{% endblock %}

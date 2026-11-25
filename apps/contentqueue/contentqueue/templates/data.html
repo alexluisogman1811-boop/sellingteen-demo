@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Data{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Data &amp; settings</h1><p class="muted">This page only shows and changes your own business account. Dates and times use {{ timezone_label }}.</p></div></div>
+{% if config.TIMEZONE_ERROR %}<p class="flash flash-warning">{{ config.TIMEZONE_ERROR }}</p>{% endif %}
+
+<section class="stats">
+  {% for name, n in stats.items() %}<div class="stat"><span class="stat-num">{{ n }}</span><span>{{ name|capitalize }}</span></div>{% endfor %}
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Export</h2>
+    <p>Download every post, including archived ones, as a CSV file (opens in Excel, Numbers or Google Sheets). Use the Posts page filters for a filtered export.</p>
+    <a class="btn btn-primary" href="{{ url_for('main.export_csv', status='all') }}">Export all posts (CSV)</a>
+    <p class="help">Want everything (posts, campaigns, categories, templates, ideas and images)?
+      <a href="{{ url_for('auth.export_data') }}">Download all my data (ZIP)</a>.</p>
+  </section>
+
+  <section class="card">
+    <h2>Demo data</h2>
+    {% if demo_loaded %}
+      <p>Demo content is loaded. Removing it deletes only demo items — anything you created is kept.</p>
+      <form method="post" action="{{ url_for('data.demo_remove') }}" data-confirm="Remove all demo items?">{{ csrf() }}
+        <button class="btn" type="submit">Remove demo data</button>
+      </form>
+    {% else %}
+      <p>Load a sample café’s campaigns, posts, templates and ideas, dated around today.</p>
+      <form method="post" action="{{ url_for('data.demo') }}">{{ csrf() }}
+        <button class="btn btn-primary" type="submit">Load demo data</button>
+      </form>
+    {% endif %}
+  </section>
+
+  <section class="card danger-zone">
+    <h2>Reset workspace</h2>
+    <p>Deletes all of <strong>this account’s</strong> posts, campaigns, categories, templates and ideas. A backup of your content and images is saved first. Other accounts are never affected.</p>
+    <form method="post" action="{{ url_for('data.reset') }}" class="stack">
+      {{ csrf() }}
+      <div class="field">
+        <label for="confirm_text">Type <strong>{{ reset_phrase }}</strong> to confirm</label>
+        <input id="confirm_text" name="confirm_text" autocomplete="off" required>
+      </div>
+      <label class="checkbox"><input type="checkbox" name="reload_demo" value="1"> Load demo data after reset</label>
+      <button class="btn btn-danger" type="submit">Reset workspace</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Recent backups</h2>
+    {% for b in backups %}<p class="mono small">{{ b }}</p>{% else %}<p class="muted">No backups yet.</p>{% endfor %}
+    <p class="help">To restore a backup, contact support from your account email.</p>
+  </section>
+</div>
+{% endblock %}

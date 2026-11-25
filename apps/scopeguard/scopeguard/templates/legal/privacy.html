@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Your account:</strong> your name or business name, email address, and a secure hash of your password (never the password itself).</li>
+    <li><strong>What you enter about your clients and projects:</strong> client names, emails, companies and notes; project scope, deliverables, exclusions, milestones, revision requests, change requests and message templates.</li>
+    <li><strong>What your clients enter on a review link:</strong> the name they type, their decision, any comment, and, with each decision, the date and time, their IP address and their browser. We also note when a review link was last opened.</li>
+    <li><strong>Basic technical logs</strong> (time, page, IP address) to keep the service secure and working.</li>
+  </ul>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't sell your data or your clients' data.</li>
+    <li>We don't send messages or emails to your clients.</li>
+    <li>We don't use advertising or tracking cookies. We use one cookie to keep you logged in. Client review pages don't need cookies.</li>
+    <li>We never see your card details. Payments are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>Why we use it</h2>
+  <p>Only to run the service for you: to show your projects and records, give your clients their review pages, keep your account secure, manage your subscription, and answer your questions.</p>
+
+  <h2>Where it is stored</h2>
+  <p>On the server that hosts ScopeGuard, protected by your login. Each account can only see its own data. A client's review link shows only the one project it was issued for. Backup copies of the database are kept on the server before upgrades and before you reset your data.</p>
+
+  <h2>Your clients' information</h2>
+  <p>You add your clients' details, so you are responsible for having a good reason to keep them (for example, they hired you) and for following privacy laws where you operate (such as Thailand's PDPA or similar laws).</p>
+
+  <h2>Your choices</h2>
+  <p>You can edit your records and download all of your data at any time (Account → Download full export). You can remove all of your project data yourself with Account → Reset your data. Approval and history records can't be edited, so that they stay trustworthy. You can also delete your whole account and all of its data yourself, on the Account page under "Delete my account". It is removed straight away, and the review links you sent stop working. If you can't log in{% if support_email %}, email {{ support_email }} from your account email{% else %}, contact us{% endif %} and we will do it within 30 days.</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }}{% if support_email %} · {{ support_email }}{% endif %}</p>
+</article>
+{% endblock %}

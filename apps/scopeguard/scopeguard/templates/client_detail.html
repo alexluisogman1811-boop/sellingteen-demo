@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}{{ client.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ client.name }}{% if client.is_demo %} {{ badge('info', 'Sample') }}{% endif %}</h1>
+    <div class="meta">{{ client.company or '' }}{% if client.company and client.email %} · {% endif %}{{ client.email or '' }}</div>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.client_edit', client_id=client.id) }}">Edit</a>
+    <a class="btn primary" href="{{ url_for('main.project_new', client_id=client.id) }}">New project</a>
+  </div>
+</div>
+{% if client.notes %}<div class="card"><pre class="wrap">{{ client.notes }}</pre></div>{% endif %}
+<div class="card">
+  <h2>Projects</h2>
+  <ul class="plain">
+  {% for p in projects %}<li><a href="{{ url_for('main.project', project_id=p.id) }}">{{ p.name }}</a> {{ badge(p.status) }}</li>
+  {% else %}<li class="empty">No projects for this client yet.</li>{% endfor %}
+  </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% from "macros.html" import filter_form %}
+{% block title %}Calendar{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="muted">{{ total }} post{{ '' if total == 1 else 's' }} in this {{ view }}{% if undated_count %} · <a href="{{ url_for('posts.list_posts', undated='1') }}">{{ undated_count }} without a date</a>{% endif %}{% if archived_hidden %} · <a href="{{ url_for('main.calendar_view', view=view, date=anchor.isoformat(), **dict(filter_args, status='all')) }}">{{ archived_hidden }} archived hidden — show</a>{% endif %}</p>
+  </div>
+  <div class="head-actions">
+    <div class="segmented" role="group" aria-label="Calendar view">
+      <a class="{{ 'active' if view == 'month' }}" href="{{ url_for('main.calendar_view', view='month', date=anchor.isoformat(), **filter_args) }}">Month</a>
+      <a class="{{ 'active' if view == 'week' }}" href="{{ url_for('main.calendar_view', view='week', date=anchor.isoformat(), **filter_args) }}">Week</a>
+    </div>
+    <div class="segmented" role="group" aria-label="Navigate">
+      <a href="{{ url_for('main.calendar_view', view=view, date=prev_anchor.isoformat(), **filter_args) }}" aria-label="Previous {{ view }}">‹ Prev</a>
+      <a href="{{ url_for('main.calendar_view', view=view, date=today.isoformat(), **filter_args) }}">Today</a>
+      <a href="{{ url_for('main.calendar_view', view=view, date=next_anchor.isoformat(), **filter_args) }}" aria-label="Next {{ view }}">Next ›</a>
+    </div>
+    <a class="btn" href="{{ url_for('main.calendar_print', view=view, date=anchor.isoformat(), **filter_args) }}" target="_blank" rel="noopener">Printable</a>
+  </div>
+</div>
+
+<details class="filter-panel" {{ 'open' if filter_args }}>
+  <summary>Filters{% if filter_args %} ({{ filter_args|length }} active){% endif %}</summary>
+  {{ filter_form(url_for('main.calendar_view'), filters, campaigns, categories, show_dates=false, extra_hidden={'view': view, 'date': anchor.isoformat()}) }}
+</details>
+
+<p class="muted small plan-note">Dates here are your internal content plan. ContentQueue never schedules or publishes on social networks.</p>
+<p class="muted small hint hint-pointer">Tip: drag a post onto another day to move it. Click “+” on a day to plan a new post.</p>
+<p class="muted small hint hint-touch">Tap a post to open it (use “Move” there to reschedule). Tap “+” to plan a post on that day.</p>
+
+{% if not total %}
+  <div class="card empty-state cal-empty">
+    <p>No posts{% if filter_args %} match these filters{% endif %} in this {{ view }}.</p>
+    <a class="btn btn-primary" href="{{ url_for('posts.new_post', date=(today if start <= today <= end else start).isoformat()) }}">Plan a post</a>
+  </div>
+{% endif %}
+
+<div class="calendar view-{{ view }}" data-move-csrf="{{ csrf_token() }}">
+  <div class="cal-head" aria-hidden="true">
+    {% for name in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] %}<div>{{ name }}</div>{% endfor %}
+  </div>
+  {% for week in weeks %}
+    <div class="cal-week">
+      {% for day in week %}
+        {% set iso = day.isoformat() %}
+        {% set day_posts = by_day.get(iso, []) %}
+        <div class="cal-day{% if view == 'month' and day.month != anchor.month %} other-month{% endif %}{% if day == today %} is-today{% endif %}{% if not day_posts %} is-empty{% endif %}" data-date="{{ iso }}">
+          <div class="cal-day-head">
+            <span class="cal-date"><span class="cal-dow">{{ day.strftime('%a') }}</span> {{ day.day }}{% if view == 'week' or day.day == 1 %} {{ day.strftime('%b') }}{% else %}<span class="cal-mon"> {{ day.strftime('%b') }}</span>{% endif %}{% if day == today %} <span class="today-pill">Today</span>{% endif %}</span>
+            <a class="cal-add" href="{{ url_for('posts.new_post', date=iso) }}" aria-label="New post on {{ day|nice_date }}">+</a>
+          </div>
+          {% for p in day_posts %}
+            <a class="chip status-{{ p.status }}{% if is_overdue(p) %} is-overdue{% endif %}" href="{{ url_for('posts.detail', post_id=p.id) }}"
+               {% if p.status != 'published' %}draggable="true" data-move-url="{{ url_for('posts.move', post_id=p.id) }}"{% endif %}
+               title="{{ p.title }} — {{ p.platform|platform_label }}, {{ p.status|status_label }}">
+              <span class="chip-status" aria-hidden="true"></span>
+              <span class="chip-platform platform-{{ p.platform }}">{{ (p.platform|platform_label)[:2] }}</span>
+              {% if p.planned_time %}<span class="chip-time">{{ p.planned_time }}</span>{% endif %}
+              <span class="chip-title">{{ p.title }}</span>
+              <span class="chip-meta">{{ p.platform|platform_label }} · {{ p.status|status_label }}{% if p.status == 'published' %} (confirmed){% endif %}{% if is_overdue(p) %} · Overdue{% endif %}{% if p.campaign_name %} · {{ p.campaign_name }}{% endif %}</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>
+
+<div class="legend small muted">
+  {% for s in STATUSES %}<span class="legend-item"><span class="chip-swatch status-{{ s }}"></span>{{ s|status_label }}{% if s == 'published' %} (confirmed by you){% endif %}</span>{% endfor %}
+  <span class="legend-item"><span class="chip-swatch is-overdue"></span>Overdue</span>
+</div>
+{% endblock %}

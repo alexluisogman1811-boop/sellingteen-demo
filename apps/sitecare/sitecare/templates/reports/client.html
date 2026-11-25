@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Report: {{ cr.client.name }} · {{ cr.period_label }}{% endblock %}
+{% block content %}
+{% set t = cr.totals %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('main.reports_index') }}">Reports</a> · <a href="{{ url_for('main.client_detail', client_id=cr.client.id) }}">{{ cr.client.name }}</a></p>
+    <h1>{{ cr.client.name }} · {{ cr.period_label }}</h1>
+    <p class="muted">{{ cr.sites|length }} website{{ '' if cr.sites|length == 1 else 's' }}{% if cr.website_id %} (filtered){% endif %}</p>
+  </div>
+</div>
+
+<form class="filters card" method="get" action="{{ url_for('main.client_report', client_id=cr.client.id) }}">
+  <label class="sr-only" for="f-start">From</label>
+  <input id="f-start" type="date" name="start" value="{{ cr.start.isoformat() }}" required>
+  <label class="sr-only" for="f-end">To</label>
+  <input id="f-end" type="date" name="end" value="{{ cr.end.isoformat() }}" required>
+  <label class="sr-only" for="f-site">Website</label>
+  <select id="f-site" name="website_id">
+    <option value="">All websites</option>
+    {% for w in websites %}<option value="{{ w.id }}" {% if cr.website_id == w.id %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+  </select>
+  <button class="btn" type="submit">Update</button>
+</form>
+
+<div class="actions report-actions">
+  <a class="btn" href="{{ url_for('main.client_report_print', client_id=cr.client.id, **args) }}" target="_blank" rel="noopener">Printable report</a>
+  <a class="btn" href="{{ url_for('main.client_report_print', client_id=cr.client.id, download='1', **args) }}">Download HTML</a>
+  <a class="btn" href="{{ url_for('main.client_report_csv_download', client_id=cr.client.id, **args) }}">Download CSV</a>
+  <button class="btn" type="button" data-copy-target="#summary-text">Copy summary</button>
+  <span class="copy-status muted small" role="status" aria-live="polite"></span>
+</div>
+
+<section class="card">
+  <h2>Save this report</h2>
+  <p class="muted small">Saving keeps an unchangeable copy you can reopen later or share with {{ cr.client.name }} through a private link.</p>
+  <form method="post" action="{{ url_for('main.client_report_save', client_id=cr.client.id) }}" class="share-box">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% for k, v in args.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+    <label class="sr-only" for="f-title">Title</label>
+    <input id="f-title" name="title" maxlength="160" placeholder="{{ cr.client.name }} - {{ cr.period_label }}">
+    <button class="btn btn-primary" type="submit">Save report</button>
+  </form>
+  {% if previous %}
+  <p class="small">Previously saved: {% for p in previous %}<a href="{{ url_for('main.saved_report_detail', report_id=p.id) }}">{{ p.title }}</a>{{ ', ' if not loop.last }}{% endfor %}
+    · <a href="{{ url_for('main.saved_reports', client_id=cr.client.id) }}">all</a></p>
+  {% endif %}
+</section>
+
+<section class="stats stats-4" aria-label="Report totals">
+  <div class="stat stat-ok"><span class="stat-value">{{ t.completed }}</span><span class="stat-label">Completed (manual records)</span></div>
+  <div class="stat{% if t.overdue %} stat-danger{% endif %}"><span class="stat-value">{{ t.overdue }}</span><span class="stat-label">Overdue, not recorded</span></div>
+  <div class="stat{% if t.issues_open %} stat-warn{% endif %}"><span class="stat-value">{{ t.issues }}</span><span class="stat-label">Issues ({{ t.issues_open }} open at period end)</span></div>
+  <div class="stat"><span class="stat-value">{{ t.verified }}</span><span class="stat-label">Verified automatically</span></div>
+</section>
+
+<section class="card">
+  <div class="card-head"><h2>Summary</h2></div>
+  <label class="sr-only" for="summary-text">Report summary text</label>
+  <textarea id="summary-text" class="summary" rows="12" readonly>{{ cr.summary }}</textarea>
+</section>
+
+{% if not cr.sites %}
+<section class="card"><p class="empty">{{ cr.client.name }} has no websites yet, so there is nothing to report. <a href="{{ url_for('main.website_new', client_id=cr.client.id) }}">Add a website</a>.</p></section>
+{% endif %}
+{% for r in cr.sites %}
+<section class="card report-body">
+  <div class="card-head"><h2>{{ r.website.name }}</h2><span class="muted small">{{ r.website.domain }}</span></div>
+  {% if not (r.completed or r.overdue or r.scheduled_later or r.skipped or r.issues) %}
+    <p class="empty">No maintenance was scheduled or recorded for this website in {{ cr.period_label }}.</p>
+  {% else %}
+    {% include "reports/_body.html" %}
+  {% endif %}
+</section>
+{% endfor %}
+<p class="notice">{{ cr.notice }}</p>
+{% endblock %}

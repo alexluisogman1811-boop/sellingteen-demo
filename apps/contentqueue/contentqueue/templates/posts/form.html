@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf, field_error %}
+{% block title %}{{ 'Edit post' if editing else 'New post' }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ 'Edit post' if editing else 'New post' }}</h1>
+    {% if editing %}<p class="muted">Last updated {{ editing.updated_at }}</p>{% endif %}
+  </div>
+  <div class="head-actions">
+    {% if editing %}<a class="btn btn-ghost" href="{{ url_for('posts.detail', post_id=editing.id) }}">Cancel</a>
+    {% else %}<a class="btn btn-ghost" href="{{ url_for('posts.list_posts') }}">Cancel</a>{% endif %}
+  </div>
+</div>
+
+{% set locked = editing and editing.status == 'published' %}
+<div class="flash flash-info draft-restore" id="draft-restore" hidden>
+  <span id="draft-restore-text">Unsaved text from this browser was found.</span>
+  <button class="btn btn-sm btn-primary" type="button" id="draft-restore-yes">Restore it</button>
+  <button class="btn btn-sm btn-ghost" type="button" id="draft-restore-no">Discard</button>
+</div>
+<form class="card form-grid" id="post-form" method="post" action="{{ action }}" enctype="multipart/form-data" novalidate
+      data-draft-key="{{ 'post-%d'|format(editing.id) if editing else 'new' }}">
+  {{ csrf() }}
+  <input type="hidden" name="form_nonce" value="{{ extra.form_nonce or new_form_nonce() }}">
+  {% if editing %}<input type="hidden" name="version" value="{{ extra.version or editing.version }}">{% endif %}
+  {% if extra.conflict %}
+    <p class="flash flash-error full">Another save happened while you were editing.
+      <a href="{{ url_for('posts.detail', post_id=editing.id) }}" target="_blank" rel="noopener">Open the current version in a new tab</a>
+      to compare. Saving this form will replace it with what you see here.</p>
+  {% endif %}
+  <div class="form-summary full" id="form-summary" role="alert" hidden></div>
+  {% if locked %}
+    <p class="flash flash-info full">This post is <strong>recorded as published by you</strong> on {{ editing.published_at }}.
+      Its platform, date and time are locked to keep the record accurate. You can still correct the caption, notes and link.</p>
+  {% endif %}
+  {% if extra.idea_id %}<input type="hidden" name="idea_id" value="{{ extra.idea_id }}">
+    <p class="flash flash-info full">Creating a post from your idea bank. The idea will be marked as used when you save.</p>{% endif %}
+
+  <div class="field full">
+    <label for="title">Working title <span class="req">*</span></label>
+    <input id="title" name="title" value="{{ post.title }}" maxlength="120" required
+           {% if errors.title %}aria-invalid="true" aria-describedby="title-error"{% endif %}>
+    {{ field_error(errors, 'title') }}
+  </div>
+
+  <div class="field">
+    <label for="platform">Platform <span class="req">*</span></label>
+    {% if locked %}
+      <input type="hidden" name="platform" value="{{ editing.platform }}">
+      <select id="platform" disabled>
+        <option value="{{ editing.platform }}" data-limit="{{ PLATFORMS[editing.platform].limit or '' }}" selected>{{ editing.platform|platform_label }}</option>
+      </select>
+    {% else %}
+    <select id="platform" name="platform" required>
+      {% for key, info in PLATFORMS.items() %}
+        <option value="{{ key }}" data-limit="{{ info.limit or '' }}" {{ 'selected' if post.platform == key }}>{{ info.label }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+    {{ field_error(errors, 'platform') }}
+  </div>
+
+  <div class="field">
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      {% for s in status_choices %}<option value="{{ s }}" {{ 'selected' if post.status == s }}>{{ s|status_label }}</option>{% endfor %}
+    </select>
+    {{ field_error(errors, 'status') }}
+    {% if not editing or editing.status != 'published' %}
+      <p class="help"><strong>Scheduled</strong> means planned in ContentQueue only — nothing is sent to any social network.
+        Post it yourself (or use the platform’s own scheduler), then use “Mark as published” on the post page.</p>
+    {% endif %}
+  </div>
+
+  <div class="field full">
+    <label for="caption">Caption</label>
+    <textarea id="caption" name="caption" rows="8" data-counter="caption-count"
+              {% if errors.caption %}aria-invalid="true"{% endif %}>{{ post.caption }}</textarea>
+    <p class="help counter" id="caption-count" aria-live="polite"></p>
+    {{ field_error(errors, 'caption') }}
+  </div>
+
+  <div class="field full">
+    <label for="hashtags">Hashtags</label>
+    <input id="hashtags" name="hashtags" value="{{ post.hashtags }}" placeholder="#smallbusiness #shoplocal"
+           {% if errors.hashtags %}aria-invalid="true"{% endif %}>
+    <p class="help">Separate with spaces or commas; “#” is added automatically and duplicates are removed.</p>
+    {{ field_error(errors, 'hashtags') }}
+  </div>
+
+  <div class="field">
+    <label for="campaign_id">Campaign</label>
+    <select id="campaign_id" name="campaign_id">
+      <option value="">— None —</option>
+      {% for c in campaigns %}<option value="{{ c.id }}" {{ 'selected' if post.campaign_id == c.id|string }}>{{ c.name }}</option>{% endfor %}
+    </select>
+    {{ field_error(errors, 'campaign_id') }}
+  </div>
+
+  <div class="field">
+    <label for="category_id">Content category</label>
+    <select id="category_id" name="category_id">
+      <option value="">— None —</option>
+      {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if post.category_id == c.id|string }}>{{ c.name }}</option>{% endfor %}
+    </select>
+    {{ field_error(errors, 'category_id') }}
+  </div>
+
+  <div class="field">
+    <label for="planned_date">Planned date</label>
+    <input id="planned_date" type="date" name="planned_date" value="{{ post.planned_date }}" min="1970-01-01" max="2200-12-31" {{ 'readonly' if locked }}
+           {% if errors.planned_date %}aria-invalid="true"{% endif %}>
+    <p class="help">Your internal plan ({{ timezone_label }}). It is not a booking on any social network.</p>
+    {{ field_error(errors, 'planned_date') }}
+  </div>
+
+  <div class="field">
+    <label for="planned_time">Planned time <span class="muted">(optional)</span></label>
+    <input id="planned_time" type="time" name="planned_time" value="{{ post.planned_time }}" {{ 'readonly' if locked }}
+           {% if errors.planned_time %}aria-invalid="true"{% endif %}>
+    {{ field_error(errors, 'planned_time') }}
+  </div>
+
+  <div class="field full">
+    <label for="image">Image <span class="muted">(optional · PNG, JPG, GIF or WebP · max 5 MB)</span></label>
+    {% if editing and editing.image_filename %}
+      <div class="current-image">
+        <img src="{{ url_for('main.uploaded_file', filename=editing.image_filename) }}" alt="Current image for {{ editing.title }}">
+        <label class="checkbox"><input type="checkbox" name="remove_image" value="1"> Remove current image</label>
+      </div>
+    {% endif %}
+    {% if extra.image_dropped %}
+      <p class="field-error">Your image wasn’t saved because of the errors on this form — please choose it again.</p>
+    {% endif %}
+    <input id="image" type="file" name="image" data-max-bytes="{{ config.MAX_IMAGE_BYTES }}"
+           accept=".png,.jpg,.jpeg,.gif,.webp,image/png,image/jpeg,image/gif,image/webp">
+    <p class="field-error" id="image-client-error" hidden></p>
+    {{ field_error(errors, 'image') }}
+  </div>
+
+  <div class="field full">
+    <label for="notes">Internal notes</label>
+    <textarea id="notes" name="notes" rows="3" placeholder="Shot list, approvals, links to assets…">{{ post.notes }}</textarea>
+    {{ field_error(errors, 'notes') }}
+  </div>
+
+  {% if editing and editing.status in ('published', 'archived') %}
+  <div class="field full">
+    <label for="published_url">Link to the live post <span class="muted">(optional)</span></label>
+    <input id="published_url" type="url" name="published_url" value="{{ post.published_url }}" placeholder="https://…">
+    {{ field_error(errors, 'published_url') }}
+  </div>
+  {% else %}
+    <input type="hidden" name="published_url" value="{{ post.published_url }}">
+  {% endif %}
+
+  <div class="form-actions full">
+    <button class="btn btn-primary" type="submit">{{ 'Save changes' if editing else 'Create post' }}</button>
+  </div>
+</form>
+{% endblock %}

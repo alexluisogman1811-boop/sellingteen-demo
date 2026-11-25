@@ -1,0 +1,54 @@
+{% from "macros.html" import flashes, site_footer with context %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ClientStart{% endblock %} · ClientStart</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('public.index') }}"><span class="logo">CS</span> ClientStart</a>
+    {% if is_owner() %}
+    <button class="btn btn-sm nav-toggle" type="button" aria-expanded="false" aria-controls="mainnav">Menu</button>
+    <nav id="mainnav" class="nav">
+      {% set ep = request.endpoint or '' %}
+      <a href="{{ url_for('owner.dashboard') }}" class="{{ 'active' if ep == 'owner.dashboard' }}">Dashboard</a>
+      <a href="{{ url_for('owner.clients') }}" class="{{ 'active' if 'client' in ep }}">Onboardings</a>
+      <a href="{{ url_for('owner.tasks') }}" class="{{ 'active' if 'task' in ep }}">Tasks</a>
+      <a href="{{ url_for('owner.templates') }}" class="{{ 'active' if 'template' in ep }}">Templates</a>
+      <a href="{{ url_for('owner.reminders') }}" class="{{ 'active' if ep == 'owner.reminders' }}">Reminders</a>
+      <a href="{{ url_for('owner.settings') }}" class="{{ 'active' if ep == 'owner.settings' }}">Data</a>
+      <a href="{{ url_for('auth.account') }}" class="{{ 'active' if ep in ('auth.account', 'auth.change_password') }}">Account</a>
+      <a class="btn btn-sm btn-primary" href="{{ url_for('owner.client_new') }}">+ New onboarding</a>
+      <form method="post" action="{{ url_for('auth.logout') }}" class="inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-sm" type="submit">Sign out</button>
+      </form>
+    </nav>
+    {% else %}
+    <nav class="nav nav-public" aria-label="Account">
+      <a href="{{ url_for('public.index') }}#pricing">Pricing</a>
+      <a href="{{ url_for('auth.login') }}">Log in</a>
+      <a class="btn btn-sm btn-primary" href="{{ url_for('auth.signup') }}">Sign up</a>
+    </nav>
+    {% endif %}
+  </header>
+
+  {% if is_owner() and g.access and g.access.state == 'trial' and request.endpoint != 'billing.subscribe' %}
+  <div class="trial-bar" role="note">
+    <div class="trial-bar-inner">
+      <span><strong>Free trial:</strong> {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.</span>
+      <a class="trial-bar-link" href="{{ url_for('billing.subscribe') }}">Subscribe</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <main class="container">
+    {{ flashes() }}
+    {% block content %}{% endblock %}
+  </main>
+  {{ site_footer(owner=True) }}
+</body>
+</html>

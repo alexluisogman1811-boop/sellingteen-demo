@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Delete my account{% endblock %}
+{% block content %}
+<section class="card auth-card danger-zone">
+  <h1>Delete my account</h1>
+  <p>This permanently deletes your account and everything in it: {{ counts.clients }} client{{ '' if counts.clients == 1 else 's' }},
+    {{ counts.websites }} website{{ '' if counts.websites == 1 else 's' }}, {{ counts.reports }} saved report{{ '' if counts.reports == 1 else 's' }},
+    all tasks, history, issues and evidence files. Shared report links stop working. This cannot be undone.</p>
+  <p class="muted">Want a copy first? <a href="{{ url_for('auth.export_data') }}">Export all my data</a>.</p>
+  {% if error %}<p class="form-alert" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" class="stack" action="{{ url_for('auth.delete_account') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="f-password">Your password</label>
+    <input id="f-password" name="password" type="password" required maxlength="128" autocomplete="current-password">
+    <label for="f-confirm">Type <strong>DELETE</strong> (or your email) to confirm</label>
+    <input id="f-confirm" name="confirm" autocomplete="off" required>
+    <button class="btn btn-danger" type="submit">Delete my account and all data</button>
+  </form>
+  <p class="hint"><a href="{{ url_for('auth.account') }}">Cancel</a></p>
+</section>
+{% endblock %}

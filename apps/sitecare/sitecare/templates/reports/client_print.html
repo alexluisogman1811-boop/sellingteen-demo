@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{{ snapshot_title or ('Maintenance report · ' ~ cr.client.name ~ ' · ' ~ cr.period_label) }}</title>
+{% include "reports/_print_css.html" %}
+{% if not download %}<script src="{{ url_for('static', filename='app.js') }}" defer></script>{% endif %}
+</head>
+<body>
+{% set t = cr.totals %}
+<div class="page">
+  {% if not download %}<div class="toolbar"><button type="button" data-print>Print / save as PDF</button></div>{% endif %}
+  <header>
+    <h1>Website maintenance report</h1>
+    <div class="meta">
+      <div><span class="muted">Client</span><br><strong>{{ cr.client.name }}</strong></div>
+      <div><span class="muted">Period</span><br>{{ cr.start|nice_date }} - {{ cr.end|nice_date }}</div>
+      <div><span class="muted">Websites</span><br>{% for r in cr.sites %}{{ r.website.domain }}{{ ', ' if not loop.last }}{% else %}None{% endfor %}</div>
+      <div><span class="muted">Generated</span><br>{{ cr.today|nice_date }}</div>
+    </div>
+    {% if snapshot_title %}<p class="saved-note">Saved report &ldquo;{{ snapshot_title }}&rdquo;. This copy shows the records as they were on {{ cr.today|nice_date }}.</p>{% endif %}
+  </header>
+  <div class="totals">
+    <div><strong>{{ t.completed }}</strong>Completed (manual records)</div>
+    <div><strong>{{ t.overdue }}</strong>Overdue, not recorded</div>
+    <div><strong>{{ t.issues }}</strong>Issues ({{ t.issues_open }} open at period end)</div>
+    <div><strong>{{ t.verified }}</strong>Verified automatically</div>
+  </div>
+  {% if not cr.sites %}<p class="empty">This client has no websites, so there is nothing to report for this period.</p>{% endif %}
+  {% for r in cr.sites %}
+    <div class="site-head"><h2>{{ r.website.name }}</h2><span class="muted">{{ r.website.domain }}</span></div>
+    {% if not (r.completed or r.overdue or r.scheduled_later or r.skipped or r.issues) %}
+      <p class="empty">No maintenance was scheduled or recorded for this website in this period.</p>
+    {% else %}
+      {% include "reports/_body.html" %}
+    {% endif %}
+  {% endfor %}
+  <p class="notice"><strong>About these results.</strong> {{ cr.notice }}</p>
+</div>
+</body>
+</html>

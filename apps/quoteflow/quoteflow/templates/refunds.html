@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Refund Policy — QuoteFlow AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<article class="card prose legal">
+  <h1>Refund Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>Try it free first</h2>
+  <p>{% if billing_enabled %}Every new account gets a {{ trial_days }}-day free trial of the Pro plan, so you can decide before paying anything. After the trial, accounts that don't subscribe move to the Free plan ({{ plans.free.quota }} quotes per month) and keep their saved quotes.{% else %}The Free plan ({{ plans.free.quota }} quotes per month) lets you try QuoteFlow before paying anything.{% endif %}</p>
+
+  <h2>14-day money-back guarantee</h2>
+  <p>If you're not happy with your first paid month of Pro ({{ price }}), ask for a refund within 14 days of that payment and you'll get your money back in full. No questions asked.</p>
+
+  <h2>Cancelling</h2>
+  <p>You can cancel at any time. Your subscription stops renewing and you keep Pro until the end of the month you paid for, then move to the Free plan. We don't refund the rest of a month after the first 14 days, except where the law requires it.</p>
+
+  <h2>How to ask</h2>
+  <p>Email {% include "_support.html" %} from your account email with the subject "Refund". Refunds go back to the original payment method through our payment provider, usually within 5–10 business days.</p>
+
+  <h2>Who we are</h2>
+  <p>QuoteFlow AI is provided by {{ operator }}.</p>
+</article>
+{% endblock %}

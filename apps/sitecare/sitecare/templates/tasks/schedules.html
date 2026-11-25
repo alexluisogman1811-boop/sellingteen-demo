@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Recurring tasks{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('main.tasks_list') }}">Tasks</a></p>
+    <h1>Recurring task setup</h1>
+  </div>
+</div>
+<form class="filters" method="get" role="search">
+  <label class="sr-only" for="q">Search recurring tasks</label>
+  <input id="q" type="search" name="q" value="{{ q }}" placeholder="Search task or website">
+  <label class="sr-only" for="fw">Website</label>
+  <select id="fw" name="website_id">
+    <option value="">All websites</option>
+    {% for w in websites %}<option value="{{ w.id }}" {% if website_id == w.id %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+  </select>
+  <label class="sr-only" for="fk">Category</label>
+  <select id="fk" name="category">
+    <option value="">All categories</option>
+    {% for k, v in CATEGORIES.items() %}<option value="{{ k }}" {% if category == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <label class="sr-only" for="fs">State</label>
+  <select id="fs" name="state">
+    <option value="">Active & paused</option>
+    <option value="active" {% if state == 'active' %}selected{% endif %}>Active</option>
+    <option value="paused" {% if state == 'paused' %}selected{% endif %}>Paused</option>
+  </select>
+  <button class="btn" type="submit">Filter</button>
+  {% if q or website_id or category or state %}<a class="btn btn-ghost" href="{{ url_for('main.schedules_list') }}">Clear</a>{% endif %}
+</form>
+<section class="card">
+  {% if tasks %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Task</th><th class="hide-sm">Website</th><th>Schedule</th><th>Next due</th><th></th></tr></thead>
+      <tbody>
+      {% for t in tasks %}
+        <tr{% if not t.active %} class="row-muted"{% endif %}>
+          <td>{{ t.title }}{% if not t.active %} <span class="badge badge-muted">Paused</span>{% endif %}{% if t.overdue %} <span class="badge badge-danger">{{ t.overdue }} overdue</span>{% endif %}
+            <br><span class="muted small">{{ CATEGORIES.get(t.category) }}</span></td>
+          <td class="hide-sm"><a href="{{ url_for('main.website_detail', website_id=t.website_id) }}">{{ t.website_name }}</a>{% if t.website_status != 'active' %} <span class="muted small">({{ WEBSITE_STATUSES[t.website_status]|lower }})</span>{% endif %}</td>
+          <td>{{ describe_schedule(t.frequency, t.interval_days) }}</td>
+          <td>{{ t.next_due|nice_date or '-' }}</td>
+          <td class="right"><a class="btn btn-sm" href="{{ url_for('main.task_edit', task_id=t.id) }}">Edit</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="empty">No recurring tasks found. Add tasks from a website's page.</p>{% endif %}
+</section>
+{% endblock %}

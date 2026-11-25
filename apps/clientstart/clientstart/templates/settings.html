@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block title %}Data{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Your data</h1></div></div>
+<div class="cols">
+  <section class="card">
+    <h2>Current data</h2>
+    <dl class="dl">
+      <dt>Clients</dt><dd>{{ stats.clients }}</dd>
+      <dt>Checklist items</dt><dd>{{ stats.tasks }}</dd>
+      <dt>Uploaded files</dt><dd>{{ stats.uploads }}</dd>
+      <dt>Templates</dt><dd>{{ stats.onboarding_templates }}</dd>
+    </dl>
+    <p><a class="btn btn-sm btn-primary" href="{{ url_for('owner.export_all') }}">Export all my data (ZIP of CSV files)</a></p>
+    <p class="muted small">You can also export onboardings and tasks as CSV from the <a href="{{ url_for('owner.clients') }}">Onboardings</a> and <a href="{{ url_for('owner.tasks') }}">Tasks</a> pages. Uploaded files are downloaded from each item.</p>
+    <p><a class="btn btn-sm" href="{{ url_for('auth.account') }}">Account settings</a>
+      <a class="btn btn-sm btn-danger" href="{{ url_for('auth.delete_account') }}">Delete my account</a></p>
+  </section>
+  {% if allow_reset %}
+  <section class="card danger-zone">
+    <h2>Reset</h2>
+    <p>Deletes <strong>all of your</strong> clients, tasks, templates, comments, history, and uploaded files. This cannot be undone. Export anything you need first.</p>
+    <form method="post" action="{{ url_for('owner.reset') }}" class="form">
+      {{ csrf() }}
+      <fieldset>
+        <label class="check"><input type="radio" name="mode" value="demo" checked> Reset and load demo data</label>
+        <label class="check"><input type="radio" name="mode" value="empty"> Reset to an empty workspace</label>
+      </fieldset>
+      <label>Type <strong>RESET</strong> to confirm <input name="confirm" autocomplete="off" required></label>
+      <button class="btn btn-danger" type="submit">Reset data</button>
+    </form>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

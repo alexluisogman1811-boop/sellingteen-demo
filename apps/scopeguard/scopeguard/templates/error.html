@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Error {{ code }}{% endblock %}
+{% block header %}{% if g.user %}{{ super() }}{% endif %}{% endblock %}
+{% block content %}
+<div class="narrow card">
+  <h1>{% if code == 404 %}Not found{% elif code == 429 %}Too many attempts{% elif code == 400 %}Request not accepted{% else %}Error {{ code }}{% endif %}</h1>
+  <p>{% if code == 404 %}This page does not exist, or the review link is invalid, expired or revoked.{% else %}{{ error.description }}{% endif %}</p>
+  {% if g.user %}<a class="btn" href="{{ url_for('main.dashboard') }}">Back to dashboard</a>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Templates{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Job templates</h1>
+  {% if g.user.role == 'manager' %}<a class="btn btn-primary" href="{{ url_for('main.template_new') }}">+ Template</a>{% endif %}
+</div>
+{% if templates %}
+<div class="card-list">
+  {% for t in templates %}
+  <div class="job-card">
+    <div class="job-card-top"><strong>{{ t.name }}</strong>
+      <span class="muted small">{{ t.task_count }} tasks · {{ t.required_count }} required</span></div>
+    {% if t.description %}<div class="muted small">{{ t.description }}</div>{% endif %}
+    {% if g.user.role == 'manager' %}
+    <div class="actions">
+      <a class="btn btn-small" href="{{ url_for('main.template_edit', template_id=t.id) }}">Edit</a>
+      <a class="btn btn-small" href="{{ url_for('main.job_new') }}?template_id={{ t.id }}">Use for new job</a>
+      <form method="post" action="{{ url_for('main.template_delete', template_id=t.id) }}" class="inline" data-confirm="Delete this template? Existing jobs keep their checklists.">
+        {{ csrf_field() }}<button class="btn btn-small btn-danger" type="submit">Delete</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">No templates yet. Templates hold reusable checklists for common jobs.</p>
+{% endif %}
+{% endblock %}

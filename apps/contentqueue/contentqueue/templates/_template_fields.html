@@ -1,0 +1,25 @@
+{% from "macros.html" import field_error %}
+<div class="field">
+  <label for="t-name">Name <span class="req">*</span></label>
+  <input id="t-name" name="name" value="{{ form.name or '' }}" maxlength="80" required>
+  {{ field_error(errors, 'name') }}
+</div>
+<div class="field">
+  <label for="t-platform">Best for</label>
+  <select id="t-platform" name="platform">
+    <option value="">Any platform</option>
+    {% for key, info in PLATFORMS.items() %}<option value="{{ key }}" {{ 'selected' if form.platform == key }}>{{ info.label }}</option>{% endfor %}
+  </select>
+  {{ field_error(errors, 'platform') }}
+</div>
+<div class="field">
+  <label for="t-body">Template text <span class="req">*</span></label>
+  <textarea id="t-body" name="body" rows="7" placeholder="New in store: {product}! {cta}">{{ form.body or '' }}</textarea>
+  <p class="help">Use <code>{placeholder}</code> markers (lowercase letters, numbers, _). You’ll fill them in when using the template.</p>
+  {{ field_error(errors, 'body') }}
+</div>
+<div class="field">
+  <label for="t-tags">Default hashtags</label>
+  <input id="t-tags" name="hashtags" value="{{ form.hashtags or '' }}">
+  {{ field_error(errors, 'hashtags') }}
+</div>

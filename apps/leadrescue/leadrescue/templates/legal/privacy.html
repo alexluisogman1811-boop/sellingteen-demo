@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Privacy Notice{% endblock %}
+{% block content %}
+{% include "legal/_legal_header.html" %}
+<article class="card legal">
+  <h1>Privacy Notice</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <p>LeadRescue is a follow-up tracker for roofing contractors, operated by <strong>{{ legal_operator }}</strong> ("we").
+    This notice explains what information LeadRescue stores, why, and what control you have over it.</p>
+
+  <h2>Who is who</h2>
+  <ul>
+    <li><strong>You</strong> (the roofing business and your team) decide what customer information to put into LeadRescue. For your customers' data you are the business responsible for it, and we process it on your behalf.</li>
+    <li><strong>Your customers</strong> (homeowners) never use LeadRescue directly. LeadRescue never contacts them.</li>
+  </ul>
+
+  <h2>What we store</h2>
+  <ul>
+    <li><strong>Account information:</strong> your name, email address, a one-way hash of your password (never the password itself), your business name, team roles, your workspace's time zone, and when you accepted these terms.</li>
+    <li><strong>Customer and lead information you enter or import:</strong> homeowners' names, phone numbers, email addresses and street addresses, plus job type, estimated value, lead source and status, dates, notes, activity history and message drafts.</li>
+    <li><strong>Subscription status:</strong> when your free trial started and the date your workspace is paid until. Payments are handled by our payment provider on its own secure page; we never see or store card details.</li>
+    <li><strong>Audit log:</strong> a record of who exported, imported or deleted data and when, which the workspace owner can see. It holds counts and record numbers, not your customers' names or contact details.</li>
+    <li><strong>Technical information:</strong> a session cookie that keeps you logged in, and short-lived server logs. Logs record that a page was requested, but search terms, invitation links and password reset links are removed from them.</li>
+  </ul>
+
+  <h2>What we do not do</h2>
+  <ul>
+    <li>We do not sell or rent any information.</li>
+    <li>LeadRescue does not send text messages or emails to anyone. Message drafts are suggestions you copy and send yourself; the app never sends them.</li>
+    <li>LeadRescue does not send your data to any AI service. Drafts are written by built-in templates on our server.</li>
+    <li>We do not use advertising or analytics trackers. The only cookie is the login session cookie.</li>
+  </ul>
+
+  <h2>Where data is kept</h2>
+  <p>The app and its database run on our hosting provider's servers. Data is sent over HTTPS.
+    Only people you add to your workspace can see your workspace's data. We access it only to provide support you ask for, to keep the service secure, or if the law requires it.</p>
+
+  <h2>How long we keep it</h2>
+  <ul>
+    <li>Your data stays until you delete it or delete your workspace, including after a trial or subscription ends.</li>
+    <li>When an owner deletes a workspace, its leads, activity, drafts, audit log and invitations are removed from the live database immediately.</li>
+    <li>Copies in backups expire on the backup schedule (up to {{ config.get('BACKUP_RETENTION_DAYS', 7) }} days).</li>
+  </ul>
+
+  <h2>Your choices</h2>
+  <ul>
+    <li><strong>Export:</strong> the workspace owner can download all of the workspace's data as CSV files under <em>Settings → Your data</em>, even after the trial ends.</li>
+    <li><strong>Delete:</strong> the owner can permanently delete the workspace, and anyone can delete their own account, under <em>Settings → Your data</em>.</li>
+    <li><strong>Questions or requests</strong>, including requests from your customers about their information: email <strong>{{ legal_contact }}</strong>. We'll help you respond.</li>
+  </ul>
+
+  <h2>Security</h2>
+  <p>Passwords are hashed. Each business's data is kept separate and checked on every request. Sessions expire, and logging out or changing your password signs you out on every other device.
+    No system is perfectly secure. If we learn of a breach affecting your data, we'll tell you without undue delay.</p>
+
+  <h2>Changes</h2>
+  <p>If this notice changes in a way that matters, we'll tell workspace owners before the change takes effect.</p>
+</article>
+{% endblock %}

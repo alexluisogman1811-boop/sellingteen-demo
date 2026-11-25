@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — QuoteFlow AI{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ profile.business_name or 'Dashboard' }}</h1>
+    <p class="muted" style="margin:4px 0 0">Paste a customer message and get a ready-to-send quote.</p>
+  </div>
+  <a href="{{ url_for('new_quote') }}" class="btn lg">+ New quote</a>
+</div>
+
+{% if not g.user.onboarded %}
+  <div class="notice setup" style="margin-bottom:20px">
+    <h3>Finish setting up your business (about 3 minutes)</h3>
+    <p>Add your services and prices so QuoteFlow can write accurate quotes for you.</p>
+    <a href="{{ url_for('onboarding', step=1) }}" class="btn">Continue setup</a>
+  </div>
+{% endif %}
+
+<div class="grid-2">
+  <div class="card">
+    <h2>Quotes</h2>
+    {% if quotes %}
+      <table class="quotes">
+        <thead><tr><th>Customer request</th><th>Price</th><th>Date</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for q in quotes %}
+            <tr>
+              <td class="req"><a href="{{ url_for('view_quote', quote_id=q.id) }}">{{ q.customer_request }}</a></td>
+              <td class="meta nowrap">{{ q.price or 'Price TBC' }}</td>
+              <td class="meta nowrap">{{ q.created_at[:10] }}</td>
+              <td class="meta"><span class="status status-{{ q.status }}">{{ statuses[q.status] }}</span></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div class="empty">
+        <p>No quotes yet.</p>
+        <a href="{{ url_for('new_quote') }}" class="btn secondary">Create your first quote</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <div>
+    <div class="card">
+      <h3>{{ usage.plan_name }} plan</h3>
+      {% include "_usage.html" %}
+      {% if usage.plan == 'free' %}
+        <a href="{{ url_for('billing_page') }}" class="btn block">Upgrade to Pro — {{ plans.pro.quota }} quotes/month</a>
+      {% else %}
+        <a href="{{ url_for('billing_page') }}" class="btn secondary block">Plan & billing</a>
+      {% endif %}
+    </div>
+    <div class="card">
+      <h3>Business profile</h3>
+      <div class="progress" aria-label="Profile {{ done }} of {{ total }} complete"><span style="width: {{ (done / total * 100) | round | int }}%"></span></div>
+      {% if done < total %}
+        <p class="muted small">{{ done }} of {{ total }} key sections filled in. The more you add, the more accurate your quotes.</p>
+      {% else %}
+        <p class="muted small">Your profile is complete.</p>
+      {% endif %}
+      <a href="{{ url_for('profile') }}" class="btn secondary block">{{ 'Complete profile' if done < total else 'Edit profile' }}</a>
+    </div>
+    <div class="card">
+      <h3>Account</h3>
+      <p class="muted small" style="word-break:break-all">{{ g.user.email }}</p>
+      <div class="actions" style="margin-top:0">
+        <a href="{{ url_for('account') }}" class="btn secondary">Settings</a>
+        <form method="post" action="{{ url_for('logout') }}" style="margin:0">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn secondary" type="submit">Log out</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Delete account — QuoteFlow AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Delete my account</h1></div>
+
+<form method="post" action="{{ url_for('delete_account') }}" class="card" data-busy-label="Deleting…">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <p>This deletes your account <strong>{{ g.user.email }}</strong> for good: your business profile, pricing rules,
+    {{ quotes }} saved quote{{ '' if quotes == 1 else 's' }} and your usage history. It can't be undone.</p>
+  <p class="muted small">Want a copy first? <a href="{{ url_for('export_data') }}">Download all my data</a> (ZIP of CSV files).</p>
+  {% if stripe_active %}
+    <p class="notice">You have an active Pro subscription. Please cancel it first under
+      <a href="{{ url_for('billing_page') }}">Plan &amp; billing</a> so you aren't charged again.</p>
+  {% endif %}
+  <div class="field">
+    <label for="confirm">Type DELETE (or your email) to confirm</label>
+    <input type="text" id="confirm" name="confirm" required autocomplete="off">
+  </div>
+  <div class="field">
+    <label for="password">Your password</label>
+    <input type="password" id="password" name="password" required autocomplete="current-password">
+  </div>
+  <button class="btn danger" type="submit">Delete my account and all its data</button>
+  <a class="btn secondary" href="{{ url_for('account') }}">Cancel</a>
+</form>
+{% endblock %}

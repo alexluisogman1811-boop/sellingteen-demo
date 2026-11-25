@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schedule {{ days[0].isoformat() }} · ShiftSnap</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="print-page">
+  <div class="no-print print-bar">
+    <button class="btn" type="button" id="print-btn">Print</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.schedule', date=monday.isoformat(), employee=employee or None, role=role or None) }}">Back to schedule</a>
+  </div>
+  <h1>Weekly schedule: {{ monday|week_label }}</h1>
+  <p class="small">
+    {% if employee_name %}Employee: <strong>{{ employee_name }}</strong> · {% endif %}
+    {% if role %}Role: <strong>{{ role }}</strong> · {% endif %}
+    Total {{ total|hours }}{% if demo_mode %} · <strong>DEMO DATA</strong>{% endif %}
+  </p>
+  {% if rows %}
+  <table class="print-table">
+    <thead>
+      <tr><th>Employee</th>{% for day in days %}<th>{{ day|dshort }}</th>{% endfor %}<th>Hours</th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <th scope="row">{{ r.name }}</th>
+        {% for day in days %}
+        <td>{% for s in r.cells[day] %}
+          <div class="p-shift">{{ s.start_time }}–{{ s.end_time }}{{ ' (+1)' if s.overnight }}<br><span class="small">{{ s.role }}</span></div>
+        {% endfor %}</td>
+        {% endfor %}
+        <td>{{ r.hours|hours }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="small">(+1) = ends the next day. Printed from ShiftSnap.</p>
+  {% else %}
+  <p>No shifts scheduled for this week{{ ' with these filters' if employee or role }}.</p>
+  {% endif %}
+  <footer class="site-footer no-print">
+    <div class="site-footer-inner">
+      <span>ShiftSnap · by sellingteen</span>
+      <nav aria-label="Legal">
+        <a href="{{ url_for('legal.terms') }}">Terms</a>
+        <a href="{{ url_for('legal.privacy') }}">Privacy</a>
+        <a href="{{ url_for('legal.refunds') }}">Refunds</a>
+      </nav>
+    </div>
+  </footer>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

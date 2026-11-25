@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Set up your business — QuoteFlow AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<ol class="steps-indicator" aria-label="Setup progress">
+  {% for s in steps %}
+    <li class="{{ 'done' if loop.index < step else ('current' if loop.index == step) }}" {{ 'aria-current="step"' | safe if loop.index == step }}>
+      <span class="dot">{{ '✓' if loop.index < step else loop.index }}</span><span class="label">{{ s[0] }}</span>
+    </li>
+  {% endfor %}
+</ol>
+
+<div class="page-head">
+  <div>
+    <p class="muted small" style="margin:0 0 4px">Step {{ step }} of {{ steps | length }}</p>
+    <h1>{{ title }}</h1>
+    <p class="muted" style="margin:4px 0 0">{{ intro }}</p>
+  </div>
+</div>
+
+<form method="post" class="card" data-busy-label="Saving…">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  {% if step == 1 %}
+    <div class="field">
+      <label for="business_name">Business name</label>
+      <input type="text" id="business_name" name="business_name" value="{{ profile.business_name }}" placeholder="e.g. Sparkle Home Cleaning" required autofocus>
+      <p class="hint" style="margin-top:6px">Used to sign your replies.</p>
+    </div>
+    <div class="field">
+      <label for="service_area">Service area</label>
+      <textarea id="service_area" name="service_area" rows="2" placeholder="e.g. Riverside, Oakwood and Downtown">{{ profile.service_area }}</textarea>
+    </div>
+    <div class="field">
+      <label for="opening_hours">Business hours</label>
+      <textarea id="opening_hours" name="opening_hours" rows="2" placeholder="e.g. Mon–Fri 8am–6pm, Sat 9am–2pm">{{ profile.opening_hours }}</textarea>
+    </div>
+
+  {% elif step == 2 %}
+    <div class="field">
+      <label for="services">Services you offer</label>
+      <p class="hint">One per line. Add a typical duration so quotes can include time estimates. Anything not listed here, the AI will say you don't offer.</p>
+      <textarea id="services" name="services" rows="7" autofocus placeholder="e.g.
+Basic clean – about 2–3 hours for a 2-bed, 1-bath home
+Deep clean – about 4–5 hours for a 2-bed, 1-bath home
+Move-out clean
+Inside oven clean (add-on) – 1 hour">{{ profile.services }}</textarea>
+    </div>
+
+  {% else %}
+    <div class="field" style="max-width:200px">
+      <label for="currency">Currency</label>
+      <select id="currency" name="currency">
+        {% for c in currencies %}<option value="{{ c }}" {{ 'selected' if c == profile.currency }}>{{ c }}</option>{% endfor %}
+      </select>
+    </div>
+    {% include "_pricing_fields.html" %}
+  {% endif %}
+
+  <div class="actions onboarding-actions">
+    <button class="btn" type="submit">{{ 'Finish setup' if step == steps | length else 'Continue' }}</button>
+    {% if step > 1 %}<a href="{{ url_for('onboarding', step=step - 1) }}" class="btn secondary">Back</a>{% endif %}
+    <a href="{{ url_for('dashboard') }}" class="skip">Skip for now</a>
+  </div>
+</form>
+<p class="muted small" style="text-align:center">You can change all of this later in your business profile.</p>
+{% endblock %}

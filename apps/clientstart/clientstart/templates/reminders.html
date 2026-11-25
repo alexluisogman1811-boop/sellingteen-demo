@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf with context %}
+{% block title %}Reminders{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Reminder templates</h1>
+    <p class="muted">These fill in automatically on each onboarding page so you can copy them into your own email. Nothing is ever sent by ClientStart.</p></div>
+</div>
+<div class="card">
+  <p class="small">Placeholders: {% for p in placeholders %}<code>{{ '{' ~ p ~ '}' }}</code> {% endfor %}</p>
+</div>
+{% for r in reminders %}
+<form method="post" class="card form">
+  {{ csrf() }}<input type="hidden" name="id" value="{{ r.id }}">
+  <div class="grid-2">
+    <label>Name <input name="name" required maxlength="100" value="{{ r.name }}"></label>
+    <label>Subject <input name="subject" required maxlength="200" value="{{ r.subject }}"></label>
+  </div>
+  <label>Message <textarea name="body" rows="8" required maxlength="5000">{{ r.body }}</textarea></label>
+  <div class="btn-row">
+    <button class="btn btn-primary" name="action" value="update" type="submit">Save</button>
+    <button class="btn btn-link confirm" data-confirm="Delete this reminder template?" name="action" value="delete" type="submit">Delete</button>
+  </div>
+</form>
+{% endfor %}
+<form method="post" class="card form">
+  {{ csrf() }}
+  <h2>New reminder template</h2>
+  <div class="grid-2">
+    <label>Name <input name="name" required maxlength="100"></label>
+    <label>Subject <input name="subject" required maxlength="200"></label>
+  </div>
+  <label>Message <textarea name="body" rows="6" required maxlength="5000" placeholder="Hi {client_name}, …"></textarea></label>
+  <button class="btn btn-primary" name="action" value="create" type="submit">Add template</button>
+</form>
+{% endblock %}

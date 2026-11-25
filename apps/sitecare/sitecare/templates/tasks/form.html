@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ 'Edit task' if task else 'Add recurring task' }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('main.website_detail', website_id=site.id) }}">{{ site.name }}</a></p>
+    <h1>{{ 'Edit recurring task' if task else 'Add recurring task' }}</h1>
+  </div>
+</div>
+<form method="post" class="card form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if errors %}<p class="form-alert" role="alert">Please fix the highlighted fields.</p>{% endif %}
+  <div class="form-grid">
+    {{ m.select('category', 'Category', CATEGORIES.items(), values, errors, blank='Choose a category') }}
+    {{ m.input('title', 'Task title', values, errors, required=True, attrs='maxlength="120"') }}
+    {{ m.select('frequency', 'Repeats', FREQUENCIES.items(), values, errors) }}
+    <div class="field{% if errors.get('interval_days') %} has-error{% endif %}" data-show-when="frequency=custom">
+      <label for="f-interval_days">Every how many days? <span class="req" aria-hidden="true">*</span></label>
+      <input id="f-interval_days" name="interval_days" type="number" min="1" max="365" inputmode="numeric"
+             value="{{ values.get('interval_days') if values.get('interval_days') is not none else '' }}">
+      <p class="hint">Only used for a custom interval, e.g. 14 for fortnightly.</p>
+      {{ m.field_error(errors, 'interval_days') }}
+    </div>
+    {{ m.input('start_date', 'First due date', values, errors, type='date', required=True, hint='Monthly tasks repeat on this day of the month (clamped to shorter months).') }}
+    {{ m.textarea('description', 'Checklist / instructions', values, errors, hint='What should be checked each time. No passwords or keys.') }}
+  </div>
+  {% if task %}<p class="hint">Changing the schedule replaces upcoming unrecorded due dates. Recorded history is never changed.</p>{% endif %}
+  <p class="hint">SiteCare Desk only reminds you. Nothing is checked automatically - you record the result after doing the work.</p>
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">{{ 'Save changes' if task else 'Add task' }}</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.website_detail', website_id=site.id) }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

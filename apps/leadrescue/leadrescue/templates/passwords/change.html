@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Change password{% endblock %}
+{% block content %}
+<div class="auth-card card">
+  <h1>Change password</h1>
+  <p class="muted small">Changing your password signs you out on every other device.</p>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.current_password) }}
+    {{ field(form.password) }}
+    {{ field(form.confirm) }}
+    <button class="btn btn-primary btn-block" type="submit">Change password</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, errors as show_errors %}
+{% block title %}Edit deliverable{% endblock %}
+{% block content %}
+<div class="narrow">
+  <p><a href="{{ url_for('main.project', project_id=p.id, _anchor='scope') }}">← {{ p.name }}</a></p>
+  <h1>Edit deliverable</h1>
+  <p class="notice">This edits the working draft. Earlier published versions keep their original wording.</p>
+  {{ show_errors(errors) }}
+  <form method="post" class="stack card">
+    {{ csrf() }}
+    <div class="field"><label for="title">Deliverable</label>
+      <input id="title" name="title" type="text" required maxlength="200" value="{{ item.title or '' }}"></div>
+    <div class="field"><label for="description">Details</label>
+      <textarea id="description" name="description" maxlength="3000">{{ item.description or '' }}</textarea></div>
+    <div class="row">
+      <div class="field"><label for="due_date">Due date</label>
+        <input id="due_date" name="due_date" type="date" value="{{ item.due_date or '' }}"></div>
+      <div class="field"><label for="revision_allowance">Revision allowance</label>
+        <input id="revision_allowance" name="revision_allowance" type="number" min="0" max="100" value="{{ item.revision_allowance if item.revision_allowance not in (None, '') else '' }}" placeholder="{{ p.revision_allowance }} (project default)"></div>
+    </div>
+    <div class="actions"><button class="btn primary" type="submit">Save</button>
+      <a class="btn" href="{{ url_for('main.project', project_id=p.id, _anchor='scope') }}">Cancel</a></div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Review link created{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('main.project', project_id=p.id, _anchor='share') }}">← {{ p.name }}</a></p>
+<h1>Client review link created</h1>
+<div class="notice warn"><strong>Copy this link now.</strong> For security only a hash is stored, so it cannot be shown again. If you lose it, create a new one and revoke this one.</div>
+{% if local_only %}
+<div class="notice warn"><strong>This link points to your own computer</strong> ({{ request.host }}), so your client cannot open it from theirs.
+  To share links with clients, run ScopeGuard on a server they can reach and set <code>SCOPEGUARD_BASE_URL</code> to its public address (see the README). For now you can preview the client view yourself.</div>
+{% endif %}
+<div class="card">
+  <label class="field-label" for="review-url">{{ 'Approval' if can_decide else 'View-only' }} review link for {{ recipient }} (valid {{ days }} days)</label>
+  <div class="linkbox">
+    <input id="review-url" type="text" readonly value="{{ url }}">
+    <button class="btn primary" type="button" data-copy="review-url">Copy</button>
+  </div>
+  <p class="mt"><a class="btn small" href="{{ url }}" target="_blank" rel="noopener noreferrer">Preview client view</a></p>
+  <p class="muted mt">{% if can_decide %}Decisions made with this link are recorded as {{ recipient }}'s. ScopeGuard can't verify who holds the link, so send it only to {{ recipient }}, ideally to an address you know is theirs.{% else %}This link can only view the scope; it can't record decisions.{% endif %}</p>
+</div>
+{% for m in rendered %}
+<div class="card">
+  <h2>{{ m.name }}</h2>
+  <p class="muted">Ready to paste into your own email. Nothing is sent automatically.</p>
+  <label class="field-label" for="subj-{{ loop.index }}">Subject</label>
+  <div class="linkbox"><input id="subj-{{ loop.index }}" type="text" value="{{ m.subject }}"><button class="btn" type="button" data-copy="subj-{{ loop.index }}">Copy</button></div>
+  <label class="field-label mt" for="body-{{ loop.index }}">Message</label>
+  <textarea id="body-{{ loop.index }}" class="tall">{{ m.body }}</textarea>
+  <button class="btn mt" type="button" data-copy="body-{{ loop.index }}">Copy message</button>
+</div>
+{% endfor %}
+{% endblock %}

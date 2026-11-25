@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, errors as show_errors %}
+{% block title %}{{ 'Edit terms' if editing else 'New project' }}{% endblock %}
+{% block content %}
+<div class="narrow">
+  <h1>{{ 'Edit project terms' if editing else 'New project' }}</h1>
+  {% if editing %}<p class="notice">Changes here update the working draft. Published scope versions are never overwritten; publish a new version to share the change with the client.</p>{% endif %}
+  {{ show_errors(errors) }}
+  <form method="post" class="stack card">
+    {{ csrf() }}
+    {% if not editing %}
+    <div class="field"><label for="client_id">Client</label>
+      <select id="client_id" name="client_id" required>
+        <option value="">Choose a client…</option>
+        {% for c in clients %}<option value="{{ c.id }}" {% if project.client_id|string == c.id|string %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select>
+      <div class="hint"><a href="{{ url_for('main.client_new') }}">Add a new client</a></div></div>
+    {% endif %}
+    <div class="field"><label for="name">Project name</label>
+      <input id="name" name="name" type="text" required maxlength="150" value="{{ project.name or '' }}"></div>
+    <div class="field"><label for="description">Summary</label>
+      <textarea id="description" name="description" maxlength="5000">{{ project.description or '' }}</textarea></div>
+    <div class="row">
+      <div class="field"><label for="start_date">Start date</label>
+        <input id="start_date" name="start_date" type="date" value="{{ project.start_date or '' }}"></div>
+      <div class="field"><label for="deadline">Deadline</label>
+        <input id="deadline" name="deadline" type="date" value="{{ project.deadline or '' }}"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="revision_allowance">Revisions per deliverable</label>
+        <input id="revision_allowance" name="revision_allowance" type="number" min="0" max="100" required value="{{ project.revision_allowance if project.revision_allowance is not none else 2 }}">
+        <div class="hint">Agreed rounds included; can be overridden per deliverable.</div></div>
+      <div class="field"><label for="hourly_rate">Hourly rate (optional)</label>
+        <input id="hourly_rate" name="hourly_rate" type="number" min="0" step="0.01" value="{{ project.hourly_rate if project.hourly_rate is not none else '' }}"></div>
+      <div class="field"><label for="currency">Currency</label>
+        <input id="currency" name="currency" type="text" maxlength="3" value="{{ project.currency or 'USD' }}"></div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" type="submit">{{ 'Save draft terms' if editing else 'Create project' }}</button>
+      {% if editing %}<a class="btn" href="{{ url_for('main.project', project_id=editing.id) }}">Cancel</a>{% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

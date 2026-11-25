@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Message templates{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Message templates</h1><div class="meta">Reusable emails and messages. They are filled in per project and copied by you; nothing is sent automatically.</div></div>
+  <a class="btn primary" href="{{ url_for('main.template_edit') }}">New template</a>
+</div>
+{% for t in templates %}
+<div class="card">
+  <div class="section-head">
+    <h2>{{ t.name }}</h2>
+    <div class="actions">
+      <a class="btn small" href="{{ url_for('main.template_edit', template_id=t.id) }}">Edit</a>
+      <form method="post" action="{{ url_for('main.template_delete', template_id=t.id) }}" data-confirm="Delete this template?">{{ csrf() }}<button class="btn small danger" type="submit">Delete</button></form>
+    </div>
+  </div>
+  <p><strong>Subject:</strong> {{ t.subject }}</p>
+  <pre class="wrap muted">{{ t.body }}</pre>
+</div>
+{% else %}<p class="empty">No templates yet.</p>{% endfor %}
+<p class="muted">Available placeholders: {% for ph in placeholders %}<code>{{ '{' ~ ph ~ '}' }}</code>{{ ', ' if not loop.last }}{% endfor %}</p>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Get more customer reviews{% endblock %}
+{% macro demo_cta(label='Try the demo', extra='') %}
+  {% if demo_enabled %}
+  <form method="post" action="{{ url_for('demo.start_demo') }}" class="inline">
+    {{ csrf() }}
+    <button class="btn btn-lg {{ extra }}" type="submit">{{ label }}</button>
+  </form>
+  {% else %}
+  <a class="btn btn-lg {{ extra }}" href="{{ url_for('auth.signup') }}">Get Started</a>
+  {% endif %}
+{% endmacro %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">ReviewBoost AI · For electricians and local service businesses</p>
+  <h1>Get More Customer Reviews Without Chasing Customers</h1>
+  <p class="lead">Happy customers are often glad to leave a review. They just need to be asked.
+    ReviewBoost AI writes a personal review request for every finished job, so asking takes about a minute.</p>
+  <div class="cta-row">
+    {{ demo_cta('Try the Demo') }}
+    {% if demo_enabled %}<a class="btn btn-secondary btn-lg" href="{{ url_for('auth.signup') }}">Get Started</a>{% endif %}
+  </div>
+  {% if demo_enabled %}<p class="hint">The demo opens a private sample account with fictional customers. No signup needed.</p>{% endif %}
+</section>
+
+<section class="card landing-section">
+  <h2>The problem</h2>
+  <p>You finish the job, the customer is happy, and you're already driving to the next one.
+    Asking for a review gets forgotten, or it means writing the same text again and again.
+    Weeks later you can't remember who you asked.</p>
+  <h2>The fix</h2>
+  <p>Add the customer when the job is done. ReviewBoost drafts a friendly, personal message using
+    their name, the work you did, and your review link. Copy it, send it from your own phone or email,
+    and tap one button to remember you asked.</p>
+</section>
+
+<section class="landing-section">
+  <h2 class="center">How it works</h2>
+  <ol class="how-steps">
+    <li class="card"><span class="step-num">1</span><h3>Add your customer</h3><p>Name, phone and the job you did. It takes about 20 seconds.</p></li>
+    <li class="card"><span class="step-num">2</span><h3>Generate a personalized review request</h3><p>Written for that customer and that job, using only what you entered.</p></li>
+    <li class="card"><span class="step-num">3</span><h3>Copy and send it</h3><p>Paste it into a text, LINE, WhatsApp or email from your own phone. Nothing is sent automatically.</p></li>
+    <li class="card"><span class="step-num">4</span><h3>Track your follow-ups</h3><p>See who still needs asking, who you've contacted, and who left a review.</p></li>
+  </ol>
+</section>
+
+<section class="landing-grid">
+  <div class="card">
+    <h2>Example message</h2>
+    <p class="muted small">For a fictional customer, Maria, after an EV charger install:</p>
+    <blockquote class="example-msg">{{ example }}</blockquote>
+    <p class="hint">Messages only use details you enter. ReviewBoost never invents discounts, promises or customer details.</p>
+  </div>
+  <div class="card">
+    <h2>Why owners use it</h2>
+    <ul class="benefits">
+      <li><strong>Saves time.</strong> No more writing every review request from scratch.</li>
+      <li><strong>Never forget who to ask.</strong> Your dashboard shows who hasn't been asked yet.</li>
+      <li><strong>Sounds like you.</strong> Personal messages, plus your own saved wording if you prefer.</li>
+      <li><strong>Works on your phone.</strong> Use it between jobs, right from the truck.</li>
+      <li><strong>You stay in control.</strong> Nothing is sent automatically. You send each message yourself.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="card center pricing" id="pricing">
+  <h2>Simple pricing</h2>
+  <p class="price"><span class="price-amount">$19</span><span class="price-period">/month</span></p>
+  <p class="muted">One plan per business. Everything included.{% if config.BILLING_ENABLED %} Start with a {{ config.TRIAL_DAYS }}-day free trial, no card needed.{% endif %}</p>
+  <ul class="price-list">
+    <li>Unlimited customers and review requests</li>
+    <li>Personalized messages, plus your own saved templates</li>
+    <li>Dashboard to track who you've asked and who left a review</li>
+    <li>Works on your phone and computer</li>
+    <li>No contract. Cancel anytime.</li>
+  </ul>
+  <div class="cta-row center-row">
+    {{ demo_cta('Try the Demo') }}
+    {% if demo_enabled %}<a class="btn btn-secondary btn-lg" href="{{ url_for('auth.signup') }}">Get Started</a>{% endif %}
+  </div>
+  <p class="hint">No card needed to get started, and you're never charged automatically. Billing is arranged with you directly.</p>
+  <p class="small muted">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+</section>
+
+<p class="fine-print center small muted">Reviews are always up to your customers. ReviewBoost helps you ask. It doesn't write, post or guarantee reviews.</p>
+{% endblock %}

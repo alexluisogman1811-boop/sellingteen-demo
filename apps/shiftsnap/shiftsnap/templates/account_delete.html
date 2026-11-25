@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error %}
+{% block title %}Delete account{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Delete your account</h1>
+  <p>This permanently deletes <strong>{{ current_account.name }}</strong> and everything in it: all employees,
+    availability, shifts, settings and every sign-in (managers and employees). It cannot be undone.</p>
+  <p>Want a copy first? <a href="{{ url_for('auth.export_data') }}">Download all your data (ZIP of CSV files)</a>.</p>
+  <p class="muted small">Deleting the account does not cancel a payment you set up with the payment provider.
+    Cancel that there too.</p>
+  {% if errors %}<div class="flash flash-error" role="alert">Your account was not deleted. Please fix the highlighted field.</div>{% endif %}
+  <form method="post" action="{{ url_for('auth.delete_account') }}" class="form" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Type DELETE (or your business email) to confirm
+      <input name="confirm" autocomplete="off" autocapitalize="none" spellcheck="false" required
+             class="{{ 'invalid' if errors.confirm }}">
+      {{ field_error(errors, 'confirm') }}</label>
+    <label>Your password
+      <input type="password" name="password" autocomplete="current-password" required
+             class="{{ 'invalid' if errors.password }}">
+      {{ field_error(errors, 'password') }}</label>
+    <div class="form-actions">
+      <button class="btn btn-danger" type="submit">Delete my account forever</button>
+      <a href="{{ url_for('auth.account') }}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

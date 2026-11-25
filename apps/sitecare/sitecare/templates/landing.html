@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Maintenance tracker for client websites{% endblock %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">SiteCare Desk · for developers and studios who look after client websites</p>
+  <h1>Keep a clear record of the care work you do for every client website</h1>
+  <p class="lead">Record routine work such as backup checks, updates, form tests and performance reviews,
+    track issues, and produce honest client reports for any period.</p>
+  <div class="cta-row">
+    <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Start {{ config.TRIAL_DAYS }}-day free trial</a>
+    <a class="btn" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>What you can do</h2>
+    <ul>
+      <li>Keep your clients and their websites (domain, platform, maintenance plan, status) in one place.</li>
+      <li>Set recurring tasks: daily, weekly, monthly or every N days.</li>
+      <li>Record each check with the date, the result, who did it, notes and optional evidence files.</li>
+      <li>Track issues with severity, status and resolution notes.</li>
+      <li>Make a client report for a month or any date range. Print it, download it as HTML, or export CSV.</li>
+      <li>Save a report as an unchangeable copy and share it with that client through a private link.</li>
+    </ul>
+  </section>
+  <section class="card">
+    <h2>Honest by design</h2>
+    <ul>
+      <li>Everything is manual. A task is only marked done when you record it.</li>
+      <li>SiteCare Desk does not run backups, uptime monitoring or security scans, and never assumes they succeeded.</li>
+      <li>Missed work stays overdue until you record or skip it. It never silently disappears.</li>
+      <li>Each studio has its own account and only ever sees its own data. Your clients never need an account.</li>
+    </ul>
+  </section>
+</div>
+
+<section class="card" id="pricing">
+  <h2>Price</h2>
+  <p class="price-text">{{ config.PRICE_TEXT }}</p>
+  <p class="muted">{% if config.BILLING_ENABLED %}Try every feature free for {{ config.TRIAL_DAYS }} days. No card needed to start.{% endif %}
+    Export or delete your data at any time.</p>
+  <div class="cta-row">
+    <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Start {{ config.TRIAL_DAYS }}-day free trial</a>
+    <a class="btn" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+</section>
+{% endblock %}

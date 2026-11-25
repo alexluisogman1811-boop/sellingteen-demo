@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Team{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Team</h1>
+  <a class="btn btn-primary" href="{{ url_for('auth.user_new') }}">+ Add person</a>
+</div>
+<section class="panel">
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for u in users %}
+      <tr class="{{ 'muted' if not u.active }}">
+        <td>{{ u.name }}</td><td>{{ u.email }}</td><td>{{ roles[u.role] }}</td>
+        <td>{{ 'Active' if u.active else 'Deactivated' }}</td>
+        <td class="right">
+          {% if u.id != g.user.id %}
+          <form method="post" action="{{ url_for('auth.user_toggle', user_id=u.id) }}" class="inline">
+            {{ csrf_field() }}
+            <button class="btn btn-small" type="submit">{{ 'Deactivate' if u.active else 'Reactivate' }}</button>
+          </form>
+          {% else %}<span class="muted small">You</span>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="muted small">Workers can update checklists, upload photos and submit jobs for review. Managers can also manage customers, templates, jobs, share links and exports.</p>
+</section>
+{% endblock %}

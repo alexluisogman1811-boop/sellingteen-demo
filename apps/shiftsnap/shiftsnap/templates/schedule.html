@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% from "_macros.html" import shift_card with context %}
+{% block title %}Schedule{% endblock %}
+{% block content %}
+{% set here = current_url() %}
+{% set keep = {'employee': employee or None, 'role': role or None} %}
+<div class="page-head">
+  <h1>
+    {% if view == 'week' %}Week of {{ monday|week_label }}
+    {% else %}{{ d|dlong }}{% endif %}
+  </h1>
+  {% if is_manager %}
+  <a class="btn hide-mobile" href="{{ url_for('main.shift_new', date=d.isoformat(), employee=employee if employee.isdigit() else None, next=here) }}">+ Add shift</a>
+  {% else %}
+  <a class="btn btn-ghost" href="{{ url_for('main.schedule', view=view, date=d.isoformat(), employee=current_user.employee_id) }}">Only my shifts</a>
+  {% endif %}
+</div>
+
+<div class="toolbar">
+  <div class="btn-group" role="group" aria-label="Navigate">
+    <a class="btn btn-ghost" href="{{ url_for('main.schedule', view=view, date=prev_d.isoformat(), **keep) }}">← Prev {{ view }}</a>
+    <a class="btn btn-ghost" href="{{ url_for('main.schedule', view=view, **keep) }}">Today</a>
+    <a class="btn btn-ghost" href="{{ url_for('main.schedule', view=view, date=next_d.isoformat(), **keep) }}">Next {{ view }} →</a>
+  </div>
+  <div class="btn-group" role="group" aria-label="View">
+    <a class="btn btn-ghost {{ 'on' if view == 'week' }}" href="{{ url_for('main.schedule', view='week', date=d.isoformat(), **keep) }}">Week</a>
+    <a class="btn btn-ghost {{ 'on' if view == 'day' }}" href="{{ url_for('main.schedule', view='day', date=d.isoformat(), **keep) }}">Day</a>
+  </div>
+  {% if is_manager %}
+  <div class="btn-group" role="group" aria-label="Export">
+    <a class="btn btn-ghost" href="{{ url_for('main.schedule_print', date=d.isoformat(), **keep) }}" target="_blank" rel="noopener">Print week</a>
+    <a class="btn btn-ghost" href="{{ url_for('main.schedule_export', date=d.isoformat(), **keep) }}">Export week CSV</a>
+  </div>
+  {% endif %}
+</div>
+
+<form class="filters card" method="get" action="{{ url_for('main.schedule') }}">
+  <input type="hidden" name="view" value="{{ view }}">
+  <input type="hidden" name="date" value="{{ d.isoformat() }}">
+  <label>Employee
+    <select name="employee">
+      <option value="">All employees</option>
+      <option value="unfilled" {{ 'selected' if employee == 'unfilled' }}>Unfilled shifts only</option>
+      {% for e in employees %}
+      <option value="{{ e.id }}" {{ 'selected' if employee == e.id|string }}>{{ e.name }}{{ ' (inactive)' if not e.active }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Role
+    <select name="role">
+      <option value="">All roles</option>
+      {% for r in roles %}<option value="{{ r }}" {{ 'selected' if role == r }}>{{ r }}</option>{% endfor %}
+    </select>
+  </label>
+  <button class="btn" type="submit">Apply</button>
+  {% if employee or role %}<a href="{{ url_for('main.schedule', view=view, date=d.isoformat()) }}">Clear filters</a>{% endif %}
+  <span class="muted small filter-summary">{{ shifts|length }} shift{{ '' if shifts|length == 1 else 's' }} · {{ total_hours|round(2)|hours }}</span>
+</form>
+
+{# Quick day picker: jumps within the week view on phones, switches days in day view. #}
+<nav class="day-strip {{ 'mobile-only' if view == 'week' }}" aria-label="Days this week">
+  {% for day in days %}
+  {% set n = by_day[day]|length %}
+  <a class="day-chip {{ 'is-today' if day == today }} {{ 'is-current' if view == 'day' and day == d }}"
+     href="{{ '#d-' ~ day.isoformat() if view == 'week' else url_for('main.schedule', view='day', date=day.isoformat(), **keep) }}"
+     {% if view == 'day' and day == d %}aria-current="date"{% endif %}>
+    <span class="dc-wd">{{ WEEKDAYS[day.weekday()][:3] }}</span>
+    <span class="dc-num">{{ day.day }}</span>
+    <span class="dc-count {{ 'zero' if not n }}">{{ n }}</span>
+  </a>
+  {% endfor %}
+</nav>
+
+{% if is_manager and not has_any_employee and not shifts %}
+<section class="empty card">
+  <h2>Nothing to schedule yet</h2>
+  <p>Add employees first so you can assign them to shifts — or create unfilled shifts now and assign people later.</p>
+  <a class="btn" href="{{ url_for('main.employee_new') }}">Add an employee</a>
+  <a class="btn btn-ghost" href="{{ url_for('main.shift_new', date=d.isoformat(), next=here) }}">Create an unfilled shift</a>
+</section>
+{% elif not shifts and not carry_over %}
+<section class="empty card">
+  {% if employee or role %}
+    <p>No shifts match these filters for this {{ view }}. <a href="{{ url_for('main.schedule', view=view, date=d.isoformat()) }}">Clear filters</a></p>
+  {% else %}
+    <p>No shifts scheduled for this {{ view }} yet.
+      {% if is_manager %}<a href="{{ url_for('main.shift_new', date=d.isoformat(), next=here) }}">Add the first shift</a>.{% endif %}</p>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if view == 'week' %}
+<div class="week">
+  {% for day in days %}
+  <section class="day {{ 'is-today' if day == today }} {{ 'is-empty' if not by_day[day] }}" id="d-{{ day.isoformat() }}">
+    <header class="day-head">
+      <a href="{{ url_for('main.schedule', view='day', date=day.isoformat(), **keep) }}">{{ day|dshort }}</a>
+      {% if is_manager %}<a class="add" title="Add shift on {{ day|dshort }}" aria-label="Add shift on {{ day|dshort }}"
+         href="{{ url_for('main.shift_new', date=day.isoformat(), employee=employee if employee.isdigit() else None, next=here) }}">+</a>{% endif %}
+    </header>
+    {% for s in by_day[day] %}{{ shift_card(s, here) }}{% else %}<p class="muted small day-empty">No shifts</p>{% endfor %}
+  </section>
+  {% endfor %}
+</div>
+{% else %}
+<section class="card">
+  {% if carry_over %}
+    <p class="muted small">Overnight shifts continuing from {{ prev_d|dshort }}:</p>
+    <div class="shift-list">{% for s in carry_over %}{{ shift_card(s, here, show_date=true) }}{% endfor %}</div>
+  {% endif %}
+  <div class="shift-list">{% for s in shifts %}{{ shift_card(s, here) }}{% endfor %}</div>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>{{ 'Weekly hours' if is_manager else 'Your hours' }} <span class="muted small">· {{ days[0]|dshort }} – {{ days[-1]|dshort }}, all roles</span></h2>
+  {% if weekly_hours %}
+  <table class="table hours-table">
+    <thead><tr><th>Employee</th><th>Role</th><th>Shifts</th><th>Hours</th></tr></thead>
+    <tbody>
+    {% for r in weekly_hours %}
+      <tr class="{{ 'over' if r.hours > 40 }}">
+        <td><a href="{{ url_for('main.schedule', view='week', date=d.isoformat(), employee=r.employee.id) }}">{{ r.employee.name }}</a>{% if not r.employee.active %} <span class="tag">Inactive</span>{% endif %}</td>
+        <td>{{ r.employee.role or '—' }}</td>
+        <td>{{ r.shifts }}</td>
+        <td>{{ r.hours|hours }}{% if r.hours > 40 %} <span class="tag tag-warn" title="More than 40 hours">40h+</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    {% if is_manager and summary.unfilled_count %}
+      <tr class="unfilled-row">
+        <td><a href="{{ url_for('main.schedule', view='week', date=d.isoformat(), employee='unfilled') }}">Unfilled</a></td>
+        <td>—</td>
+        <td>{{ summary.unfilled_count }}</td>
+        <td>{{ summary.unfilled_hours|hours }}</td>
+      </tr>
+    {% endif %}
+    </tbody>
+    {% if is_manager %}<tfoot>
+      <tr><th colspan="3">Total ({{ summary.assigned_hours|hours }} assigned + {{ summary.unfilled_hours|hours }} unfilled)</th>
+          <th>{{ summary.total_hours|hours }}</th></tr>
+    </tfoot>{% endif %}
+  </table>
+  <p class="muted small">Overnight shifts count toward the week in which they start.</p>
+  {% else %}
+  <p class="empty-inline">{{ 'No employees yet.' if is_manager else 'You have no shifts this week.' }}</p>
+  {% endif %}
+</section>
+
+{% if is_manager %}
+<a class="fab mobile-only" aria-label="Add shift"
+   href="{{ url_for('main.shift_new', date=d.isoformat(), employee=employee if employee.isdigit() else None, next=here) }}">+ Shift</a>
+{% endif %}
+{% endblock %}

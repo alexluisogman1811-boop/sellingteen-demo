@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "macros.html" import field, textarea %}
+{% block title %}{{ 'Edit job' if job else 'New job' }}{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <p class="crumb"><a href="{{ url_for('main.job_detail', job_id=job.id) if job else url_for('main.jobs') }}">{{ job.title if job else 'Jobs' }}</a></p>
+  <h1>{{ 'Edit job' if job else 'New job' }}</h1>
+  {% if not customers %}
+    <p class="notice">Add a customer and a property first. <a href="{{ url_for('main.customer_new') }}">Add customer</a></p>
+  {% else %}
+  <form method="post" action="{{ url_for('main.job_edit', job_id=job.id) if job else url_for('main.job_new') }}" class="stack">
+    {{ csrf_field() }}
+    {{ field('title', 'Job title', values.title, required=true, hint='e.g. "Weekly office clean"') }}
+    <label class="field"><span class="field-label">Customer <span class="req">*</span></span>
+      <select name="customer_id" id="customer_id" required data-filters="property_id">
+        <option value="">Choose customer…</option>
+        {% for c in customers %}<option value="{{ c.id }}" {% if values.customer_id == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select></label>
+    <label class="field"><span class="field-label">Property <span class="req">*</span></span>
+      <select name="property_id" id="property_id" required>
+        <option value="">Choose property…</option>
+        {% for p in properties %}<option value="{{ p.id }}" data-customer="{{ p.customer_id }}" {% if values.property_id == p.id %}selected{% endif %}>{{ p.customer_name }} – {{ p.name }}</option>{% endfor %}
+      </select></label>
+    {% if not job %}
+    <label class="field"><span class="field-label">Checklist template</span>
+      <select name="template_id">
+        <option value="">No template (add tasks later)</option>
+        {% for t in templates %}<option value="{{ t.id }}" {% if values.template_id == t.id %}selected{% endif %}>{{ t.name }}</option>{% endfor %}
+      </select>
+      <span class="hint">The template's tasks are copied into this job.</span></label>
+    {% endif %}
+    <label class="field"><span class="field-label">Assigned worker</span>
+      <input type="text" name="assigned_worker" value="{{ values.assigned_worker or '' }}" maxlength="100" list="team-members" autocomplete="off">
+      <span class="hint">Pick a team member so the job shows under their “Assigned to you”.</span></label>
+    <datalist id="team-members">{% for name in team_members %}<option value="{{ name }}">{% endfor %}</datalist>
+    {{ field('appointment_date', 'Appointment date', values.appointment_date, type='date', required=true) }}
+    <div class="two-col">
+      {{ field('start_time', 'Appointment start', values.start_time, type='time') }}
+      {{ field('end_time', 'Appointment end', values.end_time, type='time') }}
+    </div>
+    <p class="hint">Planned times only. Actual work times are recorded when the worker starts and submits the job.</p>
+    {{ textarea('internal_notes', 'Internal notes (team only, not on report)', values.internal_notes) }}
+    {{ textarea('report_notes', 'Report notes (shown to the customer)', values.report_notes) }}
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">{{ 'Save changes' if job else 'Create job' }}</button>
+      <a class="btn" href="{{ url_for('main.job_detail', job_id=job.id) if job else url_for('main.jobs') }}">Cancel</a>
+    </div>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}

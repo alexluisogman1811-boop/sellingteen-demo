@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}GCs{% endblock %}
+{% block content %}
+<div class="spread">
+  <h1>General contractors</h1>
+  <a class="btn btn-primary" href="{{ url_for('core.customer_form') }}">+ Add GC</a>
+</div>
+<div class="card">
+  {% if customers %}
+  <ul class="list">
+    {% for c in customers %}
+    <li><a class="item" href="{{ url_for('core.customer_detail', customer_id=c.id) }}">
+      <span class="item-title">{{ c.name }}</span>
+      <span class="small muted">{{ c.job_count }} job{{ "" if c.job_count == 1 else "s" }}</span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty">No GCs yet. Add the general contractors you work for, with the contacts who should get notices.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field_error %}
+{% block title %}{{ 'Edit' if service else 'New' }} service{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('admin.services') }}">← Services</a></p>
+<section class="card narrow">
+  <h1>{{ 'Edit ' ~ service.name if service else 'New service' }}</h1>
+  <form method="post" class="form" novalidate>
+    {{ csrf() }}
+    <label for="name">Name</label>
+    <input id="name" name="name" maxlength="100" required value="{{ form.get('name', '') }}">
+    {{ field_error(errors, 'name') }}
+    <label for="description">Description</label>
+    <textarea id="description" name="description" rows="3" maxlength="1000">{{ form.get('description', '') }}</textarea>
+    {{ field_error(errors, 'description') }}
+    <div class="grid-2">
+      <div>
+        <label for="price">Price ({{ settings.currency_symbol }})</label>
+        <input id="price" name="price" inputmode="decimal" value="{{ form.get('price', '') }}">
+        {{ field_error(errors, 'price_cents') }}
+      </div>
+      <div>
+        <label for="duration_minutes">Duration (minutes)</label>
+        <input id="duration_minutes" name="duration_minutes" type="number" min="5" max="480" step="5" value="{{ form.get('duration_minutes', '') }}">
+        {{ field_error(errors, 'duration_minutes') }}
+      </div>
+    </div>
+    <label for="sort_order">Display order</label>
+    <input id="sort_order" name="sort_order" type="number" min="0" max="999" value="{{ form.get('sort_order', 0) }}">
+    {{ field_error(errors, 'sort_order') }}
+    <label class="check"><input type="checkbox" name="active" value="1" {% if form.get('active') %}checked{% endif %}> Active (bookable online)</label>
+    <button class="btn btn-primary" type="submit">Save service</button>
+  </form>
+</section>
+{% endblock %}

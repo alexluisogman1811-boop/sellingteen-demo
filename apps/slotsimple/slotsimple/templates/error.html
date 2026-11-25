@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="card narrow center">
+  <p class="eyebrow">Error {{ code }}</p>
+  <h1>{{ title }}</h1>
+  {% if description %}<p class="muted">{{ description }}</p>{% endif %}
+  <p><a class="btn" href="{{ url_for('public.index', slug=biz.slug) if biz else url_for('site.landing') }}">Back to start</a></p>
+</section>
+{% endblock %}

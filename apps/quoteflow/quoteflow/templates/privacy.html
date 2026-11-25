@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy — QuoteFlow AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<article class="card prose legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>Who we are</h2>
+  <p>QuoteFlow AI is provided by {{ operator }}. Contact: {% include "_support.html" %}.</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Your account:</strong> your email address and a secure hash of your password (never the password itself).</li>
+    <li><strong>Your business information:</strong> what you enter in your business profile, such as your business name, services, pricing rules, service area, hours, contact details and policies.</li>
+    <li><strong>Customer messages and quotes:</strong> the inquiries you paste in, and the quotes and replies you generate and save. These may include your customers' personal details, such as a name or address.</li>
+    <li><strong>Usage:</strong> how many quotes you generate each month, and a few product events (signing up, generating a quote, reaching the free limit, upgrading), to run your plan and see how the service is used.</li>
+    <li><strong>Plan and billing:</strong> your trial dates and plan status, and if you pay online, your payment provider's customer and subscription IDs.</li>
+    <li><strong>Basic technical logs</strong> (time, page, IP address) to keep the service secure and working.</li>
+  </ul>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't sell your data or your customers' data, and we don't use it for advertising.</li>
+    <li>We don't send messages to your customers.</li>
+    <li>We don't use advertising or tracking cookies. We use one cookie to keep you logged in.</li>
+    <li>We never see your card details. Payments are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>Why we use it</h2>
+  <p>Only to run the service for you: to write, save and show your quotes, manage your plan and subscription, keep your account secure, and answer your questions.</p>
+
+  <h2>Who else receives it</h2>
+  <ul>
+    <li><strong>Anthropic (AI provider):</strong> when a reply is written by Claude AI, your business profile and the customer's message are sent to Anthropic's Claude API to draft it. Prices are worked out on our server from your pricing rules, and our API key never leaves our server. When a reply is written from QuoteFlow's built-in templates, nothing is sent to an AI provider.</li>
+    <li><strong>Our payment provider:</strong> only if you pay online, to take and manage your subscription payments.</li>
+  </ul>
+
+  <h2>Where it is stored</h2>
+  <p>On the server that hosts QuoteFlow AI, protected by your login, over encrypted (HTTPS) connections. Each business can only see its own data.</p>
+
+  <h2>Your customers' information</h2>
+  <p>You choose which customer messages to paste in, so you are responsible for having a good reason to use them (for example, the customer asked you for a quote) and for following the privacy laws where you operate.</p>
+
+  <h2>How long we keep it</h2>
+  <p>We keep your data while your account is open. When you ask us to delete your account, we delete it and its data within 30 days.</p>
+
+  <h2>Your choices</h2>
+  <p>You can change your business information and edit your quotes at any time. Under Account settings you can download all your data (a ZIP of CSV files) and delete your whole account yourself; deleting removes your account and all its data straight away. You can also email {% include "_support.html" %} from your account email for help.</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }} · {% include "_support.html" %}</p>
+
+  <p class="legal-note">Still to be decided by a parent or guardian: the business address to publish here.</p>
+</article>
+{% endblock %}

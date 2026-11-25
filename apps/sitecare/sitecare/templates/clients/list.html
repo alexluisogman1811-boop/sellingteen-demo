@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Clients</h1>
+  <div class="actions"><a class="btn btn-primary" href="{{ url_for('main.client_new') }}">Add client</a></div>
+</div>
+<form class="filters" method="get" role="search">
+  <label class="sr-only" for="q">Search clients</label>
+  <input id="q" type="search" name="q" value="{{ q }}" placeholder="Search name, contact, email, notes">
+  <button class="btn" type="submit">Search</button>
+  {% if q %}<a class="btn btn-ghost" href="{{ url_for('main.clients_list') }}">Clear</a>{% endif %}
+</form>
+<section class="card">
+  {% if clients %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Client</th><th class="hide-sm">Contact</th><th>Websites</th></tr></thead>
+      <tbody>
+      {% for c in clients %}
+        <tr>
+          <td><a href="{{ url_for('main.client_detail', client_id=c.id) }}">{{ c.name }}</a></td>
+          <td class="hide-sm">{{ c.contact_name }}{% if c.contact_email %}<br><span class="muted small">{{ c.contact_email }}</span>{% endif %}</td>
+          <td>{{ c.active_count }} active{% if c.site_count != c.active_count %} <span class="muted small">/ {{ c.site_count }} total</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% elif q %}<p class="empty">No clients match &ldquo;{{ q }}&rdquo;.</p>
+  {% else %}<p class="empty">No clients yet. <a href="{{ url_for('main.client_new') }}">Add your first client</a>.</p>{% endif %}
+</section>
+{% endblock %}

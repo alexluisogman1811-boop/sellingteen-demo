@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import followup_item %}
+{% block title %}Follow-ups{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Follow-ups</h1>
+    <p class="muted">Won and Lost leads are closed, so they don't appear here. Reopen a lead by changing its status.</p>
+  </div>
+</div>
+
+{% set sections = [
+  ('overdue', 'Overdue', 'Follow-up date has passed — contact these first.', 'No overdue follow-ups. Nice work.'),
+  ('today', 'Due today', 'Leads that need contact today.', "You're all caught up. No follow-ups are due today."),
+  ('upcoming', 'Upcoming', 'Scheduled for later.', 'No upcoming follow-ups scheduled.'),
+  ('unscheduled', 'No follow-up date', 'Active leads without a next step. Give each one a date.', 'Every active lead has a follow-up date.'),
+] %}
+
+<div class="fu-sections">
+{% for key, label, desc, empty in sections %}
+  <section class="card fu-section fu-section-{{ key }}" aria-labelledby="sec-{{ key }}">
+    <div class="card-head">
+      <div>
+        <h2 id="sec-{{ key }}">{{ label }} <span class="count-pill">{{ groups[key]|length }}</span></h2>
+        <p class="muted small">{{ desc }}</p>
+      </div>
+    </div>
+    {% if groups[key] %}
+      <ul class="fu-list">
+        {% for lead in groups[key] %}{{ followup_item(lead, actions=(key != 'upcoming'), back=url_for('leads.followups')) }}{% endfor %}
+      </ul>
+    {% else %}
+      <div class="empty-inline"><p class="muted">{{ empty }}</p></div>
+    {% endif %}
+  </section>
+{% endfor %}
+</div>
+{% endblock %}

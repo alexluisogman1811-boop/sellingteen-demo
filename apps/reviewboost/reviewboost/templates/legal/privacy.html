@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Your account:</strong> business name, email address, a secure hash of your password (never the password itself), and your review link.</li>
+    <li><strong>What you enter about your customers:</strong> name, phone, optional email, the service, the job date, the message, and whether they were contacted or left a review.</li>
+    <li><strong>Basic technical logs</strong> (time, page, IP address) to keep the service secure and working. Search terms are removed from logs.</li>
+  </ul>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't sell your data or your customers' data.</li>
+    <li>We don't send messages to your customers.</li>
+    <li>We don't use advertising or tracking cookies. We use one cookie to keep you logged in.</li>
+    <li>We never see your card details. Payments are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>Why we use it</h2>
+  <p>Only to run the service for you: to show your customer list, write messages, keep your account secure, manage your subscription, and answer your questions.</p>
+
+  <h2>Where it is stored</h2>
+  <p>On the server that hosts ReviewBoost, protected by your login. Each business can only see its own data.</p>
+
+  <h2>Your customers' information</h2>
+  <p>You add your customers' details, so you are responsible for having a good reason to keep them (for example, they hired you) and for following privacy laws where you operate (such as Thailand's PDPA or similar laws). Delete a customer at any time and their details are removed.</p>
+
+  <h2>Your choices</h2>
+  <p>You can change or delete your customers at any time. You can also delete your whole account and all its data yourself, on the Account page under "Delete account". It is removed straight away. If you can't log in{% if support_email %}, email {{ support_email }} from your account email{% else %}, contact us{% endif %} and we will do it within 30 days.</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }}{% if support_email %} · {{ support_email }}{% endif %}</p>
+</article>
+{% endblock %}

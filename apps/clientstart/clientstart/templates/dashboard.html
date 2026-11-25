@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge, priority_badge, progress_bar, who_badge with context %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Dashboard</h1><p class="muted">Everything you need before work can begin.</p></div>
+</div>
+
+<section class="stats">
+  <a class="stat" href="{{ url_for('owner.clients', status='active') }}"><span class="stat-num">{{ counts.active }}</span><span>Active onboardings</span></a>
+  <a class="stat stat-danger" href="{{ url_for('owner.tasks', overdue='1') }}"><span class="stat-num">{{ counts.overdue }}</span><span>Overdue tasks</span></a>
+  <a class="stat stat-warn" href="{{ url_for('owner.tasks', assignee='client', status='waiting') }}"><span class="stat-num">{{ counts.waiting }}</span><span>Waiting for client</span></a>
+  <a class="stat stat-info" href="{{ url_for('owner.tasks', status='submitted') }}"><span class="stat-num">{{ counts.review }}</span><span>Awaiting your review</span></a>
+  <a class="stat stat-ok" href="{{ url_for('owner.clients', status='completed') }}"><span class="stat-num">{{ counts.completed }}</span><span>Completed onboardings</span></a>
+</section>
+
+{% if not active_clients and not completed_clients %}
+<div class="card getting-started">
+  <h2>Welcome to ClientStart 👋</h2>
+  <p class="muted">Collect everything you need from a client before work begins — in three steps.</p>
+  <ol class="steps">
+    <li><strong>Make a template</strong> (optional) — the files, questions and approvals you need for a type of project.
+      <a href="{{ url_for('owner.templates') }}">Templates →</a></li>
+    <li><strong>Create an onboarding</strong> for a client and apply a template, or add items by hand.
+      <a href="{{ url_for('owner.client_new') }}">New onboarding →</a></li>
+    <li><strong>Copy the private portal link</strong> to your client. Their answers and uploads show up here for review.</li>
+  </ol>
+  <p class="btn-row"><a class="btn btn-primary" href="{{ url_for('owner.client_new') }}">+ Create first onboarding</a>
+     {% if config.ALLOW_RESET %}<a class="btn" href="{{ url_for('owner.settings') }}">Or explore with demo data</a>{% endif %}</p>
+</div>
+{% endif %}
+
+<div class="cols">
+  <div>
+    {% if review %}
+    <section class="card">
+      <h2>Awaiting your review <span class="count">{{ review|length }}</span></h2>
+      <ul class="list">
+        {% for t in review %}
+        <li><a href="{{ url_for('owner.task_detail', task_id=t.id) }}">{{ t.title }}</a>
+          <span class="muted small">{{ t.client_name }} · {{ KIND_LABELS[t.kind] }}</span></li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <h2>Overdue <span class="count">{{ overdue|length }}</span></h2>
+      {% if overdue %}
+      <ul class="list">
+        {% for t in overdue %}
+        <li><a href="{{ url_for('owner.task_detail', task_id=t.id) }}">{{ t.title }}</a>
+          <span class="muted small">{{ t.client_name }} · due {{ t.due_date }}</span>
+          <span class="badges">{{ who_badge(t.assignee) }} {{ priority_badge(t.priority) }}</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}<p class="muted">Nothing overdue. 🎉</p>{% endif %}
+    </section>
+
+    <section class="card">
+      <h2>Waiting for client <span class="count">{{ waiting|length }}</span></h2>
+      {% if waiting %}
+      <ul class="list">
+        {% for t in waiting[:12] %}
+        <li><a href="{{ url_for('owner.task_detail', task_id=t.id) }}">{{ t.title }}</a>
+          <span class="muted small">{{ t.client_name }}{% if t.due_date %} · due {{ t.due_date }}{% endif %}</span>
+          <span class="badges">{{ status_badge(t.status) }}</span></li>
+        {% endfor %}
+      </ul>
+      {% if waiting|length > 12 %}<p><a href="{{ url_for('owner.tasks', assignee='client') }}">View all {{ waiting|length }} →</a></p>{% endif %}
+      {% else %}<p class="muted">No outstanding client items.</p>{% endif %}
+    </section>
+  </div>
+
+  <div>
+    <section class="card">
+      <h2>Active onboardings</h2>
+      {% for c in active_clients %}
+      <a class="client-row" href="{{ url_for('owner.client_detail', client_id=c.id) }}">
+        <div><strong>{{ c.company or c.name }}</strong><div class="muted small">{{ c.project_name }}{% if c.start_date %} · starts {{ c.start_date }}{% endif %}</div></div>
+        {{ progress_bar(progress[c.id]) }}
+      </a>
+      {% else %}<p class="muted">No active onboardings.</p>{% endfor %}
+    </section>
+
+    {% if completed_clients %}
+    <section class="card">
+      <h2>Recently completed</h2>
+      <ul class="list">
+        {% for c in completed_clients %}
+        <li><a href="{{ url_for('owner.client_detail', client_id=c.id) }}">{{ c.company or c.name }}</a>
+          <span class="muted small">{{ c.project_name }}</span></li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <h2>Recent activity</h2>
+      <ul class="timeline">
+        {% for a in recent %}
+        <li><span class="muted small">{{ a.created_at }} · {{ a.actor }}</span><br>
+          {% if a.client_name %}<strong>{{ a.client_name }}:</strong> {% endif %}{{ a.message }}</li>
+        {% else %}<li class="muted">No activity yet.</li>{% endfor %}
+      </ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

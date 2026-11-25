@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field_error %}
+{% block title %}Add customer{% endblock %}
+{% block content %}
+<div class="narrow">
+  <a class="back" href="{{ url_for('routes.customers') }}">← Customers</a>
+  <h1>Add customer</h1>
+  <form method="post" class="card form" novalidate>
+    {{ csrf() }}
+    <label>Name <input name="name" value="{{ data.name }}" required maxlength="100" autocomplete="off" placeholder="e.g. Jordan Lee" autofocus></label>
+    {{ field_error(errors, 'name') }}
+    <label>Email <input type="email" name="email" value="{{ data.email }}" maxlength="254" autocomplete="off"></label>
+    {{ field_error(errors, 'email') }}
+    <label>Phone <input type="tel" name="phone" value="{{ data.phone }}" maxlength="25" autocomplete="off"></label>
+    {{ field_error(errors, 'phone') }}
+    {% if not errors.email and not errors.phone %}<p class="hint">Add at least an email or a phone number.</p>{% endif %}
+    <label>Company <span class="muted">(optional)</span> <input name="company" value="{{ data.company }}" maxlength="100" autocomplete="off"></label>
+    {{ field_error(errors, 'company') }}
+    <button class="btn btn-primary btn-block" type="submit">Save customer</button>
+  </form>
+</div>
+{% endblock %}

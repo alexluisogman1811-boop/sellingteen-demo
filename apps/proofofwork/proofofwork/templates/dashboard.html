@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "macros.html" import job_list with context %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Hello, {{ g.user.name }}</h1>
+    <p class="muted">{{ today|nice_date }}</p>
+  </div>
+</div>
+
+<div class="stats">
+  <a class="stat" href="{{ url_for('main.jobs', date_from=today, date_to=today) }}"><span class="stat-num">{{ todays_jobs|length }}</span><span>Today</span></a>
+  <a class="stat" href="{{ url_for('main.jobs', status='in_progress') }}"><span class="stat-num">{{ in_progress|length }}</span><span>In progress</span></a>
+  <a class="stat stat-review" href="{{ url_for('main.jobs', status='awaiting_review') }}"><span class="stat-num">{{ awaiting|length }}</span><span>Awaiting review</span></a>
+  <a class="stat stat-done" href="{{ url_for('main.jobs', status='completed') }}"><span class="stat-num">{{ completed|length }}</span><span>Recently completed</span></a>
+</div>
+
+<div class="dash-grid">
+  {% if my_jobs %}
+  <section class="panel panel-mine">
+    <h2>Assigned to you</h2>
+    {{ job_list(my_jobs, "") }}
+  </section>
+  {% endif %}
+  <section class="panel">
+    <h2>Today's jobs</h2>
+    {{ job_list(todays_jobs, "No jobs scheduled for today.") }}
+  </section>
+  <section class="panel">
+    <h2>In progress</h2>
+    {{ job_list(in_progress, "Nothing in progress right now.") }}
+  </section>
+  <section class="panel">
+    <h2>Awaiting review</h2>
+    {{ job_list(awaiting, "No jobs waiting for review.") }}
+  </section>
+  <section class="panel">
+    <h2>Recently completed</h2>
+    {{ job_list(completed, "No completed jobs yet.") }}
+  </section>
+  {% if upcoming %}
+  <section class="panel">
+    <h2>Coming up</h2>
+    {{ job_list(upcoming, "") }}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

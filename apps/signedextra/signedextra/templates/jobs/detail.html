@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, csrf, ticket_no %}
+{% block title %}{{ job.name }}{% endblock %}
+{% block content %}
+<div class="spread">
+  <div>
+    <p class="small muted"><a href="{{ url_for('core.jobs') }}">Jobs</a> · {{ job.customer_name }}</p>
+    <h1>{{ job.name }}</h1>
+    <p class="muted small">{{ job.address }}{% if job.gc_reference %} · GC ref {{ job.gc_reference }}{% endif %}
+      {% if job.status == 'closed' %} · <strong>Closed</strong>{% endif %}</p>
+  </div>
+  <div class="row">
+    {% if is_manager() %}
+    <a class="btn btn-secondary" href="{{ url_for('core.job_form', job_id=job.id) }}">Edit job</a>
+    <a class="btn btn-secondary" href="{{ url_for('invoices.new_invoice', job_id=job.id) }}">Create invoice</a>
+    {% endif %}
+    {% if job.status == 'active' %}<a class="btn btn-primary" href="{{ url_for('tickets.new_ticket', job_id=job.id) }}">+ New ticket</a>{% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>Tickets</h2>
+  {% if tickets %}
+  <ul class="list">
+    {% for t in tickets %}
+    <li><a class="item" href="{{ url_for('tickets.ticket_detail', ticket_id=t.id) }}">
+      <span><span class="item-title">{{ ticket_no(t) }} · {{ t.work_date }}</span><br><span class="small muted">{{ t.description|truncate(80) }}</span></span>
+      <span class="right">{{ badge(t.status) }}{% if can_see_prices() %}<br><span class="small">{{ t.total_cents|money }}</span>{% endif %}</span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="empty">No tickets on this job yet.</p>{% endif %}
+</div>
+
+{% if is_manager() %}
+<div class="grid grid-2">
+  <div class="card">
+    <h2>Crew on this job</h2>
+    <p class="small muted">Foremen only see jobs they're assigned to.</p>
+    {% if foremen %}
+    <form method="post" action="{{ url_for('core.job_members', job_id=job.id) }}">
+      {{ csrf() }}
+      {% set member_ids = members|map(attribute='id')|list %}
+      {% for f in foremen %}
+      <label class="checkbox"><input type="checkbox" name="user_id" value="{{ f.id }}" {{ "checked" if f.id in member_ids }}> {{ f.name }}</label>
+      {% endfor %}
+      <button class="btn btn-secondary btn-sm mt" type="submit">Save crew</button>
+    </form>
+    {% else %}
+    <p class="muted">No foremen yet. Invite them from <a href="{{ url_for('core.team') }}">Team</a>.</p>
+    {% endif %}
+  </div>
+  <div class="card">
+    <h2>Invoices</h2>
+    {% if invoices %}
+    <ul class="list">
+      {% for i in invoices %}
+      <li><a class="item" href="{{ url_for('invoices.invoice_detail', invoice_id=i.id) }}"><span>INV-{{ "%04d"|format(i.number) }}</span><span>{{ badge(i.status) }} {{ i.total_cents|money }}</span></a></li>
+      {% endfor %}
+    </ul>
+    {% else %}<p class="muted">No invoices yet.</p>{% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

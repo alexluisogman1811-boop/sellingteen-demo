@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Schedule unavailable{% endblock %}
+{% block content %}
+<section class="card narrow">
+  {% if access.state == 'ended' %}
+    <h1>The schedule isn't available right now</h1>
+    <p>{{ current_account.name if current_account else 'Your workplace' }}'s ShiftSnap account is paused.
+      Nothing has been lost: your shifts are still saved.</p>
+    <p>Please ask your manager about it. Once they've sorted it out, you can sign in again as usual.</p>
+  {% else %}
+    <h1>Subscriptions are handled by your manager</h1>
+    <p>There's nothing you need to do here.</p>
+    <a class="btn btn-ghost" href="{{ url_for('main.dashboard') }}">Back to my shifts</a>
+  {% endif %}
+</section>
+{% endblock %}

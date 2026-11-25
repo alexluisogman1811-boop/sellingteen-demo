@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>1. Who we are</h2>
+  <p>ContractorDocs ("the service") is provided by {{ operator }} ("we", "us").{% if support_email %} You can contact us at {{ support_email }}.{% endif %} The service is offered to businesses in the United States.</p>
+
+  <h2>2. What the service does</h2>
+  <p>ContractorDocs helps construction contractors keep track of subcontractor paperwork: you add subcontractors, upload their documents (such as certificates of insurance, workers' compensation certificates, licenses and W-9 forms), and see which documents are valid, expiring soon, expired or missing, with in-app reminders before documents expire.</p>
+  <p>The service may try to read the document type and expiration date from an uploaded file. You must check these details against the original document and confirm or correct them.</p>
+  <p><strong>ContractorDocs does not verify documents.</strong> It does not check that a document is genuine, that a policy is in force, or that coverage is adequate, and it does not tell you whether you or your subcontractors are legally, contractually or insurance compliant. It is not legal, insurance or compliance advice. It does not send emails or messages to your subcontractors, and it only emails you password reset links you ask for (when email is set up).</p>
+
+  <h2>3. Your account</h2>
+  <p>You must give a valid email address and keep your password private. You are responsible for what happens in your account. You must be allowed to enter into this agreement on behalf of your business.</p>
+
+  <h2>4. Your responsibilities</h2>
+  <ul>
+    <li>Only upload documents you are allowed to hold and process, for example documents your subcontractors gave you for your work together.</li>
+    <li>Check dates and document details yourself, and make your own decisions about whether a subcontractor meets your requirements.</li>
+    <li>Do not use the service to break any law or to store content that is unrelated to tracking subcontractor documents.</li>
+  </ul>
+
+  <h2>5. Free trial and subscription</h2>
+  <p>New accounts get a free trial of {{ trial_days }} days. After the trial, using the service requires a paid subscription ({{ price }}), billed through our payment provider. Subscriptions renew each month until you cancel. You can cancel at any time; access continues until the end of the period you paid for. See the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+
+  <h2>6. Your data</h2>
+  <p>Your subcontractor records and uploaded documents belong to you. We handle them as described in the <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>. If your account ends, we may delete its data after 90 days.</p>
+
+  <h2>7. Availability and changes</h2>
+  <p>We work to keep the service available but cannot promise it will always be online or error-free, or that automatically read dates are correct. We may change features or these terms; we will update the date above and, for important changes, tell you by email or in the app.</p>
+
+  <h2>8. Limitation of liability</h2>
+  <p>The service is provided "as is". To the extent the law allows, we are not liable for indirect losses, lost profits, or losses caused by expired, missing, incorrect or forged documents, missed reminders, or decisions you make based on the service. Our total liability is limited to the amount you paid us in the last 3 months.</p>
+
+  <h2>9. Ending the agreement</h2>
+  <p>You can stop using the service at any time. We may suspend accounts that break these terms.</p>
+</article>
+{% endblock %}

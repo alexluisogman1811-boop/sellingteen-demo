@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>1. Who we are</h2>
+  <p>ClientStart ("the service") is provided by {{ operator }} ("we", "us").{% if support_email %} You can contact us at {{ support_email }}.{% endif %}</p>
+
+  <h2>2. What the service does</h2>
+  <p>ClientStart helps your business collect the information, files and approvals you need from a client before work begins. You create onboarding checklists, and each client gets a private link to a portal where they answer questions, upload requested files and mark items done. <strong>ClientStart never sends emails or messages for you.</strong> Reminder messages are written for you to copy and send yourself.</p>
+
+  <h2>3. Your account</h2>
+  <p>You must give a valid email address and keep your password private. You are responsible for what happens in your account, and for who you share each client portal link with. You must be allowed to enter into this agreement where you live.</p>
+
+  <h2>4. Your responsibilities</h2>
+  <ul>
+    <li>Only add clients you have a real business relationship with, and only ask them for information and files you have a legitimate reason to collect.</li>
+    <li>Share each portal link only with that client. Anyone who has a link can open that client's portal until it expires or you disable or regenerate it.</li>
+    <li>Do not use the service to collect payment card numbers, passwords or other data you are not allowed to store, to harass anyone, or to break any law.</li>
+  </ul>
+
+  <h2>5. Free trial and subscription</h2>
+  <p>New accounts get a free trial of {{ trial_days }} days. After the trial, using the service requires a paid subscription ({{ price }}), billed through our payment provider. Subscriptions renew each month until you cancel. You can cancel at any time; access continues until the end of the period you paid for. If your trial or subscription ends, your data is kept and your clients' portal links keep working, but you need an active subscription to use the rest of the app. See the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+
+  <h2>6. Your data</h2>
+  <p>Your client records, checklists and the files your clients upload belong to you. We handle them as described in the <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>. If your account ends, we may delete its data after 90 days.</p>
+
+  <h2>7. Availability and changes</h2>
+  <p>We work to keep the service available but cannot promise it will always be online or error-free. Keep your own copies of important files. We may change features or these terms; we will update the date above and, for important changes, tell you by email or in the app.</p>
+
+  <h2>8. Limitation of liability</h2>
+  <p>The service is provided "as is". To the extent the law allows, we are not liable for indirect losses, lost profits, or the content of files and information you or your clients upload. Our total liability is limited to the amount you paid us in the last 3 months.</p>
+
+  <h2>9. Ending the agreement</h2>
+  <p>You can stop using the service at any time. We may suspend accounts that break these terms.</p>
+</article>
+{% endblock %}

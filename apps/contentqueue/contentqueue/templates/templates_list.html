@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Caption templates{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Caption templates</h1><p class="muted">Reusable caption structures. Filled in locally — no AI service involved.</p></div></div>
+
+<div class="grid-side">
+  <section>
+    {% for t in templates %}
+      <article class="card item-card">
+        <div class="item-head">
+          <h2>{{ t.name }}</h2>
+          <div class="row-actions">
+            <a class="btn btn-sm btn-primary" href="{{ url_for('library.use_template', item_id=t.id) }}">Use</a>
+            <button class="btn btn-sm" type="button" data-copy="tpl-{{ t.id }}">Copy</button>
+            <a class="btn btn-sm btn-ghost" href="{{ url_for('library.edit_template', item_id=t.id) }}">Edit</a>
+          </div>
+        </div>
+        <div class="caption-box" id="tpl-{{ t.id }}">{{ t.body }}</div>
+        <p class="muted small">
+          {% if t.platform %}{{ t.platform|platform_label }} · {% endif %}
+          {% set ph = find_placeholders(t.body) %}{% if ph %}Fields: {{ ph|join(', ') }}{% else %}No fields{% endif %}
+          {% if t.hashtags %} · {{ t.hashtags }}{% endif %}
+        </p>
+      </article>
+    {% else %}
+      <div class="card empty-state"><p>No templates yet. Save a caption structure you use often.</p></div>
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <h2>New template</h2>
+    <form method="post" class="stack" novalidate>
+      {{ csrf() }}
+      {% include "_template_fields.html" %}
+      <button class="btn btn-primary" type="submit">Save template</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

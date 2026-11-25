@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}Delete my account{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<h1>Delete my account ({{ g.company.name }})</h1>
+<div class="card">
+  <p><strong>This can't be undone.</strong> Download your data first if you might need it:
+    <a href="{{ url_for('account.export_company') }}">Export all company data</a>.</p>
+  <h2>What gets deleted straight away</h2>
+  <ul>
+    <li>All {{ counts.users }} team login{{ '' if counts.users == 1 else 's' }}, including yours</li>
+    <li>{{ counts.tickets }} ticket{{ '' if counts.tickets == 1 else 's' }} with their lines and versions,
+      {{ counts.attachments }} photo{{ '' if counts.attachments == 1 else 's' }},
+      {{ counts.signatures }} signature{{ '' if counts.signatures == 1 else 's' }},
+      {{ counts.notices }} notice{{ '' if counts.notices == 1 else 's' }} and
+      {{ counts.invoices }} invoice{{ '' if counts.invoices == 1 else 's' }}</li>
+    <li>GCs, contacts, jobs, labor rates and all signature, invite and reset links (they stop working)</li>
+  </ul>
+  <h2>What stays: the audit log</h2>
+  <p>The history log is append-only by design, so nobody, including us, can quietly edit or remove entries.
+    Its entries stay after deletion but are no longer linked to any account and can't be opened in the app.
+    They record what happened and when (for example "ticket signed"), the names of the people who did it
+    (team members, and the name a GC typed when signing), IP addresses, and some details such as GC contact names.
+    They don't include ticket descriptions, photos, signature images, prices or notice text.
+    {% if config.SUPPORT_EMAIL %}Questions: {{ config.SUPPORT_EMAIL }}.{% endif %}</p>
+</div>
+<div class="card">
+  <form method="post" novalidate data-confirm="Permanently delete {{ g.company.name }} and all its data?">
+    {{ csrf() }}
+    {{ field(form, "confirm_name", "Type DELETE (or your email) to confirm", required=True, attrs='autocomplete="off"') }}
+    {{ field(form, "current_password", "Your password", type="password", required=True, attrs='autocomplete="current-password"') }}
+    <div class="row">
+      <button class="btn btn-danger" type="submit">Permanently delete my account</button>
+      <a class="btn btn-secondary" href="{{ url_for('account.overview') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

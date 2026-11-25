@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<div class="card mt-lg">
+  <p class="muted small">Error {{ code }}</p>
+  <h1>{{ title }}</h1>
+  {% if message %}<p>{{ message }}</p>{% endif %}
+  <p><a class="btn btn-secondary" href="{{ url_for('core.dashboard') if g.user else url_for('auth.login') }}">Go to the start page</a></p>
+</div>
+{% endblock %}

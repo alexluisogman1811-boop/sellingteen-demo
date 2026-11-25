@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pill, due with context %}
+{% block title %}Documents{% endblock %}
+{% block content %}
+<h1>Documents</h1>
+<div class="card">
+  <form method="get" action="{{ url_for('main.documents') }}" class="filters">
+    <input name="q" value="{{ q }}" placeholder="Search name, file or subcontractor" aria-label="Search documents">
+    <select name="status" aria-label="Status">
+      <option value="">Any status</option>
+      {% for k in ['valid', 'expiring', 'expired', 'review'] %}<option value="{{ k }}" {{ 'selected' if status == k }}>{{ LABELS[k] }}</option>{% endfor %}
+    </select>
+    <select name="type" aria-label="Document type">
+      <option value="">Any type</option>
+      {% for t in DOC_TYPES %}<option {{ 'selected' if doc_type == t }}>{{ t }}</option>{% endfor %}
+    </select>
+    <select name="sub" aria-label="Subcontractor">
+      <option value="">Any subcontractor</option>
+      {% for s in subs %}<option value="{{ s.id }}" {{ 'selected' if sub_id == s.id }}>{{ s.name }}</option>{% endfor %}
+    </select>
+    <button>Filter</button>
+    <a href="{{ url_for('main.documents') }}">Reset</a>
+  </form>
+  {% if not rows %}<p class="muted">No documents match.</p>{% else %}
+  <table class="responsive">
+    <thead><tr><th>Name</th><th>Subcontractor</th><th>Type</th><th>Uploaded</th><th>Expires</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td data-label="Name"><a href="{{ url_for('main.document_detail', doc_id=r.doc.id) }}">{{ r.doc.name }}</a></td>
+        <td data-label="Subcontractor">{{ r.doc.subcontractor_name }}</td>
+        <td data-label="Type">{{ r.doc.doc_type or 'Unknown' }}</td>
+        <td data-label="Uploaded">{{ r.doc.uploaded_at[:10] }}</td>
+        <td data-label="Expires">{% if r.doc.no_expiration %}Does not expire{% else %}{{ r.doc.expiration_date or '–' }} {% if r.days_left is not none %}<span class="muted">({{ due(r.days_left) }})</span>{% endif %}{% endif %}</td>
+        <td data-label="Status">{{ pill(r.status) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

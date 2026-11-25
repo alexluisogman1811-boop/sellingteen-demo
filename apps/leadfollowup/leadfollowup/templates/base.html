@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}{% endblock %} · LeadFollowUp AI</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body class="{{ 'app' if g.user else 'public' }}">
+  <a class="skip-link" href="#main">Skip to content</a>
+  {% if g.user %}
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="{{ url_for('leads.dashboard') }}" aria-label="LeadFollowUp AI, dashboard">
+        <img src="{{ url_for('static', filename='favicon.svg') }}" alt="" width="28" height="28">
+        <span class="brand-text">LeadFollowUp <strong>AI</strong></span>
+      </a>
+      {% set ep = request.endpoint or '' %}
+      <nav class="mainnav" aria-label="Main">
+        <a href="{{ url_for('leads.dashboard') }}" {% if ep == 'leads.dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
+        <a href="{{ url_for('leads.followups') }}" {% if ep == 'leads.followups' %}aria-current="page"{% endif %}>Follow-ups{% if nav_due_count %} <span class="nav-count" aria-label="{{ nav_due_count }} due or overdue">{{ nav_due_count }}</span>{% endif %}</a>
+        <a href="{{ url_for('leads.lead_list') }}" {% if ep in ('leads.lead_list', 'leads.lead_detail', 'leads.lead_edit', 'leads.lead_delete') %}aria-current="page"{% endif %}>Leads</a>
+      </nav>
+      <div class="topbar-actions">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('leads.lead_new') }}" aria-label="Add lead"><span aria-hidden="true">+</span><span class="btn-label" aria-hidden="true"> Add lead</span></a>
+        {% if g.user.is_demo %}<span class="badge badge-demo" title="Example data created with flask seed-demo">Demo account</span>{% endif %}
+        <a class="account" href="{{ url_for('account.settings') }}" title="Account settings ({{ g.user.email }})">{{ g.user.business_name }}</a>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-ghost btn-sm">Log out</button>
+        </form>
+      </div>
+    </div>
+  </header>
+  {% endif %}
+
+  {% if g.user and g.access and g.access.state == 'trial' and request.endpoint != 'billing.subscribe' %}
+  <div class="trial-bar" role="note">
+    <div class="trial-bar-inner">
+      <span><strong>Free trial:</strong> {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.</span>
+      <a class="trial-bar-link" href="{{ url_for('billing.subscribe') }}">Subscribe</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <main id="main" class="{% block main_class %}{{ 'container' if g.user else 'auth-wrap' }}{% endblock %}" tabindex="-1">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flashes">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'error' if category == 'error' else category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <span>LeadFollowUp AI · by sellingteen</span>
+      <nav aria-label="Legal">
+        <a href="{{ url_for('legal.terms') }}">Terms</a>
+        <a href="{{ url_for('legal.privacy') }}">Privacy</a>
+        <a href="{{ url_for('legal.refunds') }}">Refunds</a>
+        {% if g.user %}<a href="{{ url_for('account.settings') }}">Account</a>{% endif %}
+        {% if g.user and config.BILLING_ENABLED and not g.user.is_demo %}<a href="{{ url_for('billing.subscribe') }}">Subscription</a>{% endif %}
+      </nav>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>

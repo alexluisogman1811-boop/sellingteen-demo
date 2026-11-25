@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Websites{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Websites</h1>
+  <div class="actions"><a class="btn btn-primary" href="{{ url_for('main.website_new') }}">Add website</a></div>
+</div>
+<form class="filters" method="get" role="search">
+  <label class="sr-only" for="q">Search websites</label>
+  <input id="q" type="search" name="q" value="{{ q }}" placeholder="Search name, domain, client, notes">
+  <label class="sr-only" for="fc">Client</label>
+  <select id="fc" name="client_id">
+    <option value="">All clients</option>
+    {% for c in clients %}<option value="{{ c.id }}" {% if filters.client_id == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+  </select>
+  <label class="sr-only" for="fp">Platform</label>
+  <select id="fp" name="platform">
+    <option value="">All platforms</option>
+    {% for k, v in PLATFORMS.items() %}<option value="{{ k }}" {% if filters.platform == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <label class="sr-only" for="fl">Plan</label>
+  <select id="fl" name="plan">
+    <option value="">All plans</option>
+    {% for k, v in PLANS.items() %}<option value="{{ k }}" {% if filters.plan == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <label class="sr-only" for="fs">Status</label>
+  <select id="fs" name="status">
+    <option value="">Any status</option>
+    {% for k, v in WEBSITE_STATUSES.items() %}<option value="{{ k }}" {% if filters.status == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <button class="btn" type="submit">Filter</button>
+  {% if q or filters.values()|select|list %}<a class="btn btn-ghost" href="{{ url_for('main.websites_list') }}">Clear</a>{% endif %}
+</form>
+<section class="card">
+  {% if sites %}
+  <p class="muted small">{{ sites|length }} website{{ '' if sites|length == 1 else 's' }}</p>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Website</th><th class="hide-sm">Client</th><th class="hide-sm">Platform / plan</th><th>Status</th><th>Overdue</th><th class="hide-sm">Next due</th><th class="hide-sm">Issues</th></tr></thead>
+      <tbody>
+      {% for s in sites %}
+        <tr>
+          <td><a href="{{ url_for('main.website_detail', website_id=s.id) }}">{{ s.name }}</a><br><span class="muted small">{{ s.domain }}</span></td>
+          <td class="hide-sm"><a href="{{ url_for('main.client_detail', client_id=s.client_id) }}">{{ s.client_name }}</a></td>
+          <td class="hide-sm">{{ PLATFORMS.get(s.platform) }}<br><span class="muted small">{{ PLANS.get(s.plan) }}</span></td>
+          <td>{{ m.site_status_badge(s.status) }}</td>
+          <td>{% if s.overdue %}<span class="badge badge-danger">{{ s.overdue }}</span>{% else %}0{% endif %}</td>
+          <td class="hide-sm">{{ s.next_due|nice_date or '-' }}</td>
+          <td class="hide-sm">{{ s.open_issues }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="empty">No websites match these filters.</p>{% endif %}
+</section>
+{% endblock %}

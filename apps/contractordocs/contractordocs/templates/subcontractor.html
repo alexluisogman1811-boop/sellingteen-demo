@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pill, due with context %}
+{% block title %}{{ sub.name }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('main.subcontractors') }}">← Subcontractors</a></p>
+<h1>{{ sub.name }}</h1>
+<p class="muted">{{ sub.trade or 'No trade set' }}{% if sub.contact_email %} · {{ sub.contact_email }}{% endif %}{% if sub.phone %} · {{ sub.phone }}{% endif %}</p>
+
+<div class="grid2">
+  <div class="card">
+    <h2>Requirements</h2>
+    <table class="responsive">
+      <thead><tr><th>Document type</th><th>Status</th><th>Expires</th></tr></thead>
+      <tbody>
+      {% for s in slots %}
+        <tr>
+          <td data-label="Type">{{ s.doc_type }}{% if not s.required %} <span class="muted">(not required)</span>{% endif %}</td>
+          <td data-label="Status">{{ pill(s.status) }}</td>
+          <td data-label="Expires">{% if s.document and s.document.expiration_date %}{{ s.document.expiration_date }} <span class="muted">({{ due(s.days_left) }})</span>{% elif s.document and s.document.no_expiration %}Does not expire{% else %}–{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3" class="muted">No required document types set. <a href="{{ url_for('main.settings') }}">Choose them in Settings</a>.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h2>Upload document</h2>
+    <form method="post" action="{{ url_for('main.upload') }}" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="subcontractor_id" value="{{ sub.id }}">
+      <label>File (PDF, PNG, JPEG, WEBP · max 10 MB)
+        <input type="file" name="file" accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/*" required></label>
+      <label>Document name <input name="name" placeholder="Defaults to the file name" maxlength="120"></label>
+      <button class="primary">Upload &amp; read</button>
+      <p class="muted small">We try to read the document type and expiration date. You confirm them on the next screen.</p>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <h2>All documents</h2>
+  {% if not rows %}<p class="muted">No documents uploaded yet.</p>{% else %}
+  <table class="responsive">
+    <thead><tr><th>Name</th><th>Type</th><th>Uploaded</th><th>Expires</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td data-label="Name"><a href="{{ url_for('main.document_detail', doc_id=r.doc.id) }}">{{ r.doc.name }}</a></td>
+        <td data-label="Type">{{ r.doc.doc_type or 'Unknown' }}</td>
+        <td data-label="Uploaded">{{ r.doc.uploaded_at[:10] }}</td>
+        <td data-label="Expires">{% if r.doc.no_expiration %}Does not expire{% else %}{{ r.doc.expiration_date or '–' }}{% endif %}</td>
+        <td data-label="Status">{{ pill(r.status) }}</td>
+        <td>
+          <form method="post" action="{{ url_for('main.document_delete', doc_id=r.doc.id) }}" onsubmit="return confirm('Delete this document? This cannot be undone.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="danger small">Delete</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Reorder list{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Reorder list</h1>
+    <p class="muted">Generated {{ today }} · {{ items|length }} item(s) at or below their reorder threshold</p>
+  </div>
+  <div class="actions no-print"><button class="btn btn-primary" type="button" data-print>Print</button></div>
+</div>
+<p class="muted small no-print">Suggested quantity refills each item to twice its reorder threshold (at least 1). Adjust it to suit your supplier's pack sizes.</p>
+
+{% if items %}
+{% for supplier, group in items|groupby('supplier_name') %}
+<section class="reorder-group">
+  <h2>{{ supplier or 'No supplier assigned' }}</h2>
+  <table class="table responsive">
+    <thead><tr><th>SKU</th><th>Product</th><th class="num">On hand</th><th class="num">Threshold</th><th class="num">Suggested order</th><th class="num">Unit cost</th><th>Status</th><th class="print-only">Ordered</th></tr></thead>
+    <tbody>
+    {% for p in group %}
+      <tr>
+        <td data-label="SKU">{{ p.sku }}</td>
+        <td data-label="Product">{{ p.name }}</td>
+        <td data-label="On hand" class="num">{{ p.quantity }}</td>
+        <td data-label="Threshold" class="num">{{ p.reorder_threshold }}</td>
+        <td data-label="Suggested order" class="num"><strong>{{ p.suggested }}</strong></td>
+        <td data-label="Unit cost" class="num">{{ p.cost_cents|money }}</td>
+        <td data-label="Status">{{ status_badge(p.status) }}</td>
+        <td class="print-only">☐ ______</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endfor %}
+{% else %}
+<p class="empty">No products need reordering right now.</p>
+{% endif %}
+{% endblock %}

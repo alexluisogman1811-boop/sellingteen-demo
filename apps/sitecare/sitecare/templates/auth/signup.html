@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field_error %}
+{% block title %}Sign up{% endblock %}
+{% block content %}
+<section class="card auth-card">
+  <h1>Start your free trial</h1>
+  <p class="muted">{% if config.BILLING_ENABLED %}{{ config.TRIAL_DAYS }} days free, no card needed. {% endif %}Your account is private: only you see your clients, websites and reports.</p>
+  <form method="post" class="stack" action="{{ url_for('auth.signup') }}" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label for="f-name">Your name or studio name</label>
+    <input id="f-name" name="name" value="{{ form.get('name', '') }}" required maxlength="100" autocomplete="organization" autofocus>
+    {{ field_error(errors, 'name') }}
+    <label for="f-email">Email</label>
+    <input id="f-email" name="email" type="email" value="{{ form.get('email', '') }}" required maxlength="254" autocomplete="email">
+    {{ field_error(errors, 'email') }}
+    <label for="f-password">Password</label>
+    <input id="f-password" name="password" type="password" required minlength="10" maxlength="128" autocomplete="new-password">
+    <p class="hint">At least 10 characters.</p>
+    <label for="f-confirm">Password again</label>
+    <input id="f-confirm" name="confirm" type="password" required maxlength="128" autocomplete="new-password">
+    {{ field_error(errors, 'password') }}
+    <button class="btn btn-primary" type="submit">Create my account</button>
+  </form>
+  <p class="hint">By signing up you agree to the <a href="{{ url_for('legal.terms') }}">Terms</a> and
+    <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>.</p>
+  <p class="hint">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+</section>
+{% endblock %}

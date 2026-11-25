@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% from "_macros.html" import license_table %}
+{% block title %}Licenses{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Licenses</h1>
+    <p class="muted">{{ total }} matching record{{ '' if total == 1 else 's' }}</p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.data_export', entity='licenses') }}">Export CSV</a>
+    <a class="btn btn-primary" href="{{ url_for('main.license_new') }}">+ Issue license</a>
+  </div>
+</div>
+
+<form method="get" class="card filters" role="search">
+  <div class="field grow">
+    <label for="q">Search</label>
+    <input id="q" name="q" type="search" value="{{ filters.q }}"
+           placeholder="Customer, email, company, order ref or product">
+  </div>
+  <div class="field">
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <option value="">Any status</option>
+      {% for s, label in STATUS_LABELS.items() %}<option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="type">Type</label>
+    <select id="type" name="type">
+      <option value="">Any type</option>
+      {% for t, label in LICENSE_TYPES.items() %}<option value="{{ t }}" {{ 'selected' if filters.license_type == t }}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="product_id">Product</label>
+    <select id="product_id" name="product_id">
+      <option value="">Any product</option>
+      {% for p in products %}<option value="{{ p.id }}" {{ 'selected' if filters.product_id == p.id }}>{{ p.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="expiry">Expiry</label>
+    <select id="expiry" name="expiry">
+      <option value="">Any</option>
+      <option value="expiring" {{ 'selected' if filters.expiry == 'expiring' }}>Expiring soon</option>
+      <option value="expired" {{ 'selected' if filters.expiry == 'expired' }}>Expired</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="delivery">Delivery</label>
+    <select id="delivery" name="delivery">
+      <option value="">Any</option>
+      {% for d, label in DELIVERY_STATUSES.items() %}<option value="{{ d }}" {{ 'selected' if filters.delivery == d }}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="window">Within</label>
+    <select id="window" name="window">
+      {% for w in windows %}<option value="{{ w }}" {{ 'selected' if filters.window_days == w }}>{{ w }} days</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="sort">Sort</label>
+    <select id="sort" name="sort">
+      {% for s in sorts %}<option value="{{ s }}" {{ 'selected' if filters.sort == s }}>{{ s|capitalize }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field filter-buttons">
+    <button class="btn btn-primary" type="submit">Apply</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.licenses') }}">Clear</a>
+  </div>
+</form>
+
+<details class="card lookup">
+  <summary><strong>Look up a full license key</strong> <span class="muted small">— e.g. when a customer emails you their key</span></summary>
+  <form method="post" action="{{ url_for('main.license_lookup') }}" class="row lookup-form" autocomplete="off">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field grow"><label for="lookup-key">License key</label>
+      <input id="lookup-key" name="key" type="password" required maxlength="128" spellcheck="false" autocomplete="off"></div>
+    <div class="field filter-buttons"><button class="btn btn-primary" type="submit">Find license</button></div>
+  </form>
+  <p class="help">Matched against the stored hash and sent by POST, so the key never appears in the address bar, browser history, or server logs.</p>
+</details>
+
+<section class="card">
+  {{ license_table(rows, empty="No licenses match these filters.") }}
+  {% if pages > 1 %}
+  <nav class="pager" aria-label="Pagination">
+    {% if page > 1 %}<a class="btn btn-sm" href="{{ url_for('main.licenses', page=page-1, **args) }}">← Previous</a>{% endif %}
+    <span class="muted">Page {{ page }} of {{ pages }}</span>
+    {% if page < pages %}<a class="btn btn-sm" href="{{ url_for('main.licenses', page=page+1, **args) }}">Next →</a>{% endif %}
+  </nav>
+  {% endif %}
+</section>
+{% endblock %}

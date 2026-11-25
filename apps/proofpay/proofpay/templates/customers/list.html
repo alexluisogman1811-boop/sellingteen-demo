@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Customers · ProofPay{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Customers</h1>
+  <a class="btn" href="{{ url_for('customers.new_customer') }}">+ Add customer</a>
+</div>
+<section class="card flush">
+  {% if rows %}
+  <table class="table">
+    <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th class="num">Jobs</th><th></th></tr></thead>
+    <tbody>
+    {% for c, job_count in rows %}
+      <tr>
+        <td data-label="Name">{{ c.name }}</td>
+        <td data-label="Email">{{ c.email or '—' }}</td>
+        <td data-label="Phone">{{ c.phone or '—' }}</td>
+        <td data-label="Jobs" class="num">{{ job_count }}</td>
+        <td class="actions"><a class="btn btn-sm btn-ghost" href="{{ url_for('customers.customer_detail', ref=c.ref) }}">Open</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty"><p class="muted">Customers are added automatically when you create a job.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

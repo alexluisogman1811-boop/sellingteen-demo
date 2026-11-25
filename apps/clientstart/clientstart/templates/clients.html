@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "macros.html" import progress_bar with context %}
+{% block title %}Onboardings{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Onboardings</h1><p class="muted">{{ clients|length }} result{{ '' if clients|length == 1 else 's' }}</p></div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('owner.export_clients', **filters) }}">Export CSV</a>
+    <a class="btn btn-primary" href="{{ url_for('owner.client_new') }}">+ New onboarding</a>
+  </div>
+</div>
+
+<form class="filters card" method="get">
+  <input type="search" name="q" value="{{ filters.q }}" placeholder="Search name, company, email, project, notes…" aria-label="Search">
+  <select name="status" aria-label="Status">
+    <option value="">All statuses</option>
+    {% for s in ['active', 'completed', 'archived'] %}<option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ s|capitalize }}</option>{% endfor %}
+  </select>
+  <select name="project_type" aria-label="Project type">
+    <option value="">All project types</option>
+    {% for t in types %}<option value="{{ t }}" {{ 'selected' if filters.project_type == t }}>{{ t }}</option>{% endfor %}
+  </select>
+  <button class="btn" type="submit">Filter</button>
+  {% if filters.q or filters.status or filters.project_type %}<a href="{{ url_for('owner.clients') }}">Clear</a>{% endif %}
+</form>
+
+<div class="card table-wrap">
+  <table class="table">
+    <thead><tr><th>Client</th><th>Project</th><th>Type</th><th>Start</th><th>Status</th><th class="w-progress">Progress</th></tr></thead>
+    <tbody>
+    {% for c in clients %}
+      <tr>
+        <td data-label="Client"><a href="{{ url_for('owner.client_detail', client_id=c.id) }}"><strong>{{ c.company or c.name }}</strong></a><div class="muted small">{{ c.name }}</div></td>
+        <td data-label="Project">{{ c.project_name }}</td>
+        <td data-label="Type">{{ c.project_type or '—' }}</td>
+        <td data-label="Start">{{ c.start_date or '—' }}</td>
+        <td data-label="Status"><span class="badge cs-{{ c.status }}">{{ c.status|capitalize }}</span></td>
+        <td data-label="Progress">{{ progress_bar(progress[c.id]) }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="center empty">
+        {% if total == 0 %}
+          <p><strong>No onboardings yet.</strong> Each onboarding tracks one client project until work can begin.</p>
+          <a class="btn btn-primary" href="{{ url_for('owner.client_new') }}">+ New onboarding</a>
+        {% else %}
+          <p class="muted">No onboardings match these filters.</p><a href="{{ url_for('owner.clients') }}">Clear filters</a>
+        {% endif %}
+      </td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

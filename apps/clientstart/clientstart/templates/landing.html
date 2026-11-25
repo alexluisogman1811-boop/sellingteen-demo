@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Client onboarding for small service businesses{% endblock %}
+{% block content %}
+<section class="hero">
+  <p class="eyebrow">ClientStart · Client onboarding for small service businesses</p>
+  <h1>Collect everything you need from a client before work begins</h1>
+  <p class="lead">Make a checklist of the information, files and approvals you need. Send your client one private link.
+    They answer, upload and tick things off; you review and approve. Everything is in one place instead of scattered emails.</p>
+  <div class="btn-row">
+    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.signup') }}">Start your {{ config.TRIAL_DAYS }}-day free trial</a>
+    <a class="btn btn-lg" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+</section>
+
+<section class="landing-section">
+  <h2>How it works</h2>
+  <ol class="how-steps">
+    <li class="card"><span class="step-num">1</span><h3>Make a checklist</h3><p>Start from a reusable template for that type of project, or add items by hand. Each item is a question, a file request or an action, with a due date.</p></li>
+    <li class="card"><span class="step-num">2</span><h3>Send one private link</h3><p>Each client gets a private portal link that expires. Your clients never need an account or password.</p></li>
+    <li class="card"><span class="step-num">3</span><h3>Your client fills it in</h3><p>They answer questions, upload the files you asked for and mark actions done — on their phone or computer.</p></li>
+    <li class="card"><span class="step-num">4</span><h3>You review</h3><p>Approve each submission, or ask for a correction with a note the client sees in their portal.</p></li>
+  </ol>
+</section>
+
+<section class="cols landing-cols">
+  <div class="card">
+    <h2>What you get</h2>
+    <ul class="benefits">
+      <li><strong>A dashboard</strong> of active onboardings, overdue items, what's waiting on clients and what's waiting for your review.</li>
+      <li><strong>Progress for every client</strong>, split into the client's items and your own.</li>
+      <li><strong>Safe file uploads.</strong> File type, content and size are checked, and files are never opened in the browser.</li>
+      <li><strong>Private notes.</strong> Internal comments and notes are never shown to your client.</li>
+      <li><strong>Search, filters and CSV export</strong> of your onboardings and tasks.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>You stay in control</h2>
+    <ul class="benefits">
+      <li><strong>ClientStart sends no emails.</strong> Reminder messages are written for you to copy and send yourself, from your own email.</li>
+      <li><strong>Each client sees only their own items</strong> — never other clients, and never your private notes.</li>
+      <li><strong>Turn a link off any time.</strong> Extend it, disable it, or regenerate it so the old link stops working.</li>
+      <li><strong>Your data stays yours.</strong> Each business account only ever sees its own clients and files.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="card center pricing" id="pricing">
+  <h2>Simple pricing</h2>
+  <p class="plan-price">{{ config.PRICE_TEXT }}</p>
+  <p class="muted">One plan per business. Everything included.{% if config.BILLING_ENABLED %} Start with a {{ config.TRIAL_DAYS }}-day free trial, no card needed.{% endif %}</p>
+  <ul class="price-list">
+    <li>Unlimited clients and onboarding checklists</li>
+    <li>Private, expiring client portal links with file uploads</li>
+    <li>Reusable templates, progress tracking and CSV export</li>
+    <li>No contract. Cancel anytime.</li>
+  </ul>
+  <a class="btn btn-primary btn-lg" href="{{ url_for('auth.signup') }}">Start your free trial</a>
+  <p class="small muted">See the <a href="{{ url_for('legal.terms') }}">Terms</a>, <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a> and <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+</section>
+{% endblock %}

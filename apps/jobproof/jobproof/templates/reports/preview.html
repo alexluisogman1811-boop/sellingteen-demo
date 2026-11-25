@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Report: {{ job.title }} – JobProof AI{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="back" href="{{ url_for('jobs.detail', job_id=job.id) }}">← Back to job</a>
+    <h1>Report preview</h1>
+    <p class="muted">This is exactly what your customer will see.</p>
+  </div>
+</div>
+
+{% if stale %}
+<div class="notice">This job changed after the report was generated.
+  <form method="post" action="{{ url_for('reports.generate', job_id=job.id) }}" class="inline" data-busy="Generating…">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-small btn-warning">Regenerate now</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="preview-layout">
+  <div class="preview-doc">
+    {% set show_customer_contact = true %}
+    {% include "_report_doc.html" %}
+  </div>
+
+  <aside class="preview-actions">
+    <section class="card" id="share">
+      <h2>Send to customer</h2>
+      {% if share %}
+        <p class="small muted">Anyone with this link can view the report – no login needed.</p>
+        <label for="share-url" class="sr-only">Share link</label>
+        <div class="copy-row">
+          <input id="share-url" type="text" readonly value="{{ share_url }}">
+          <button type="button" class="btn" data-copy="#share-url">Copy link</button>
+        </div>
+        <div class="button-row">
+          <a class="btn btn-secondary btn-small" href="{{ share_url }}" target="_blank" rel="noopener">Open customer view</a>
+          <form method="post" action="{{ url_for('reports.revoke_share', job_id=job.id) }}" class="inline"
+                data-confirm="Revoke this link? Your customer won't be able to open it any more.">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-small btn-danger-outline">Revoke link</button>
+          </form>
+        </div>
+      {% else %}
+        <p class="small muted">Create a secure link your customer can open on any phone or computer.</p>
+        <form method="post" action="{{ url_for('reports.create_share', job_id=job.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-block">Create share link</button>
+        </form>
+      {% endif %}
+    </section>
+    {% if tips %}
+    <section class="card tips-card">
+      <h2>Make this report stronger</h2>
+      <p class="small muted">Only you see this. The report never fills these in for you.</p>
+      <ul class="tips">{% for tip in tips %}<li>{{ tip }}</li>{% endfor %}</ul>
+      <a class="btn btn-secondary btn-small" href="{{ url_for('jobs.edit', job_id=job.id) }}">Edit job</a>
+    </section>
+    {% endif %}
+    <section class="card">
+      <h2>PDF</h2>
+      <a class="btn btn-secondary btn-block" href="{{ url_for('reports.pdf', job_id=job.id) }}">Download PDF</a>
+    </section>
+    <section class="card">
+      <h2>Need changes?</h2>
+      <p class="small muted">Edit the notes or photos, then regenerate. The report only uses what you entered.</p>
+      <div class="button-row">
+        <a class="btn btn-secondary btn-small" href="{{ url_for('jobs.edit', job_id=job.id) }}">Edit job</a>
+        <form method="post" action="{{ url_for('reports.generate', job_id=job.id) }}" class="inline" data-busy="Generating…">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-secondary btn-small">Regenerate</button>
+        </form>
+      </div>
+    </section>
+  </aside>
+</div>
+{% endblock %}

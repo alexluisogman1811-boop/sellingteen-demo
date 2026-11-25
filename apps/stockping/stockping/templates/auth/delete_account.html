@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Delete account{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <p><a class="small" href="{{ url_for('auth.account') }}">← Back to your account</a></p>
+  <h1>Delete your account?</h1>
+  <p>This permanently deletes <strong>{{ g.account.shop_name }}</strong> and everything in it:</p>
+  <ul>
+    <li>{{ counts.products }} product{{ '' if counts.products == 1 else 's' }} (including archived ones)</li>
+    <li>{{ counts.stock_movements }} stock movement{{ '' if counts.stock_movements == 1 else 's' }} in the history</li>
+    <li>{{ counts.suppliers }} supplier{{ '' if counts.suppliers == 1 else 's' }}</li>
+    <li>Your login ({{ g.account.email }})</li>
+  </ul>
+  <p class="muted">This can't be undone. You may want to <a href="{{ url_for('auth.export_data') }}">download all your data</a> first. If you pay for StockPing, also cancel the subscription with the payment provider.</p>
+
+  {% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" action="{{ url_for('auth.delete_account') }}" class="form" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+      <label for="f-confirm">Type DELETE (or your email) to confirm</label>
+      <input id="f-confirm" name="confirm" type="text" autocomplete="off" required>
+    </div>
+    <div class="field">
+      <label for="f-password">Your password</label>
+      <input id="f-password" name="password" type="password" autocomplete="current-password" required maxlength="200">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-danger" type="submit">Delete my account</button>
+      <a class="btn" href="{{ url_for('auth.account') }}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Get extra work signed{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Get extra work signed on site, or put on written record when the GC won't sign.</h1>
+  <p class="lead">SignedExtra is a phone-friendly app for small electrical subcontractors. Record extra work with photos,
+    get the superintendent's signature, prepare a written notice when they won't sign, and turn signed work into a
+    change-order invoice.</p>
+  <div class="row">
+    <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Start your {{ trial_days }}-day free trial</a>
+    <a class="btn btn-secondary" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+</section>
+
+<div class="grid grid-3 mt-lg">
+  <div class="card">
+    <h2>1. Record it on site</h2>
+    <p>The foreman notes what changed, who asked for it, hours by worker type, materials and photos. Foremen don't see prices.</p>
+  </div>
+  <div class="card">
+    <h2>2. Get it signed</h2>
+    <p>The superintendent signs on the phone, or through a one-time link (no account needed), where they can also decline with a reason.
+      Signed tickets lock with a content fingerprint and a history that can't be edited.</p>
+  </div>
+  <div class="card">
+    <h2>3. Notice or invoice</h2>
+    <p>If the GC refuses or doesn't respond, prepare a dated written notice that you send yourself. The office prices signed or noticed work
+      and prints a change-order invoice.</p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Built for small shops</h2>
+  <ul>
+    <li>Owner, Office and Foreman logins for the whole company</li>
+    <li>Dashboard of work waiting on a signature, unpaid or disputed</li>
+    <li>Export all your company's data any time</li>
+  </ul>
+  <h2>Good to know</h2>
+  <ul>
+    <li>SignedExtra doesn't send email or text messages. You share links and send notices and invoices yourself.</li>
+    <li>It doesn't collect payments from your customers and doesn't connect to QuickBooks or Procore.</li>
+    <li>Written notices are records you send yourself, not legal advice, and they don't guarantee payment. Check your contract and local rules.</li>
+  </ul>
+</div>
+
+{% if billing %}
+<div class="card" id="pricing">
+  <h2>Pricing</h2>
+  <p class="plan-price">{{ price }}</p>
+  <p>One price for the whole company. Every new company starts with a {{ trial_days }}-day free trial, no card needed.</p>
+  <a class="btn btn-primary" href="{{ url_for('auth.signup') }}">Start free trial</a>
+</div>
+{% endif %}
+{% endblock %}

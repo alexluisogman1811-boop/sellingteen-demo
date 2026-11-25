@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Error{% endblock %}
+{% block content %}
+<div class="empty">
+  <h1>{{ 'Page not found' if code == 404 else 'Something went wrong' }}</h1>
+  <p class="muted">{{ message }}</p>
+  <a class="btn" href="{{ url_for('routes.index') }}">Back to PayRecover</a>
+</div>
+{% endblock %}

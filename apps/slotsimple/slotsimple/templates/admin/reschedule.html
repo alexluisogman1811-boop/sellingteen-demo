@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Reschedule {{ booking.reference }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('admin.booking_detail', booking_id=booking.id) }}">← Back to booking</a></p>
+<header class="page-head">
+  <div><h1>Reschedule</h1>
+    <p class="muted">{{ booking.customer_name }} · {{ booking.service_name }} ({{ booking.duration_minutes }} min) ·
+      currently {{ booking.start_utc|local('%a %d %b %Y, %H:%M') }}</p></div>
+</header>
+
+<div class="layout-2">
+  <section class="card">
+    <form method="get" class="inline-form">
+      <label for="date">Date</label>
+      <input id="date" type="date" name="date" value="{{ selected.isoformat() }}" min="{{ today.isoformat() }}">
+      <button class="btn" type="submit">Show times</button>
+    </form>
+    <h2>{{ selected.strftime('%A %d %B %Y') }}</h2>
+    {% if slots %}
+    <form method="post" data-confirm="Move this booking to the selected time?">
+      {{ csrf() }}
+      <input type="hidden" name="date" value="{{ selected.isoformat() }}">
+      <fieldset class="slots-radio">
+        <legend class="sr-only">Available times</legend>
+        {% for s in slots %}
+        <label class="slot"><input type="radio" name="time" value="{{ s.strftime('%H:%M') }}" required> {{ s.strftime('%H:%M') }}</label>
+        {% endfor %}
+      </fieldset>
+      <button class="btn btn-primary" type="submit">Move booking</button>
+    </form>
+    <p class="hint">Minimum-notice rules are not applied to staff reschedules; availability, blocks, buffers and other bookings are.</p>
+    {% else %}
+    <p class="muted">No available times on this date.</p>
+    {% endif %}
+  </section>
+  <aside class="card side">
+    <h2>Dates with space</h2>
+    {% if upcoming %}
+    <ul class="chips">
+      {% for d in upcoming %}<li><a class="chip{% if d == selected %} selected{% endif %}" href="{{ url_for('admin.booking_reschedule', booking_id=booking.id, date=d.isoformat()) }}">{{ d.strftime('%a %d %b') }}</a></li>{% endfor %}
+    </ul>
+    {% else %}<p class="muted">No availability in the next 30 days.</p>{% endif %}
+  </aside>
+</div>
+{% endblock %}

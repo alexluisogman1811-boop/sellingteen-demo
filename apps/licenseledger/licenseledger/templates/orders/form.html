@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field, textarea %}
+{% block title %}{{ 'Edit order' if order else 'Add order' }}{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <p class="crumb"><a href="{{ url_for('main.orders') }}">Orders</a></p>
+  <h1>{{ 'Edit order ' ~ order.order_ref if order else 'Add an order' }}</h1>
+  {% if order %}<p class="muted">Status, payment and items are changed on the order page so every change is recorded in its history.</p>{% endif %}
+</div></div>
+{% if not customers %}
+<div class="card callout"><p>Add a <a href="{{ url_for('main.customer_form') }}">customer</a> before recording orders.</p></div>
+{% endif %}
+<form method="post" class="card form-grid">
+  {{ csrf() }}
+  {{ field("order_ref", "Order reference", form, required=True, attrs='maxlength="100"', help="Your own reference, e.g. an invoice or store order number.") }}
+  <div class="field">
+    <label for="f-customer_id">Customer <span class="req">*</span></label>
+    <select id="f-customer_id" name="customer_id" required>
+      <option value="">Choose a customer…</option>
+      {% for c in customers %}
+      <option value="{{ c.id }}" {{ 'selected' if form.get('customer_id')|string == c.id|string }}>{{ c.name }} — {{ c.email }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {{ field("order_date", "Order date", form, type="date", required=True) }}
+  {{ field("amount", "Amount", form, attrs='maxlength="30" placeholder="e.g. USD 49.00"', help="For reference only. Never enter card details anywhere in LicenseLedger.") }}
+  {% if not order %}
+  <div class="field">
+    <label for="f-payment_status">Payment status (recorded by you)</label>
+    <select id="f-payment_status" name="payment_status">
+      {% for k in ('awaiting', 'marked_paid', 'not_required') %}
+      <option value="{{ k }}" {{ 'selected' if form.get('payment_status', 'awaiting') == k }}>{{ PAYMENT_STATUSES[k] }}</option>
+      {% endfor %}
+    </select>
+    <p class="help">Only choose “Marked paid” after you have confirmed the payment in your own payment provider or bank.</p>
+  </div>
+  {{ field("payment_reference", "Payment reference", form, attrs='maxlength="100" placeholder="e.g. invoice or transaction ID"', help="Optional. Never a card number.") }}
+  <fieldset class="field span-2 keymode">
+    <legend>First item (optional)</legend>
+    <div class="row">
+      <div class="field grow"><label for="f-item_product_id">Product</label>
+        <select id="f-item_product_id" name="item_product_id">
+          <option value="">No item yet</option>
+          {% for p in products %}<option value="{{ p.id }}" {{ 'selected' if form.get('item_product_id')|string == p.id|string }}>{{ p.name }}</option>{% endfor %}
+        </select></div>
+      <div class="field"><label for="f-item_quantity">Seats</label>
+        <input id="f-item_quantity" name="item_quantity" type="number" min="1" max="1000" value="{{ form.get('item_quantity') or 1 }}"></div>
+    </div>
+    <p class="help">Items define how many licenses of each product the order needs. Licenses can then only be assigned for those products, up to the quantity.</p>
+  </fieldset>
+  {% endif %}
+  <div class="span-2">{{ textarea("notes", "Notes", form) }}</div>
+  <div class="form-actions span-2">
+    <button class="btn btn-primary" type="submit">Save order</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.order_detail', order_id=order.id) if order else url_for('main.orders') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

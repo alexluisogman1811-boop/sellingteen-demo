@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Reports</h1>
+  <div class="actions"><a class="btn" href="{{ url_for('main.saved_reports') }}">Saved reports</a></div>
+</div>
+
+<form class="card form" method="get" action="{{ url_for('main.reports_index') }}">
+  <h2>Client report</h2>
+  {% if clients %}
+  <p class="muted small">Covers all of the client's websites for any period up to a year. Leave the dates as they are for the current month.</p>
+  <div class="form-grid">
+    <div class="field">
+      <label for="f-client">Client</label>
+      <select id="f-client" name="client_id" required>
+        {% for c in clients %}<option value="{{ c.id }}" {% if selected_client == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-month">Month</label>
+      <input id="f-month" name="month" type="month" value="{{ this_month }}" pattern="\d{4}-\d{2}" placeholder="YYYY-MM">
+      <p class="hint">Or set a custom range below (overrides the month).</p>
+    </div>
+    <div class="field">
+      <label for="f-start">From (optional)</label>
+      <input id="f-start" name="start" type="date">
+    </div>
+    <div class="field">
+      <label for="f-end">To (optional)</label>
+      <input id="f-end" name="end" type="date">
+    </div>
+  </div>
+  <div class="form-actions"><button class="btn btn-primary" type="submit">View client report</button></div>
+  {% else %}<p class="empty">Add a client first.</p>{% endif %}
+</form>
+
+{% if clients %}
+<section class="card">
+  <h2>Quick links</h2>
+  <div class="table-wrap">
+    <table class="table table-stack">
+      <thead><tr><th>Client</th><th>This month</th><th>Last month</th></tr></thead>
+      <tbody>
+      {% for c in clients %}
+        <tr>
+          <td data-label="Client">{{ c.name }}</td>
+          <td data-label="This month"><a href="{{ url_for('main.client_report', client_id=c.id, month=this_month) }}">{{ this_month }}</a></td>
+          <td data-label="Last month"><a href="{{ url_for('main.client_report', client_id=c.id, month=last_month) }}">{{ last_month }}</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+<section class="card">
+  <div class="card-head"><h2>Recently saved</h2><a href="{{ url_for('main.saved_reports') }}">All saved reports</a></div>
+  {% if saved %}
+  <ul class="task-list">
+    {% for r in saved %}
+      <li><div><a class="task-title" href="{{ url_for('main.saved_report_detail', report_id=r.id) }}">{{ r.title }}</a>
+        <span class="muted small">{{ r.client_name }} · {{ r.period_start|nice_date }} - {{ r.period_end|nice_date }} · saved {{ r.created_at }}</span></div></li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="empty">No saved reports yet.</p>{% endif %}
+</section>
+
+{% if websites %}
+<form class="card form" method="get" action="{{ url_for('main.report_view') }}">
+  <h2>Single-website monthly report</h2>
+  <div class="form-grid">
+    <div class="field">
+      <label for="f-website">Website</label>
+      <select id="f-website" name="website_id" required>
+        {% for w in websites %}<option value="{{ w.id }}">{{ w.name }} ({{ w.domain }}){% if w.status != 'active' %} - {{ WEBSITE_STATUSES[w.status]|lower }}{% endif %}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="f-wmonth">Month</label>
+      <input id="f-wmonth" name="month" type="month" value="{{ this_month }}" required pattern="\d{4}-\d{2}" placeholder="YYYY-MM">
+    </div>
+  </div>
+  <div class="form-actions"><button class="btn" type="submit">View website report</button></div>
+</form>
+{% endif %}
+{% endblock %}

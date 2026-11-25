@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Reminder for {{ inv.number }}{% endblock %}
+{% block content %}
+<div class="narrow">
+  <a class="back" href="{{ url_for('routes.dashboard') }}">← Today</a>
+  <p class="muted small">Reminder {{ stage.number }} of {{ total_stages }}</p>
+  <h1>{{ stage.label }} for {{ inv.customer_name }}</h1>
+  <p class="muted">Invoice {{ inv.number }} · <strong>{{ inv.amount_cents|money }}</strong> · due {{ inv.due_date|nice_date }} · <span class="text-danger">{{ inv.days_overdue|days }} overdue</span></p>
+
+  <form method="post" class="card form" data-followup>
+    {{ csrf() }}
+    <input type="hidden" name="stage" value="{{ stage.number }}">
+    <div class="msg-head">
+      <label for="message">Your message</label>
+      <span class="source source-{{ draft.source }}">
+        {% if draft.source == 'ai' %}AI draft{% elif draft.source == 'mock' %}AI draft (demo mode){% else %}Standard template{% endif %}
+      </span>
+    </div>
+    {% if draft.note %}<p class="hint">{{ draft.note }}</p>{% endif %}
+    <textarea id="message" name="message" rows="10" maxlength="2000" readonly>{{ draft.text }}</textarea>
+    <p class="hint">Check it over, then copy it into a text or email to {{ inv.customer_name }}{% if inv.customer_phone %} ({{ inv.customer_phone }}){% elif inv.customer_email %} ({{ inv.customer_email }}){% endif %}. PayRecover never sends messages for you.</p>
+    <div class="actions">
+      <button type="button" class="btn" data-edit>Edit</button>
+      <button type="button" class="btn" data-copy>Copy message</button>
+    </div>
+    <hr>
+    <p class="small">After you've sent it yourself:</p>
+    <div class="actions">
+      <button class="btn btn-primary" type="submit" name="action" value="sent">Mark as sent</button>
+      <button class="btn btn-ghost" type="submit" name="action" value="skip" formnovalidate>Skip this reminder</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

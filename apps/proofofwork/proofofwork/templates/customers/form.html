@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "macros.html" import field, textarea %}
+{% block title %}{{ 'Edit customer' if customer else 'New customer' }}{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <h1>{{ 'Edit customer' if customer else 'New customer' }}</h1>
+  <form method="post" action="{{ url_for('main.customer_edit', customer_id=customer.id) if customer else url_for('main.customer_new') }}" class="stack">
+    {{ csrf_field() }}
+    {{ field('name', 'Customer / company name', values.name, required=true) }}
+    {{ field('contact_name', 'Contact person', values.contact_name) }}
+    {{ field('email', 'Email', values.email, type='email', maxlength=254) }}
+    {{ field('phone', 'Phone', values.phone, type='tel', maxlength=50) }}
+    {{ textarea('notes', 'Notes (internal)', values.notes) }}
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Save customer</button>
+      <a class="btn" href="{{ url_for('main.customer_detail', customer_id=customer.id) if customer else url_for('main.customers') }}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

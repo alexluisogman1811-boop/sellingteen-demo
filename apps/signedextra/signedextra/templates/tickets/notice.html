@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, ticket_no %}
+{% block title %}Notice for {{ ticket_no(ticket) }}{% endblock %}
+{% block content %}
+<p class="small muted no-print"><a href="{{ url_for('tickets.ticket_detail', ticket_id=ticket.id) }}">← Back to {{ ticket_no(ticket) }}</a></p>
+<h1>Written notice</h1>
+
+{% if notice.status == 'prepared' %}
+<div class="flash flash-info no-print">
+  <strong>This notice has not been sent.</strong> SignedExtra doesn't send email for you. Send it from your own email (button below), or print it and hand it over, then record how you sent it.
+</div>
+{% else %}
+<div class="flash flash-success">Recorded as sent ({{ notice.sent_method|replace('_', ' ') }}) on {{ notice.sent_at|dt }}.</div>
+{% endif %}
+
+<div class="card">
+  <p class="small muted">To: {{ notice.recipients or "No email recipients on file" }}</p>
+  <p><strong>{{ notice.subject }}</strong></p>
+  <pre class="notice" id="notice-body">{{ notice.body }}</pre>
+  <p class="small muted">Notice fingerprint (SHA-256): <span class="mono">{{ notice.content_hash }}</span></p>
+  <p class="small muted">This wording is a starting point. Check it against your contract's notice clause, and with a lawyer, before relying on it.</p>
+</div>
+
+{% if notice.status == 'prepared' %}
+<div class="card no-print">
+  <h2>1. Send it</h2>
+  <div class="row">
+    {% if emails %}<a class="btn btn-primary" href="{{ mailto }}">Open in my email app</a>{% endif %}
+    <button class="btn btn-secondary" type="button" data-copy="#notice-body">Copy text</button>
+    <button class="btn btn-secondary" type="button" data-print>Print</button>
+  </div>
+  <h2 class="mt">2. Record how you sent it</h2>
+  <form method="post" action="{{ url_for('tickets.notice_sent', ticket_id=ticket.id, notice_id=notice.id) }}" data-confirm="Record this notice as sent? Only do this after you've actually sent it.">
+    {{ csrf() }}
+    <div class="field">
+      <label for="f-method">How was it sent?</label>
+      <select id="f-method" name="method">
+        <option value="email">By email from my account</option>
+        <option value="hand_delivered">Handed over in person</option>
+        <option value="other">Other (certified mail, GC portal…)</option>
+      </select>
+    </div>
+    <button class="btn btn-ok" type="submit">I've sent it</button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} – JobProof AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<div class="card center error-card">
+  <h1>{{ title }}</h1>
+  <p>{{ message }}</p>
+  <p><a class="btn" href="{{ url_for('dashboard.index') if g.user else url_for('dashboard.landing') }}">{{ "Back to dashboard" if g.user else "Go to home page" }}</a></p>
+</div>
+{% endblock %}

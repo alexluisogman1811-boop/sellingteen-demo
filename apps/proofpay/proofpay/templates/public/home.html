@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}ProofPay · Prove the work. Get paid.{% endblock %}
+{% block main_class %}{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="wrap hero-inner">
+    <div>
+      <h1>Prove the work. Get paid.</h1>
+      <p class="lead">ProofPay helps service businesses document completed jobs, share professional job reports, and keep track of unpaid work.</p>
+      <div class="btn-row">
+        <a class="btn btn-lg" href="{{ url_for('auth.signup') }}">Start free</a>
+        {% if config.DEMO_MODE %}
+        <form method="post" action="{{ url_for('demo.start_demo') }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-lg btn-ghost" type="submit">Try the demo</button>
+        </form>
+        {% endif %}
+      </div>
+      <p class="muted small">Built for plumbers, electricians and other trades.</p>
+    </div>
+    <div>
+      <p class="eyebrow center">Example job report</p>
+      {% include "public/_example_report.html" %}
+    </div>
+  </div>
+</section>
+
+<section class="section wrap">
+  <h2 class="center">The problem</h2>
+  <div class="cols3">
+    <div class="card"><h3>"What did I pay for?"</h3><p class="muted">Customers weren't there when the work happened. A bare invoice doesn't show them what was done.</p></div>
+    <div class="card"><h3>Photos lost in your camera roll</h3><p class="muted">Before and after shots are scattered across your phone and hard to send in one place.</p></div>
+    <div class="card"><h3>Who still owes you?</h3><p class="muted">Tracking unpaid jobs in your head, on paper or in texts makes it easy to lose track.</p></div>
+  </div>
+</section>
+
+<section class="section wrap">
+  <h2 class="center">How it works</h2>
+  <ol class="steps">
+    <li><strong>Create the job.</strong> Customer, address, price. Under two minutes.</li>
+    <li><strong>Add photos and notes.</strong> Before and after photos, and what you did.</li>
+    <li><strong>Send the report.</strong> Your customer gets a clean page with the work, photos and amount due.</li>
+    <li><strong>Track payment.</strong> Mark it paid when the money arrives. Your dashboard shows what's outstanding.</li>
+  </ol>
+</section>
+
+<section class="section wrap">
+  <h2 class="center">Features</h2>
+  <div class="cols3">
+    <div class="card"><h3>Professional job reports</h3><p class="muted">A mobile-friendly page for each job with your business name, the work done and the total.</p></div>
+    <div class="card"><h3>Before &amp; after photos</h3><p class="muted">Upload from your phone. Location data is stripped automatically.</p></div>
+    <div class="card"><h3>Unpaid work at a glance</h3><p class="muted">See completed jobs that haven't been paid, and the total outstanding.</p></div>
+    <div class="card"><h3>Optional AI job summary</h3><p class="muted">Turn rough notes into a clear summary. It only rewords what you wrote, and you approve it first.</p></div>
+    <div class="card"><h3>Private share links</h3><p class="muted">Each report has its own unguessable link. Your other jobs and customers stay private.</p></div>
+    <div class="card"><h3>Online payments: coming later</h3><p class="muted">For now, customers see your payment instructions and you mark jobs paid yourself.</p></div>
+  </div>
+</section>
+
+<section class="section wrap" id="pricing">
+  <h2 class="center">Pricing</h2>
+  {% include "public/_pricing_cards.html" %}
+</section>
+
+<section class="section cta">
+  <div class="wrap center">
+    <h2>Send your next customer a job report they'll understand.</h2>
+    <a class="btn btn-lg" href="{{ url_for('auth.signup') }}">Create your free account</a>
+  </div>
+</section>
+{% endblock %}

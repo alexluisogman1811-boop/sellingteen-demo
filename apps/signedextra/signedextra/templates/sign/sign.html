@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf, ticket_no %}
+{% block title %}Review and sign {{ ticket_no(ticket) }}{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<p class="small muted">From <strong>{{ company.name }}</strong>{% if company.phone %} · {{ company.phone }}{% endif %}</p>
+<h1>Extra work ticket {{ ticket_no(ticket) }}</h1>
+{% if not public %}<div class="flash flash-info">Hand this device to the GC's representative to review and sign.</div>{% endif %}
+
+<div class="card">
+  <p class="small muted">{{ ticket.customer_name }} · {{ ticket.job_name }}{% if ticket.gc_reference %} · {{ ticket.gc_reference }}{% endif %} · work date {{ ticket.work_date }}</p>
+  <p>{{ ticket.description }}</p>
+  <p class="small">Requested by <strong>{{ ticket.requested_by_name }}</strong>{% if ticket.requested_by_role %} ({{ ticket.requested_by_role }}){% endif %}</p>
+  <table class="table">
+    <thead><tr><th>Item</th><th class="num">Qty</th></tr></thead>
+    <tbody>
+    {% for l in lines %}
+    <tr><td>{{ l.labor_label ~ " labor" if l.kind == 'labor' else l.description }}{% if l.kind == 'labor' and l.description != l.labor_label %}<br><span class="small muted">{{ l.description }}</span>{% endif %}</td>
+      <td class="num">{{ l.qty_x100|qty }} {{ "hours" if l.kind == 'labor' else l.unit }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="small muted">You're confirming the work and quantities. Pricing follows the contract rates.</p>
+  {% if photos %}
+  <div class="photos mt">
+    {% for p in photos %}<a href="{{ photo_url(p) }}" target="_blank" rel="noopener"><img src="{{ photo_url(p) }}" alt="Photo {{ loop.index }}"></a>{% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Sign</h2>
+  {% if form.errors %}<div class="flash flash-error" role="alert">Please fix the highlighted fields.</div>{% endif %}
+  <form method="post" action="{{ post_url }}" novalidate data-signature-form>
+    {{ csrf() }}
+    <input type="hidden" name="content_hash" value="{{ ticket.content_hash }}">
+    {{ field(form, "signer_name", "Your full name", required=True, attrs='autocomplete="name"') }}
+    {{ field(form, "signer_title", "Your title", required=True, hint="Superintendent, project manager…") }}
+    {{ field(form, "signer_contact", "Your email or phone", hint="Optional, for a copy.") }}
+    <div class="field{% if form.errors.get('signature_data') %} has-error{% endif %}">
+      <label>Signature <span class="req">*</span></label>
+      <div class="sigpad-wrap"><canvas data-sigpad aria-label="Signature pad: draw your signature"></canvas><div class="sig-line"></div></div>
+      <input type="hidden" name="signature_data" data-sig-output>
+      <div class="row mt"><button type="button" class="btn btn-secondary btn-sm" data-sig-clear>Clear</button></div>
+      {% if form.errors.get('signature_data') %}<p class="error-text">{{ form.errors.signature_data }}</p>{% endif %}
+    </div>
+    <label class="checkbox"><input type="checkbox" name="consent"> I agree to sign this document electronically, and my electronic signature has the same effect as a handwritten one.</label>
+    {% if form.errors.get('consent') %}<p class="error-text">{{ form.errors.consent }}</p>{% endif %}
+    <button class="btn btn-ok btn-block mt" type="submit">Sign ticket</button>
+  </form>
+</div>
+
+{% if decline_url %}
+<details class="card">
+  <summary>I don't agree with this ticket</summary>
+  <form method="post" action="{{ decline_url }}" class="mt" novalidate>
+    {{ csrf() }}
+    {{ field(form, "signer_name", "Your full name", required=True) }}
+    {{ field(form, "signer_title", "Your title", required=True) }}
+    {{ field(form, "decline_reason", "Why are you declining?", type="textarea", required=True) }}
+    <button class="btn btn-danger" type="submit">Decline</button>
+  </form>
+</details>
+<p class="small muted">This link expires {{ expires_at|dt }}.</p>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='signature.js') }}"></script>{% endblock %}

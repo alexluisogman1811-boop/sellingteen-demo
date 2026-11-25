@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service{% endblock %}
+{% block content %}{{ self.legal() }}{% endblock %}
+{% block auth_content %}{{ self.legal() }}{% endblock %}
+{% block legal %}
+<article class="card legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>1. Who we are</h2>
+  <p>LicenseLedger ("the service") is provided by {{ operator }} ("we", "us").{% if support_email %} You can contact us at {{ support_email }}.{% endif %}</p>
+
+  <h2>2. What the service does</h2>
+  <p>LicenseLedger helps you keep a record of the digital products you sell: orders, customers, license keys and renewals.
+    <strong>It is a record-keeping tool only.</strong> It does not take payments, does not check whether you were paid,
+    does not validate licenses inside your software, does not connect to any store and does not send email to your customers.
+    Payment and delivery statuses are whatever you record.</p>
+
+  <h2>3. Your account</h2>
+  <p>You must give a valid email address and keep your password private. You are responsible for what happens in your account.
+    You must be allowed to enter into this agreement where you live.</p>
+
+  <h2>4. Your responsibilities</h2>
+  <ul>
+    <li>Only add customers you have a real business relationship with, and follow the privacy laws where you operate.</li>
+    <li>Never enter payment card numbers. LicenseLedger refuses text that looks like a card number, but this is a safety net, not a guarantee.</li>
+    <li>Copy each new license key when it is shown. Full keys are shown only once and cannot be shown again (use "Replace key" if one is lost).</li>
+    <li>Do not use the service to break any law.</li>
+  </ul>
+
+  <h2>5. Free trial and subscription</h2>
+  <p>New accounts get a free trial of {{ trial_days }} days. After the trial, using the service requires a paid subscription ({{ price }}),
+    billed through our payment provider. Subscriptions renew each month until you cancel. You can cancel at any time; access continues
+    until the end of the period you paid for. See the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.
+    Even after your trial or subscription ends, you can still export your data or delete your account.</p>
+
+  <h2>6. Your data</h2>
+  <p>Your records belong to you. We handle them as described in the <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>.
+    You can export all of it at any time. If your account ends, we may delete its data after 90 days.</p>
+
+  <h2>7. Availability and changes</h2>
+  <p>We work to keep the service available but cannot promise it will always be online or error-free. Keep your own copy of important
+    records (use "Export all my data"). We may change features or these terms; we will update the date above and, for important changes,
+    tell you in the app.</p>
+
+  <h2>8. Limitation of liability</h2>
+  <p>The service is provided "as is". To the extent the law allows, we are not liable for indirect losses, lost profits, or decisions
+    you make based on the records you keep in it. Our total liability is limited to the amount you paid us in the last 3 months.</p>
+
+  <h2>9. Ending the agreement</h2>
+  <p>You can stop using the service and delete your account at any time. We may suspend accounts that break these terms.</p>
+</article>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro badge(status) -%}
+<span class="badge badge-{{ status }}">{{ STATUS_LABELS.get(status, status) }}</span>
+{%- endmacro %}
+
+{% macro type_pill(t) -%}
+<span class="pill pill-{{ t }}">{{ LICENSE_TYPES.get(t, t) }}</span>
+{%- endmacro %}
+
+{% macro expiry(lic) -%}
+  {% if lic.expiration_date %}
+    {% set d = lic.expiration_date | days_until %}
+    <span class="nowrap">{{ lic.expiration_date }}</span>
+    {% if lic.effective_status in ('active', 'suspended', 'expired') %}
+      <span class="rel {{ 'rel-past' if d < 0 else ('rel-soon' if d <= 30 else '') }}">
+        {% if d < 0 %}{{ -d }}d ago{% elif d == 0 %}today{% else %}in {{ d }}d{% endif %}
+      </span>
+    {% endif %}
+  {% elif lic.license_type == 'lifetime' %}<span class="muted">Never</span>
+  {% else %}<span class="muted">—</span>{% endif %}
+{%- endmacro %}
+
+{% macro delivery_pill(lic) -%}
+{% if lic.status in ('revoked', 'replaced') %}<span class="muted small">n/a</span>
+{% else %}<span class="dpill dpill-{{ lic.delivery_status }}">{{ DELIVERY_STATUSES.get(lic.delivery_status, lic.delivery_status) }}</span>{% endif %}
+{%- endmacro %}
+
+{% macro order_pills(o) -%}
+<span class="opill opill-{{ o.order_status }}">{{ ORDER_STATUSES.get(o.order_status, o.order_status) }}</span>
+<span class="ppill ppill-{{ o.payment_status }}" title="Recorded by the owner; LicenseLedger does not verify payments">{{ PAYMENT_STATUSES.get(o.payment_status, o.payment_status) }}</span>
+<span class="dpill dpill-{{ o.delivery_state }}">{{ ORDER_DELIVERY_STATES.get(o.delivery_state, o.delivery_state) }}{% if o.seats_required %} ({{ o.delivered_count }}/{{ o.seats_required }}){% endif %}</span>
+{%- endmacro %}
+
+{% macro key_mask(lic) -%}
+<code class="key-mask" title="Only the last 4 characters are stored in readable form">••••{{ lic.key_hint }}</code>
+{%- endmacro %}
+
+{% macro license_table(rows, show_customer=True, empty="No licenses found.") %}
+{% if rows %}
+<div class="table-wrap">
+<table class="table stack">
+  <thead>
+    <tr>
+      <th>#</th>
+      {% if show_customer %}<th>Customer</th>{% endif %}
+      <th>Product</th><th>Order</th><th>Type</th><th>Status</th><th>Delivery</th><th>Expires</th><th>Key</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for lic in rows %}
+    <tr>
+      <td data-label="#"><a href="{{ url_for('main.license_detail', license_id=lic.id) }}">#{{ lic.id }}</a></td>
+      {% if show_customer %}
+      <td data-label="Customer"><div>
+        <a href="{{ url_for('main.customer_detail', customer_id=lic.customer_id) }}">{{ lic.customer_name }}</a>
+        <div class="muted small">{{ lic.customer_email }}</div>
+      </div></td>
+      {% endif %}
+      <td data-label="Product">{{ lic.product_name }}</td>
+      <td data-label="Order">
+        {% if lic.order_id %}<a href="{{ url_for('main.order_detail', order_id=lic.order_id) }}">{{ lic.order_ref }}</a>{% else %}<span class="muted">—</span>{% endif %}
+      </td>
+      <td data-label="Type">{{ type_pill(lic.license_type) }}</td>
+      <td data-label="Status">{{ badge(lic.effective_status) }}</td>
+      <td data-label="Delivery">{{ delivery_pill(lic) }}</td>
+      <td data-label="Expires"><div>{{ expiry(lic) }}</div></td>
+      <td data-label="Key">{{ key_mask(lic) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">{{ empty }}</p>
+{% endif %}
+{% endmacro %}
+
+{% macro field(name, label, form, type="text", required=False, help=None, attrs="") %}
+<div class="field">
+  <label for="f-{{ name }}">{{ label }}{% if required %} <span class="req" aria-hidden="true">*</span>{% endif %}</label>
+  <input id="f-{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ form.get(name) if form.get(name) is not none else '' }}" {% if required %}required{% endif %} {{ attrs|safe }}>
+  {% if help %}<p class="help">{{ help }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro textarea(name, label, form, rows=3, help=None) %}
+<div class="field">
+  <label for="f-{{ name }}">{{ label }}</label>
+  <textarea id="f-{{ name }}" name="{{ name }}" rows="{{ rows }}">{{ form.get(name) or '' }}</textarea>
+  {% if help %}<p class="help">{{ help }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro delete_button(action, what) %}
+<form method="post" action="{{ action }}" class="inline" data-confirm="Delete this {{ what }}? This cannot be undone.">
+  {{ csrf() }}
+  <button class="btn btn-danger-ghost btn-sm" type="submit">Delete</button>
+</form>
+{% endmacro %}

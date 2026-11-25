@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, ticket_no %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="spread">
+  <h1>Extra work at a glance</h1>
+  <a class="btn btn-primary" href="{{ url_for('core.jobs') }}">+ New ticket</a>
+</div>
+
+{% if needs_setup %}
+<div class="flash flash-info">Start here: add your labor rates in <a href="{{ url_for('core.settings') }}">Settings</a>, then add a <a href="{{ url_for('core.customer_form') }}">GC</a> and a job.</div>
+{% endif %}
+
+<div class="grid grid-3">
+  {% for label, b, tone in buckets %}
+  <div class="card stat stat-{{ tone }}">
+    <div class="label">{{ label }}</div>
+    <div class="value">{% if can_see_prices() %}{{ b.cents|money }}{% else %}{{ b.n }}{% endif %}</div>
+    <div class="small muted">{{ b.n }} ticket{{ "" if b.n == 1 else "s" }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% if can_see_prices() %}
+<p class="small muted">Amounts include only priced lines. Unpriced material lines count as $0 until the office prices them.</p>
+{% endif %}
+
+<div class="card">
+  <h2>Recent tickets</h2>
+  {% if recent %}
+  <ul class="list">
+    {% for t in recent %}
+    <li><a class="item" href="{{ url_for('tickets.ticket_detail', ticket_id=t.id) }}">
+      <span><span class="item-title">{{ ticket_no(t) }} · {{ t.job_name }}</span><br>
+        <span class="small muted">{{ t.description|truncate(70) }}</span></span>
+      <span class="right">{{ badge(t.status) }}{% if can_see_prices() %}<br><span class="small">{{ t.total_cents|money }}</span>{% endif %}</span>
+    </a></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="empty">No tickets yet. Open a job and tap <strong>New ticket</strong> when extra work comes up.</p>
+  {% endif %}
+</div>
+{% endblock %}

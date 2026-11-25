@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Quote — QuoteFlow AI{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Quote <span class="status status-{{ quote.status }}" style="vertical-align:middle">{{ statuses[quote.status] }}</span></h1>
+    <p class="muted" style="margin:4px 0 0">Check the details, edit anything, then save and copy the reply.</p>
+  </div>
+  <a href="{{ url_for('new_quote') }}" class="btn secondary">+ New quote</a>
+</div>
+
+{# Template-mode quotes (AI_MOCK=1) carry an internal "Demo mode" note: show it as a calm line,
+   not as a warning, and keep the warning box for real gaps only. #}
+{% set ns = namespace(gaps=[], template=false) %}
+{% for item in result.missing_information or [] %}
+  {% if item.startswith("Demo mode") %}{% set ns.template = true %}{% else %}{% set ns.gaps = ns.gaps + [item] %}{% endif %}
+{% endfor %}
+{% if ns.template %}
+  <p class="muted small template-note">Written from your saved prices, services and policies using QuoteFlow's built-in quote templates. Read it through before you send it.</p>
+{% endif %}
+{% if ns.gaps %}
+  <div class="notice" style="margin-bottom:20px">
+    <h3>Missing information — check before sending</h3>
+    <ul>{% for item in ns.gaps %}<li>{{ item }}</li>{% endfor %}</ul>
+    <p class="small" style="margin:8px 0 0"><a href="{{ url_for('profile') }}">Update your business profile</a> to fill gaps for future quotes.</p>
+  </div>
+{% endif %}
+
+<form method="post" id="edit-form" data-busy-label="Saving…" data-warn-unsaved>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="grid-2">
+    <div class="card">
+      <label for="reply_text" style="font-size:1rem">Customer reply</label>
+      <p class="hint">Edit anything you like before copying.</p>
+      <textarea id="reply_text" name="reply_text" class="reply-box">{{ quote.reply_text }}</textarea>
+      <div class="actions">
+        <button class="btn" type="button" id="copy-btn">Copy Reply</button>
+        <button class="btn secondary" type="submit">Save Quote</button>
+        <select name="status" aria-label="Status" class="status-select">
+          {% for key, label in statuses.items() if key != 'draft' %}
+            <option value="{{ key }}" {{ 'selected' if key == quote.status or (quote.status == 'draft' and key == 'saved') }}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="field">
+          <label for="price">Recommended price</label>
+          <input type="text" id="price" name="price" value="{{ quote.price }}" placeholder="Not enough info — enter a price">
+          {% if result.price_breakdown %}
+            <ul class="breakdown">{% for line in result.price_breakdown %}<li>{{ line }}</li>{% endfor %}</ul>
+          {% endif %}
+        </div>
+        <div class="field">
+          <label for="duration">Estimated duration</label>
+          <input type="text" id="duration" name="duration" value="{{ quote.duration }}" placeholder="Not enough info — e.g. About 4 hours">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="services">Included services</label>
+          <p class="hint">One per line.</p>
+          <textarea id="services" name="services" rows="3">{{ quote.services }}</textarea>
+        </div>
+
+        <div class="section-label">Optional add-ons</div>
+        {% if result.upsells %}
+          <ul style="margin:0;padding-left:18px">{% for u in result.upsells %}<li>{{ u }}</li>{% endfor %}</ul>
+        {% else %}<p class="muted small" style="margin:0">None suggested.</p>{% endif %}
+      </div>
+
+      <div class="card">
+        <div class="section-label" style="margin-top:0">Customer request</div>
+        <p class="small" style="white-space:pre-line;margin:0 0 10px">{{ quote.customer_request }}</p>
+        <div class="section-label">Summary</div>
+        <p class="small" style="margin:0">{{ result.request_summary }}</p>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}

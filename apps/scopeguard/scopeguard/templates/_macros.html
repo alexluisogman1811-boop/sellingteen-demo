@@ -1,0 +1,151 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro badge(value, label=None) %}<span class="badge {{ value }}">{{ label or value|replace('_', ' ')|capitalize }}</span>{% endmacro %}
+
+{% macro errors(list) %}
+{% if list %}<ul class="errors" role="alert">{% for e in list %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+{% endmacro %}
+
+{% macro decision_status(dec) %}
+{% if dec %}{{ badge(dec.decision, DECISION_LABELS[dec.decision]) }}{% else %}{{ badge('open', 'Awaiting client') }}{% endif %}
+{% endmacro %}
+
+{% macro money(value, currency) %}{{ (currency ~ ' ' ~ '{:,.2f}'.format(value)) if value is not none else '—' }}{% endmacro %}
+
+{% macro record(a, show_subject=False, show_private=True) %}
+<div class="record {{ a.decision }}">
+  <div><strong>{{ DECISION_LABELS[a.decision] }}</strong> by <strong>{{ a.approver_name }}</strong>{% if a.approver_email and show_private %} &lt;{{ a.approver_email }}&gt;{% endif %}
+    {% if show_subject %} · {% if a.subject_type == 'scope_version' %}Scope v{{ a.version_no }}{% else %}Change request “{{ a.cr_title }}”{% endif %}{% endif %}
+  </div>
+  <div class="muted">{{ a.created_at|ts }}{% if a.ip_address and show_private %} · IP {{ a.ip_address }}{% endif %}</div>
+  <div class="method">{{ METHOD_LABELS[a.method] }}</div>
+  {% if a.evidence_note %}<div><small>{% if a.method == 'client_review_link' %}Statement confirmed:{% else %}Evidence:{% endif %}</small> {{ a.evidence_note }}</div>{% endif %}
+  {% if a.comment %}<div><small>Comment:</small> <pre class="wrap">{{ a.comment }}</pre></div>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro diff_view(diff) %}
+<div class="diff">
+{% if diff.first %}<p class="muted">First version, nothing earlier to compare.</p>
+{% elif not diff.terms and not diff.sections %}<p class="muted">No differences.</p>
+{% else %}
+  {% for label, old, new in diff.terms %}<div class="changed">{{ label }}: <span class="removed">{{ old if old not in (None, '') else '(none)' }}</span> → {{ new if new not in (None, '') else '(none)' }}</div>{% endfor %}
+  {% for section, d in diff.sections.items() %}
+    <h3>{{ section|capitalize }}</h3>
+    <ul>
+      {% for x in d.added %}<li class="added">Added: {{ x }}</li>{% endfor %}
+      {% for x in d.changed %}<li class="changed">Changed: {{ x }}</li>{% endfor %}
+      {% for x in d.removed %}<li class="removed">Removed: {{ x }}</li>{% endfor %}
+    </ul>
+  {% endfor %}
+{% endif %}
+</div>
+{% endmacro %}
+
+{% macro scope_view(scope, currency=None) %}
+<div class="card">
+  <h2>Deliverables</h2>
+  <ul class="plain feed">
+  {% for d in scope.deliverables %}
+    <li><strong>{{ d.title }}</strong>{% if d.due_date %} <small>· due {{ d.due_date }}</small>{% endif %}
+      <small>· {{ d.revision_allowance if d.revision_allowance is not none else scope.terms.revision_allowance }} revision round(s) included</small>
+      {% if d.description %}<div class="muted"><pre class="wrap">{{ d.description }}</pre></div>{% endif %}</li>
+  {% else %}<li class="empty">No deliverables.</li>{% endfor %}
+  </ul>
+</div>
+<div class="grid-2">
+  <div class="card">
+    <h2>Not included (exclusions)</h2>
+    <ul class="plain feed">{% for e in scope.exclusions %}<li>{{ e.text }}</li>{% else %}<li class="empty">None listed.</li>{% endfor %}</ul>
+  </div>
+  <div class="card">
+    <h2>Milestones & deadlines</h2>
+    <ul class="plain feed">
+      {% for m in scope.milestones %}<li>{{ m.title }}{% if m.due_date %} <small>· {{ m.due_date }}</small>{% endif %}</li>{% endfor %}
+      {% if scope.terms.deadline %}<li><strong>Final deadline</strong> <small>· {{ scope.terms.deadline }}</small></li>{% endif %}
+      {% if not scope.milestones and not scope.terms.deadline %}<li class="empty">None listed.</li>{% endif %}
+    </ul>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro impact(c, currency) %}Time impact: {{ ('%g'|format(c.estimated_hours) ~ ' extra hours') if c.estimated_hours is not none else 'not estimated' }} · Price impact: {{ money(c.proposed_cost, currency) if c.proposed_cost is not none else 'not specified' }}{% endmacro %}
+
+{% macro total_text(t, currency) %}{% if not t.count %}None{% else %}{% if t.hours is not none %}{{ '%g'|format(t.hours) }} h{% else %}no hours estimated{% endif %} · {% if t.cost is not none %}{{ money(t.cost, currency) }}{% else %}no price given{% endif %}{% if t.hours_missing or t.cost_missing %}<br><small>{{ t.hours_missing }} without a time estimate, {{ t.cost_missing }} without a price (not counted)</small>{% endif %}{% endif %}{% endmacro %}
+
+{% macro cr_totals(crs, currency) %}
+<div class="cr-totals">
+  <div class="cr-total agreed"><span>Approved extra work</span>
+    <strong>{{ total_text(crs.agreed, currency) }}</strong>
+    <small>{{ crs.agreed.count }} approved or completed request(s)</small></div>
+  <div class="cr-total pending"><span>Submitted, not yet decided</span>
+    <strong>{{ total_text(crs.pending, currency) }}</strong>
+    <small>{{ crs.pending.count }} awaiting a client decision</small></div>
+</div>
+{% endmacro %}
+
+{% macro cr_source(i) %}
+{% set c = i.cr %}{% set d = i.decision %}
+{% if d %}<div class="cr-source">{{ DECISION_LABELS[d.decision] }} by <strong>{{ d.approver_name }}</strong> on {{ d.created_at|ts }}, {{ METHOD_SHORT[d.method] }}.</div>
+{% elif c.status == 'withdrawn' %}<div class="cr-source">Withdrawn by the freelancer on {{ c.updated_at|ts }}{% if not c.submitted_at %} before it was sent to the client{% endif %}.</div>
+{% elif c.status == 'submitted' %}<div class="cr-source">Submitted {{ c.submitted_at|ts }}. Not agreed yet: work on this should not start until the client approves it.</div>
+{% elif c.status == 'draft' %}<div class="cr-source">Draft. The client cannot see it until you submit it.</div>
+{% endif %}
+{% if c.reason %}<div class="cr-reason"><small class="muted">Reason:</small> {{ c.reason }}</div>{% elif c.status != 'draft' %}<div class="cr-reason muted"><small>Reason: not recorded (created before reasons were tracked).</small></div>{% endif %}
+{% endmacro %}
+
+{% macro cr_sections(crs, p, link=True, show_drafts=True) %}
+{{ cr_totals(crs, p.currency) }}
+{% for status, heading in [('draft', 'Drafts: not sent to the client'), ('submitted', 'Submitted: awaiting client decision (not agreed)'), ('approved', 'Approved: agreed, not yet completed'), ('completed', 'Completed'), ('rejected', 'Rejected by the client'), ('withdrawn', 'Withdrawn')] %}
+  {% set items = crs.groups[status] %}
+  {% if (items or status in ('submitted', 'approved')) and (show_drafts or status != 'draft') %}
+  <h3 class="cr-heading {{ status }}">{{ heading }} <span class="muted">({{ items|length }})</span></h3>
+  <ul class="cr-list">
+  {% for i in items %}{% set c = i.cr %}
+    <li class="cr-item {{ status }}">
+      <div class="cr-main">
+        {% if link %}<a href="{{ url_for('main.change_detail', project_id=p.id, cr_id=c.id) }}">#{{ c.id }} {{ c.title }}</a>{% else %}<strong>#{{ c.id }} {{ c.title }}</strong>{% endif %}
+        {{ badge(status, CR_LABELS[status]) }}
+      </div>
+      <div class="muted">{{ impact(c, p.currency) }} · created {{ c.created_at|ts }}{% if c.completed_at %} · completed {{ c.completed_at|ts }}{% endif %}</div>
+      {{ cr_source(i) }}
+    </li>
+  {% else %}<li class="empty">None.</li>{% endfor %}
+  </ul>
+  {% endif %}
+{% endfor %}
+{% endmacro %}
+
+{# Original agreed scope vs everything approved on top of it. #}
+{% macro version_link(no, p, owner, token) %}{% if owner %}<a href="{{ url_for('main.version_detail', project_id=p.id, version_no=no) }}">Version {{ no }}</a>{% elif token %}<a href="{{ url_for('portal.version', token=token, version_no=no) }}">Version {{ no }}</a>{% else %}Version {{ no }}{% endif %}{% endmacro %}
+
+{% macro baseline_view(b, p, owner=False, token=None) %}
+<div class="card baseline" id="baseline">
+  <h2>Original scope and approved changes</h2>
+  <div class="baseline-grid">
+    <div class="baseline-col original">
+      <h3>Original agreed scope</h3>
+      {% if b.original %}
+        <p><strong>{{ version_link(b.original.version_no, p, owner, token) }}</strong>,
+          first approved by {{ b.original_dec.approver_name }} on {{ b.original_dec.created_at|ts }} <small class="muted">({{ METHOD_SHORT[b.original_dec.method] }})</small>.</p>
+      {% else %}<p class="agreement warn">No scope version has been approved yet, so there is no agreed original scope.</p>{% endif %}
+    </div>
+    <div class="baseline-col changes">
+      <h3>Approved changes since then</h3>
+      {% if b.scope_diff %}
+        <p>Scope updated to <strong>{{ version_link(b.current.version_no, p, owner, token) }}</strong>, approved {{ b.current_dec.created_at|ts }}:</p>
+        {{ diff_view(b.scope_diff) }}
+      {% endif %}
+      {% if b.approved_changes %}
+        <ul class="plain">
+        {% for i in b.approved_changes %}{% set c = i.cr %}
+          <li><span><strong>#{{ c.id }} {{ c.title }}</strong> {{ badge(c.status, CR_LABELS[c.status]) }}<br><small class="muted">{{ impact(c, p.currency) }}{% if i.decision %} · approved by {{ i.decision.approver_name }}, {{ i.decision.created_at|ts }}{% endif %}</small></span></li>
+        {% endfor %}
+        </ul>
+        <p><small>Total approved extra work: {{ total_text(b.agreed, p.currency) }}</small></p>
+      {% endif %}
+      {% if not b.scope_diff and not b.approved_changes %}<p class="muted">No approved changes{% if b.original %} since the original scope{% endif %}.</p>{% endif %}
+    </div>
+  </div>
+</div>
+{% endmacro %}

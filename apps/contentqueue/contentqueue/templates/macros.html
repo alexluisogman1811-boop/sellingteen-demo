@@ -1,0 +1,94 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro status_badge(status) -%}
+  <span class="badge status-{{ status }}"{% if status == 'published' %} title="You confirmed this was published"{% elif status == 'scheduled' %} title="Planned in ContentQueue only — not scheduled on the platform"{% endif %}>{{ status|status_label }}{% if status == 'published' %}<span class="visually-hidden"> (confirmed by you)</span>{% endif %}</span>
+{%- endmacro %}
+
+{% macro platform_badge(platform) -%}
+  <span class="badge platform platform-{{ platform }}">{{ platform|platform_label }}</span>
+{%- endmacro %}
+
+{% macro field_error(errors, name) -%}
+  {% if errors and errors.get(name) %}<p class="field-error" id="{{ name }}-error">{{ errors[name] }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro post_row(p, show_actions=true) %}
+  <article class="post-row status-{{ p.status }}{% if is_overdue(p) %} is-overdue{% endif %}">
+    <div class="post-row-main">
+      <a class="post-title" href="{{ url_for('posts.detail', post_id=p.id) }}">{{ p.title }}</a>
+      <div class="meta">
+        {{ platform_badge(p.platform) }} {{ status_badge(p.status) }}
+        {% if is_overdue(p) %}<span class="badge badge-overdue">Overdue</span>{% endif %}
+        {% if p.campaign_name %}<span class="tag color-{{ p.campaign_color }}">{{ p.campaign_name }}</span>{% endif %}
+        {% if p.category_name %}<span class="tag tag-muted">{{ p.category_name }}</span>{% endif %}
+      </div>
+      {% if p.caption %}<p class="post-excerpt">{{ p.caption|truncate(140) }}</p>{% endif %}
+    </div>
+    <div class="post-row-side">
+      <div class="when">
+        {% if p.planned_date %}{{ p.planned_date|nice_date }}{% if p.planned_time %} · {{ p.planned_time }}{% endif %}
+        {% else %}<span class="muted">No date</span>{% endif %}
+      </div>
+      {% if show_actions %}
+        <div class="row-actions">
+          <a class="btn btn-sm" href="{{ url_for('posts.edit', post_id=p.id) }}">Edit</a>
+          {% if p.status == 'scheduled' %}
+            <a class="btn btn-sm btn-success" href="{{ url_for('posts.detail', post_id=p.id) }}#mark-published">Mark published…</a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </article>
+{% endmacro %}
+
+{% macro filter_form(action, filters, campaigns, categories, show_dates=true, extra_hidden=None) %}
+  <form class="filters" method="get" action="{{ action }}">
+    {% if extra_hidden %}{% for k, v in extra_hidden.items() %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}{% endif %}
+    <label>Search
+      <input type="search" name="q" value="{{ filters.q }}" placeholder="Title, caption, hashtag…">
+    </label>
+    <label>Platform
+      <select name="platform">
+        <option value="">All platforms</option>
+        {% for key, info in PLATFORMS.items() %}
+          <option value="{{ key }}" {{ 'selected' if filters.platform == key }}>{{ info.label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Campaign
+      <select name="campaign_id">
+        <option value="">All campaigns</option>
+        {% for c in campaigns %}
+          <option value="{{ c.id }}" {{ 'selected' if filters.campaign_id == c.id }}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Category
+      <select name="category_id">
+        <option value="">All categories</option>
+        {% for c in categories %}
+          <option value="{{ c.id }}" {{ 'selected' if filters.category_id == c.id }}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Status
+      <select name="status">
+        <option value="" {{ 'selected' if not filters.status }}>All except archived</option>
+        <option value="active" {{ 'selected' if filters.status == 'active' }}>Open (draft/review/scheduled)</option>
+        <option value="overdue" {{ 'selected' if filters.status == 'overdue' }}>Overdue</option>
+        {% for s in STATUSES %}
+          <option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ s|status_label }}</option>
+        {% endfor %}
+        <option value="all" {{ 'selected' if filters.status == 'all' }}>Everything</option>
+      </select>
+    </label>
+    {% if show_dates %}
+      <label>From <input type="date" name="date_from" value="{{ filters.date_from or '' }}"></label>
+      <label>To <input type="date" name="date_to" value="{{ filters.date_to or '' }}"></label>
+    {% endif %}
+    <div class="filter-actions">
+      <button class="btn btn-primary btn-sm" type="submit">Apply</button>
+      <a class="btn btn-sm btn-ghost" href="{{ action }}{% if extra_hidden %}?{% for k, v in extra_hidden.items() %}{{ k }}={{ v|urlencode }}{{ '&' if not loop.last }}{% endfor %}{% endif %}">Clear</a>
+    </div>
+  </form>
+{% endmacro %}

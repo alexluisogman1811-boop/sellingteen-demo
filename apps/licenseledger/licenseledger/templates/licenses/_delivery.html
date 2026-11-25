@@ -1,0 +1,46 @@
+{# Delivery panel. Expects `lic` (a row from LICENSE_SELECT). #}
+<section class="card delivery-card" id="delivery">
+  <h2>Delivery</h2>
+  {% if lic.status in ('revoked', 'replaced') %}
+    <p class="muted">This license is {{ lic.status }}; it must not be delivered.
+      {% if lic.delivery_status == 'delivered' %}It was delivered on {{ lic.delivered_at }}.{% endif %}</p>
+  {% elif lic.delivery_status == 'delivered' %}
+    <p><span class="dpill dpill-delivered">Delivered</span> {{ lic.delivered_at }}
+      by {{ DELIVERY_METHODS.get(lic.delivery_method, lic.delivery_method or 'unknown')|lower }}
+      {% if lic.delivery_reference %}<br><span class="muted">Reference: {{ lic.delivery_reference }}</span>{% endif %}</p>
+    <details class="action">
+      <summary>Reopen delivery</summary>
+      <form method="post" action="{{ url_for('main.license_reopen_delivery', license_id=lic.id) }}" class="action-form" data-once>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field"><label for="reopen-reason">Reason <span class="req">*</span></label>
+          <input id="reopen-reason" name="reason" required maxlength="500" placeholder="e.g. Email bounced"></div>
+        <button class="btn btn-sm" type="submit">Mark as pending again</button>
+      </form>
+    </details>
+  {% else %}
+    <p><span class="dpill dpill-pending">Delivery pending</span>
+      Send the key to <strong>{{ lic.customer_email }}</strong> yourself, then record it here.</p>
+    {% if lic.status == 'suspended' %}
+      <p class="flash flash-error">This license is suspended. Reactivate it before delivering.</p>
+    {% elif lic.order_id and lic.order_status == 'cancelled' %}
+      <p class="flash flash-error">Order {{ lic.order_ref }} is cancelled. Do not deliver this license.</p>
+    {% else %}
+    <form method="post" action="{{ url_for('main.license_deliver', license_id=lic.id) }}" class="action-form" data-once
+          data-confirm="Record that you sent license #{{ lic.id }} to {{ lic.customer_email }}?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row">
+        <div class="field"><label for="d-method">Sent by</label>
+          <select id="d-method" name="method">{% for k, v in DELIVERY_METHODS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+        <div class="field grow"><label for="d-ref">Delivery reference</label>
+          <input id="d-ref" name="reference" maxlength="200" autocomplete="off" placeholder="e.g. 'Gmail, Re: Your order' — never the key itself"></div>
+      </div>
+      {% if lic.order_id and lic.payment_status not in ('marked_paid', 'not_required') %}
+      <p class="flash flash-error">Payment for order {{ lic.order_ref }} is “{{ PAYMENT_STATUSES[lic.payment_status] }}”.
+        <a href="{{ url_for('main.order_detail', order_id=lic.order_id) }}">Record the payment</a> first, or confirm below.</p>
+      <label class="radio"><input type="checkbox" name="allow_unpaid" value="1"> Deliver before payment is recorded (noted in the history)</label>
+      {% endif %}
+      <button class="btn btn-primary btn-sm" type="submit">Mark as delivered</button>
+    </form>
+    {% endif %}
+  {% endif %}
+</section>

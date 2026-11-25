@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Delete account{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <h1>Delete your business account</h1>
+  <p>This deletes <strong>{{ g.account.name }}</strong> and everything in it: all customers, properties, templates,
+    jobs, checklists, photos, report links, and the logins of every manager and worker in your team.
+    Report links you shared with customers stop working. This cannot be undone.</p>
+  <p class="muted">Want a copy first? <a href="{{ url_for('auth.export_data') }}">Download all your data</a> (a ZIP of CSV files and photos).</p>
+  <form method="post" action="{{ url_for('auth.delete_account') }}" class="stack">
+    {{ csrf_field() }}
+    <label class="field"><span class="field-label">Type DELETE (or your email address) to confirm</span>
+      <input type="text" name="confirm" required maxlength="254" autocomplete="off"></label>
+    <label class="field"><span class="field-label">Your password</span>
+      <input type="password" name="password" required maxlength="200" autocomplete="current-password"></label>
+    <button class="btn btn-danger" type="submit">Delete my account and all data</button>
+  </form>
+  <p><a href="{{ url_for('auth.change_password') }}">Cancel</a></p>
+</section>
+{% endblock %}

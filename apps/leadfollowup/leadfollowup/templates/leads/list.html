@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, due_badge %}
+{% block title %}Leads{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Leads</h1>
+    {% if has_any %}<p class="muted">{{ leads|length }} lead{{ 's' if leads|length != 1 }} shown</p>{% endif %}
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('leads.lead_new') }}"><span aria-hidden="true">+</span> Add lead</a>
+</div>
+
+{% if not has_any %}
+<section class="empty-state">
+  <div class="empty-icon" aria-hidden="true">📋</div>
+  <h2>No leads yet</h2>
+  <p class="muted">You don't have any leads yet. Add your first lead to start tracking follow-ups.</p>
+  <a class="btn btn-primary" href="{{ url_for('leads.lead_new') }}">Add your first lead</a>
+</section>
+{% else %}
+
+<form class="filters card" method="get" role="search" data-autosubmit>
+  <div class="field field-search">
+    <label for="q">Search</label>
+    <input id="q" name="q" type="search" value="{{ filters.q }}" placeholder="Name, phone, email, service or notes">
+  </div>
+  <div class="field">
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <option value="">All statuses</option>
+      <option value="active" {% if filters.status == 'active' %}selected{% endif %}>Active (not won/lost)</option>
+      {% for s in statuses %}<option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="followup">Follow-up</label>
+    <select id="followup" name="followup">
+      <option value="">Any</option>
+      {% for v, l in [('overdue','Overdue'), ('today','Due today'), ('upcoming','Upcoming'), ('unscheduled','No follow-up date'), ('closed','Closed (won/lost)')] %}
+      <option value="{{ v }}" {% if filters.followup == v %}selected{% endif %}>{{ l }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="sort">Sort by</label>
+    <select id="sort" name="sort">
+      {% for v, l in [('followup','Follow-up date (soonest)'), ('followup_desc','Follow-up date (latest)'), ('updated','Last updated'), ('created','Newest'), ('name','Name A–Z')] %}
+      <option value="{{ v }}" {% if filters.sort == v %}selected{% endif %}>{{ l }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="filter-actions">
+    <button type="submit" class="btn btn-secondary">Apply</button>
+    {% if filters.q or filters.status or filters.followup or filters.sort != 'followup' %}
+    <a class="btn btn-ghost" href="{{ url_for('leads.lead_list') }}">Clear</a>
+    {% endif %}
+  </div>
+</form>
+
+{% if leads %}
+<div class="card table-card">
+  <table class="lead-table">
+    <thead>
+      <tr>
+        <th scope="col">Customer</th>
+        <th scope="col">Service</th>
+        <th scope="col">Status</th>
+        <th scope="col">Follow-up</th>
+        <th scope="col">Source</th>
+        <th scope="col">Last updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for lead in leads %}
+      <tr class="row-{{ followup_state(lead) }}">
+        <td data-label="Customer">
+          <a class="lead-link" href="{{ url_for('leads.lead_detail', lead_id=lead.id) }}">{{ lead_name(lead) }}</a>
+          {% if lead.name %}<div class="muted small">{{ lead.phone or lead.email }}</div>{% endif %}
+        </td>
+        <td data-label="Service">{{ lead.service or '—' }}</td>
+        <td data-label="Status">{{ status_badge(lead.status) }}</td>
+        <td data-label="Follow-up">
+          {{ due_badge(lead) }}
+          {% if lead.next_follow_up and followup_state(lead) in ('overdue', 'upcoming') %}<div class="muted small">{{ lead.next_follow_up|nicedate }}</div>{% endif %}
+        </td>
+        <td data-label="Source">{{ lead.source }}</td>
+        <td data-label="Last updated" class="muted small">{{ lead.updated_at|localtime('%d %b %Y') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<section class="empty-state empty-compact">
+  <h2>No matching leads</h2>
+  <p class="muted">No leads match your search or filters. Try different keywords or clear the filters.</p>
+  <a class="btn btn-secondary" href="{{ url_for('leads.lead_list') }}">Clear filters</a>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

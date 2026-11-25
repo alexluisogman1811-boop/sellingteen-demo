@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Weekly shift scheduling for small businesses{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Weekly shift scheduling for small businesses</h1>
+  <p class="lead">Plan your team's week in one place. ShiftSnap catches double-booked staff, flags shifts outside
+    someone's availability, and adds up everyone's hours, without complicated workforce software.</p>
+  <p>
+    <a class="btn" href="{{ url_for('auth.signup') }}">Start your {{ trial_days }}-day free trial</a>
+    <a class="btn btn-ghost" href="{{ url_for('auth.login') }}">Sign in</a>
+  </p>
+</section>
+
+<section class="card">
+  <h2>What it does</h2>
+  <ul class="feature-list">
+    <li><strong>Day and week schedule</strong> with filters by employee and role, plus unfilled shifts you can assign later.</li>
+    <li><strong>Overlapping shifts are blocked:</strong> the same person can't be booked twice at once, including across midnight.</li>
+    <li><strong>Availability warnings:</strong> a shift outside the hours someone said they can work needs a deliberate “Save anyway”.</li>
+    <li><strong>Weekly hours</strong> for every employee, with unfilled hours and totals; 40h+ is highlighted.</li>
+    <li><strong>Overnight shifts</strong> (for example 22:00 to 06:00) are handled correctly.</li>
+    <li><strong>Print the week or export a CSV</strong> to share it however you like.</li>
+    <li><strong>Employee sign-ins:</strong> your staff can see their own shifts and the team schedule, read-only. They don't see each other's contact details or private notes.</li>
+    <li><strong>Works on phones:</strong> a day picker, a quick add button and large buttons for small screens.</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>What it doesn't do</h2>
+  <p>ShiftSnap <strong>does not send</strong> schedules, emails, SMS or notifications to anyone. You share the
+    schedule yourself: print it, export the CSV, or give your employees a sign-in to check it.</p>
+</section>
+
+<section class="card" id="pricing">
+  <h2>Pricing</h2>
+  <p class="plan-price">{{ price }}</p>
+  <p>Every new account starts with a {{ trial_days }}-day free trial with every feature, no card needed.
+    Each business only ever sees its own employees and shifts.</p>
+  <a class="btn" href="{{ url_for('auth.signup') }}">Create your account</a>
+  <p class="muted small">See the <a href="{{ url_for('legal.terms') }}">Terms</a>,
+    <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a> and <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.</p>
+</section>
+{% endblock %}

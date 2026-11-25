@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, badge, record, impact, cr_source %}
+{% block title %}{{ cr.title }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('main.project', project_id=p.id, _anchor='changes') }}">← {{ p.name }}</a></p>
+<div class="page-head">
+  <div>
+    <h1>#{{ cr.id }} {{ cr.title }} {{ badge(cr.status, CR_LABELS[cr.status]) }}</h1>
+    <div class="meta">Created {{ cr.created_at|ts }}{% if cr.submitted_at %} · submitted {{ cr.submitted_at|ts }}{% endif %} · updated {{ cr.updated_at|ts }}{% if cr.completed_at %} · completed {{ cr.completed_at|ts }}{% endif %}</div>
+  </div>
+  <div class="actions">
+    {% if cr.status == 'draft' %}<a class="btn" href="{{ url_for('main.change_edit', project_id=p.id, cr_id=cr.id) }}">Edit draft</a>{% endif %}
+    <a class="btn" href="{{ url_for('main.compose', project_id=p.id, cr_id=cr.id) }}">Write message about this</a>
+  </div>
+</div>
+
+<div class="card">
+  <h2>What will change</h2>
+  <pre class="wrap">{{ cr.description }}</pre>
+  <h2 class="mt">Reason</h2>
+  {% if cr.reason %}<pre class="wrap">{{ cr.reason }}</pre>{% else %}<p class="muted">Not recorded (created before reasons were tracked).</p>{% endif %}
+  <p class="mt"><strong>{{ impact(cr, p.currency) }}</strong></p>
+</div>
+
+{% if own_transitions %}
+<div class="card">
+  <h2>Your actions</h2>
+  <div class="actions">
+  {% for t in own_transitions %}
+    <form method="post" action="{{ url_for('main.change_status', project_id=p.id, cr_id=cr.id) }}"
+      {% if t == 'withdrawn' %}data-confirm="Withdraw this change request? It stays in the history but can no longer be approved."{% elif t == 'submitted' %}data-confirm="Submit to the client? After this it can't be edited."{% endif %}>
+      {{ csrf() }}<input type="hidden" name="status" value="{{ t }}">
+      <button class="btn {{ 'primary' if t in ('submitted', 'completed') else 'danger' }}" type="submit">
+        {{ {'submitted': 'Submit to client', 'withdrawn': 'Withdraw', 'completed': 'Mark completed'}[t] }}</button>
+    </form>
+  {% endfor %}
+  </div>
+  {% if cr.status == 'submitted' %}<p class="muted mt">Only the client can approve or reject this, on their review link. You can't do it for them.</p>{% endif %}
+</div>
+{% endif %}
+
+{% if can_record_client %}
+<details class="card">
+  <summary><strong>The client decided outside ScopeGuard (email, call)? Record it with evidence</strong></summary>
+  <form method="post" action="{{ url_for('main.change_record_decision', project_id=p.id, cr_id=cr.id) }}" class="stack mt">
+    {{ csrf() }}
+    <div class="notice warn">The record will be labelled “recorded by the freelancer from off-platform evidence”, and it can't be edited afterwards. Never record a decision the client did not make.</div>
+    <div class="field"><label for="decision">Client's decision</label>
+      <select id="decision" name="decision"><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
+    <div class="row">
+      <div class="field"><label for="approver_name">Who decided</label><input id="approver_name" name="approver_name" type="text" required maxlength="120" value="{{ p.client_name }}"></div>
+      <div class="field"><label for="approver_email">Their email</label><input id="approver_email" name="approver_email" type="email" maxlength="254" value="{{ p.client_email or '' }}"></div>
+    </div>
+    <div class="field"><label for="evidence_note">Evidence</label><textarea id="evidence_note" name="evidence_note" required maxlength="2000" placeholder="e.g. Email from the client on 2026-05-12: “Yes, please go ahead.”"></textarea></div>
+    <label class="check"><input type="checkbox" name="confirm" value="1" required> I confirm the client actually made this decision.</label>
+    <div><button class="btn primary" type="submit">Save client decision</button></div>
+  </form>
+</details>
+{% endif %}
+
+<div class="card">
+  <h2>Decision records</h2>
+  {% for a in decisions %}{{ record(a) }}{% else %}<p class="empty">No client decision recorded.</p>{% endfor %}
+</div>
+<div class="card">
+  <h2>History of this request</h2>
+  <ul class="plain feed">{% for e in events %}<li>{{ e.created_at|ts }}: {{ e.message }} <small class="muted">({{ e.actor }})</small></li>{% else %}<li class="empty">No history.</li>{% endfor %}</ul>
+</div>
+{% endblock %}

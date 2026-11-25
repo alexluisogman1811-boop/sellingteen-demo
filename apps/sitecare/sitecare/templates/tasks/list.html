@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}Tasks{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Tasks</h1>
+  <div class="actions"><a class="btn" href="{{ url_for('main.schedules_list') }}">Recurring task setup</a></div>
+</div>
+<nav class="tabs" aria-label="Task views">
+  {% for key, label in views.items() %}
+    <a href="{{ url_for('main.tasks_list', view=key, q=q or None, website_id=website_id, client_id=client_id, category=category or None, date_from=date_from.isoformat() if date_from else None, date_to=date_to.isoformat() if date_to else None) }}"
+       {% if key == view %}class="active" aria-current="page"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</nav>
+<form class="filters" method="get" role="search">
+  <input type="hidden" name="view" value="{{ view }}">
+  <label class="sr-only" for="q">Search tasks</label>
+  <input id="q" type="search" name="q" value="{{ q }}" placeholder="Search task, website, client, notes">
+  <label class="sr-only" for="fw">Website</label>
+  <select id="fw" name="website_id">
+    <option value="">All websites</option>
+    {% for w in websites %}<option value="{{ w.id }}" {% if website_id == w.id %}selected{% endif %}>{{ w.name }} ({{ w.domain }})</option>{% endfor %}
+  </select>
+  <label class="sr-only" for="fc">Client</label>
+  <select id="fc" name="client_id">
+    <option value="">All clients</option>
+    {% for c in clients %}<option value="{{ c.id }}" {% if client_id == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+  </select>
+  <label class="sr-only" for="fk">Category</label>
+  <select id="fk" name="category">
+    <option value="">All categories</option>
+    {% for k, v in CATEGORIES.items() %}<option value="{{ k }}" {% if category == k %}selected{% endif %}>{{ v }}</option>{% endfor %}
+  </select>
+  <label class="sr-only" for="fd1">From date</label>
+  <input id="fd1" type="date" name="date_from" value="{{ date_from.isoformat() if date_from else '' }}" title="From date">
+  <label class="sr-only" for="fd2">To date</label>
+  <input id="fd2" type="date" name="date_to" value="{{ date_to.isoformat() if date_to else '' }}" title="To date">
+  <button class="btn" type="submit">Filter</button>
+  {% if q or website_id or client_id or category or date_from or date_to %}<a class="btn btn-ghost" href="{{ url_for('main.tasks_list', view=view) }}">Clear</a>{% endif %}
+</form>
+<section class="card">
+  {% if rows %}
+  <p class="muted small">{{ rows|length }} item{{ '' if rows|length == 1 else 's' }}{% if rows|length == 500 %} (first 500){% endif %}</p>
+  <div class="table-wrap">
+    <table class="table table-stack">
+      <thead><tr><th>Due</th><th>Task</th><th>Website</th><th>Status</th><th>Recorded</th><th></th></tr></thead>
+      <tbody>
+      {% for o in rows %}
+        <tr>
+          <td data-label="Due" class="nowrap">{{ o.due_date|nice_date }}</td>
+          <td data-label="Task">{{ o.title }}<br><span class="muted small">{{ CATEGORIES.get(o.category) }}</span></td>
+          <td data-label="Website"><a href="{{ url_for('main.website_detail', website_id=o.website_id) }}">{{ o.website_name }}</a><br><span class="muted small">{{ o.client_name }}</span></td>
+          <td data-label="Status">{{ m.occ_status(o, today) }}</td>
+          <td data-label="Recorded">{% if o.status == 'completed' %}{{ o.completed_on|nice_date }}{% if o.recorded_by %} · {{ o.recorded_by }}{% endif %}<br>{{ m.verification_badge(o) }}{% elif o.status == 'skipped' %}<span class="muted">Skipped{% if o.recorded_by %} · {{ o.recorded_by }}{% endif %}</span>{% else %}-{% endif %}</td>
+          <td data-label="" class="right"><a class="btn btn-sm{% if o.status == 'pending' %} btn-primary{% endif %}" href="{{ url_for('main.occurrence_record', occ_id=o.id) }}">{{ 'Record' if o.status == 'pending' else 'View' }}</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="empty">Nothing here{% if q or website_id or client_id or category or date_from or date_to %} for these filters{% endif %}.</p>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }} · {{ job.business.name }}{% endblock %}
+{% block head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+{% block body_class %}report-body{% endblock %}
+{% block nav %}{% endblock %}
+{% block main_class %}report-wrap{% endblock %}
+{% block content %}
+{% set status = job.display_status %}
+<article class="report">
+  <header class="report-head">
+    <div class="report-biz">
+      <div class="report-bizname">{{ job.business.name }}</div>
+      {% if job.business.trade %}<div class="muted small">{{ job.business.trade }}</div>{% endif %}
+    </div>
+    {% if job.business.is_demo %}<span class="badge st-demo">DEMO</span>{% endif %}
+  </header>
+
+  <section class="report-hero">
+    <p class="eyebrow">Job report</p>
+    <h1>{% if job.is_completed %}Your project is complete{% else %}Your project is {{ 'in progress' if job.status == 'in_progress' else 'being prepared' }}{% endif %}</h1>
+    <dl class="report-meta">
+      <div><dt>Customer</dt><dd>{{ job.customer.name }}</dd></div>
+      <div><dt>Project</dt><dd>{{ job.title }}</dd></div>
+      {% if job.address %}<div><dt>Location</dt><dd>{{ job.address }}</dd></div>{% endif %}
+      {% if job.completed_at %}<div><dt>Completed</dt><dd>{{ job.completed_at.strftime('%B %d, %Y') }}</dd></div>{% endif %}
+    </dl>
+  </section>
+
+  {% if job.summary %}
+  <section class="report-section">
+    <h2>Summary</h2>
+    <p class="pre">{{ job.summary }}</p>
+  </section>
+  {% endif %}
+
+  {% if job.work_items %}
+  <section class="report-section">
+    <h2>Work completed</h2>
+    <ul class="checklist">{% for item in job.work_items %}<li>{{ item }}</li>{% endfor %}</ul>
+  </section>
+  {% elif job.description %}
+  <section class="report-section">
+    <h2>Job details</h2>
+    <p class="pre">{{ job.description }}</p>
+  </section>
+  {% endif %}
+
+  {% if job.photos %}
+  <section class="report-section">
+    <h2>Photos</h2>
+    {% set before, after, other = job.photos_of('before'), job.photos_of('after'), job.photos_of('general') %}
+    {% if before or after %}
+    <div class="ba-grid">
+      <div>
+        <h3 class="ba-label">Before</h3>
+        {% for p in before %}<a href="{{ url_for('public.photo', token=token, photo_ref=p.ref) }}" target="_blank" rel="noopener"><img src="{{ url_for('public.photo', token=token, photo_ref=p.ref, thumb=1) }}" alt="Before photo" loading="lazy"></a>{% else %}<p class="muted small">No before photos</p>{% endfor %}
+      </div>
+      <div>
+        <h3 class="ba-label ba-after">After</h3>
+        {% for p in after %}<a href="{{ url_for('public.photo', token=token, photo_ref=p.ref) }}" target="_blank" rel="noopener"><img src="{{ url_for('public.photo', token=token, photo_ref=p.ref, thumb=1) }}" alt="After photo" loading="lazy"></a>{% else %}<p class="muted small">No after photos</p>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if other %}
+    <div class="thumbs">{% for p in other %}<a class="thumb" href="{{ url_for('public.photo', token=token, photo_ref=p.ref) }}" target="_blank" rel="noopener"><img src="{{ url_for('public.photo', token=token, photo_ref=p.ref, thumb=1) }}" alt="Job photo" loading="lazy"></a>{% endfor %}</div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <section class="report-invoice {{ 'is-paid' if job.is_paid else '' }}">
+    <div class="inv-row">
+      <span>Total</span>
+      <span class="inv-total">{{ job.price_cents|money }}</span>
+    </div>
+    <div class="inv-row">
+      <span>Status</span>
+      {% if job.is_paid %}
+        <span class="badge st-paid big-badge">PAID</span>
+      {% elif job.price_cents > 0 and job.is_completed %}
+        <span class="badge st-due big-badge">PAYMENT DUE</span>
+      {% elif job.price_cents > 0 %}
+        <span class="badge st-progress big-badge">NOT YET DUE</span>
+      {% else %}
+        <span class="badge st-draft big-badge">NO CHARGE</span>
+      {% endif %}
+    </div>
+    {% if job.due_date and not job.is_paid and job.price_cents > 0 %}
+      <p class="muted small">Due by {{ job.due_date.strftime('%B %d, %Y') }}</p>
+    {% endif %}
+    {% if job.is_paid %}
+      <p class="small">Thank you! {{ job.business.name }} has confirmed this invoice is paid.</p>
+    {% elif job.price_cents > 0 and job.is_completed %}
+      <a class="btn btn-block btn-lg" href="{{ url_for('public.pay', token=token) }}">Pay Invoice</a>
+    {% endif %}
+  </section>
+
+  <footer class="report-foot">
+    <p><strong>{{ job.business.name }}</strong></p>
+    {% if job.business.phone %}<p><a href="tel:{{ job.business.phone|replace(' ', '') }}">{{ job.business.phone }}</a></p>{% endif %}
+    {% if job.business.email %}<p><a href="mailto:{{ job.business.email }}">{{ job.business.email }}</a></p>{% endif %}
+    <p class="muted small powered">Job report by ProofPay</p>
+  </footer>
+</article>
+{% endblock %}
+{% block footer %}{% endblock %}

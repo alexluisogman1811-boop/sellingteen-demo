@@ -1,0 +1,39 @@
+{% from "macros.html" import site_footer with context %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ code }} · ClientStart</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="container narrow">
+    <div class="card center">
+      <p class="eyebrow">Error {{ code }}</p>
+      {% if code == 404 %}
+        <h1>Page not found</h1>
+        <p class="muted">This page doesn't exist, or the link is no longer valid. If you were sent a portal link, ask your contact for a new one.</p>
+      {% elif code == 410 %}
+        <h1>This link has expired</h1>
+        <p class="muted">For your security, onboarding links stop working after a while. Please ask your contact to send you a fresh link — anything you already submitted is safe.</p>
+      {% elif code == 413 %}
+        <h1>File too large</h1>
+        <p class="muted">The upload exceeded the size limit. Go back and choose a smaller file.</p>
+      {% elif code == 401 %}
+        <h1>Please sign in</h1>
+        <p class="muted">Your session has ended. <a href="{{ url_for('auth.login') }}">Sign in again</a>.</p>
+      {% elif code == 429 %}
+        <h1>Too many attempts</h1>
+        <p class="muted">Please wait a few minutes and try again.</p>
+      {% elif code == 403 %}
+        <h1>Not allowed</h1>
+        <p class="muted">{{ error.description }}</p>
+      {% else %}
+        <h1>Something went wrong</h1>
+        <p class="muted">{{ error.description }}</p>
+      {% endif %}
+    </div>
+  </main>
+  {{ site_footer() }}
+</body>
+</html>

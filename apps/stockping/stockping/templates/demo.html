@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Demo data{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Demo data</h1></div>
+<section class="card">
+  <p>The demo dataset adds 10 sample products (SKUs start with <code>DEMO-</code>), 3 sample suppliers and about a month of stock history.
+     Demo records are flagged in the database, so removing them never touches your own products, suppliers or history.</p>
+  <dl class="details">
+    <dt>Demo products</dt><dd id="demo-products">{{ demo.products }}</dd>
+    <dt>Movements on demo products</dt><dd>{{ demo.movements }}{% if demo.user_movements %} (including <strong>{{ demo.user_movements }}</strong> you recorded yourself){% endif %}</dd>
+    <dt>Demo suppliers</dt><dd>{{ demo.suppliers }}</dd>
+    <dt>Your real products</dt><dd>{{ demo.real_products }} (never removed)</dd>
+  </dl>
+  {% if demo.kept_suppliers %}
+  <div class="flash flash-info">These demo suppliers are used by your real products and will be kept as normal suppliers: {{ demo.kept_suppliers|join(', ') }}.</div>
+  {% endif %}
+</section>
+
+{% if not demo.products %}
+<form method="post" action="{{ url_for('main.demo_action', action='load') }}" class="card">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h2>Load demo data</h2>
+  <p>Adds the sample products alongside your data. Any demo SKU you already use is skipped.</p>
+  <button class="btn btn-primary" type="submit">Load demo data</button>
+</form>
+{% else %}
+<div class="grid-2">
+  <form method="post" action="{{ url_for('main.demo_action', action='reset') }}" class="card">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h2>Reset demo data</h2>
+    <p>Deletes the {{ demo.products }} demo product(s) and their {{ demo.movements }} movement(s), then reloads the original demo set.</p>
+    <label class="check"><input type="checkbox" name="confirm" value="yes" required> I understand demo products and their history will be replaced</label>
+    <button class="btn btn-danger" type="submit">Reset demo data</button>
+  </form>
+  <form method="post" action="{{ url_for('main.demo_action', action='remove') }}" class="card">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h2>Remove demo data</h2>
+    <p>Deletes demo products, their movements and unused demo suppliers. Your real records stay.</p>
+    <label class="check"><input type="checkbox" name="confirm" value="yes" required> I understand demo products and their history will be deleted</label>
+    <button class="btn btn-danger" type="submit">Remove demo data</button>
+  </form>
+</div>
+<p class="muted small">Want to keep a demo product? Open it and choose "Keep as a real product" first.</p>
+{% endif %}
+{% endblock %}

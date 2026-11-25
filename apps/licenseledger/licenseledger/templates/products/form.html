@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, field, textarea %}
+{% block title %}{{ 'Edit product' if product else 'Add product' }}{% endblock %}
+{% block content %}
+<div class="page-head"><div>
+  <p class="crumb"><a href="{{ url_for('main.products') }}">Products</a></p>
+  <h1>{{ 'Edit ' ~ product.name if product else 'Add a product' }}</h1>
+</div></div>
+<form method="post" class="card form-grid">
+  {{ csrf() }}
+  {{ field("name", "Product name", form, required=True, attrs='maxlength="200"') }}
+  {{ field("sku", "SKU / code", form, attrs='maxlength="64"', help="Optional, must be unique.") }}
+  <div class="field">
+    <label for="f-default_license_type">Default license type</label>
+    <select id="f-default_license_type" name="default_license_type">
+      {% for t, label in LICENSE_TYPES.items() %}
+      <option value="{{ t }}" {{ 'selected' if form.get('default_license_type') == t }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {{ field("default_term_days", "Default term (days)", form, type="number", attrs='min="1" max="36500"', help="Used for fixed-term licenses when no end date is given.") }}
+  <div class="span-2">{{ textarea("notes", "Notes", form) }}</div>
+  <div class="form-actions span-2">
+    <button class="btn btn-primary" type="submit">Save product</button>
+    <a class="btn btn-ghost" href="{{ url_for('main.products') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

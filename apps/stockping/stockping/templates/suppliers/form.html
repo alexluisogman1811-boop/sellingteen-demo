@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% from "_macros.html" import input, textarea %}
+{% block title %}{{ 'Edit supplier' if supplier else 'New supplier' }}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{{ 'Edit ' ~ supplier.name if supplier else 'New supplier' }}</h1></div>
+<form method="post" class="card form" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="form-grid">
+    {{ input("name", "Name", form, errors, required=true, maxlength=120) }}
+    {{ input("contact_name", "Contact name", form, errors, maxlength=120) }}
+    {{ input("email", "Email", form, errors, type="email", maxlength=200) }}
+    {{ input("phone", "Phone", form, errors, type="tel", maxlength=40) }}
+  </div>
+  {{ textarea("notes", "Notes", form, errors, maxlength=1000) }}
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Save supplier</button>
+    <a class="btn" href="{{ url_for('main.supplier_list') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

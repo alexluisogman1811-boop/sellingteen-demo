@@ -1,0 +1,58 @@
+{% macro status_badge(status) -%}
+<span class="badge status-{{ status|lower }}">{{ status }}</span>
+{%- endmacro %}
+
+{% macro due_badge(lead) -%}
+{% set state = followup_state(lead) %}
+<span class="due due-{{ state }}">
+  {%- if state == 'overdue' %}<span class="dot" aria-hidden="true"></span>{% endif -%}
+  {{ due_label(lead) }}</span>
+{%- endmacro %}
+
+{% macro contact_line(lead) -%}
+{% if lead.phone %}<a href="tel:{{ lead.phone|replace(' ', '') }}">{{ lead.phone }}</a>{% endif %}
+{% if lead.phone and lead.email %}<span aria-hidden="true"> · </span>{% endif %}
+{% if lead.email %}<a href="mailto:{{ lead.email }}">{{ lead.email }}</a>{% endif %}
+{% if not lead.phone and not lead.email %}<span class="muted">No phone or email</span>{% endif %}
+{%- endmacro %}
+
+{# One row in a prioritised follow-up list, with quick actions. #}
+{% macro followup_item(lead, actions=true, back='', highlight=false) -%}
+{% set state = followup_state(lead) %}
+<li class="fu-item fu-{{ state }}{{ ' is-next' if highlight }}">
+  <div class="fu-main">
+    {% if highlight %}<span class="start-here">Start here</span>{% endif %}
+    <a class="fu-name" href="{{ url_for('leads.lead_detail', lead_id=lead.id) }}">{{ lead_name(lead) }}</a>
+    <div class="fu-meta">
+      {{ lead.service or 'No service recorded' }}
+      <span aria-hidden="true">·</span> {{ status_badge(lead.status) }}
+    </div>
+    <div class="fu-when">
+      {{ due_badge(lead) }}
+      {% if lead.next_follow_up and state in ('overdue', 'upcoming') %}<span class="muted small">{{ lead.next_follow_up|nicedate }}</span>{% endif %}
+    </div>
+    <div class="fu-contact">{{ contact_line(lead) }}</div>
+  </div>
+  {% if actions %}
+  <div class="fu-actions">
+    <a class="btn btn-secondary btn-sm" href="{{ url_for('leads.lead_detail', lead_id=lead.id, **({'from': 'dashboard'} if back == url_for('leads.dashboard') else {})) }}" aria-label="Open {{ lead_name(lead) }}">Open</a>
+    <a class="btn {{ 'btn-primary' if highlight else 'btn-secondary' }} btn-sm" href="{{ url_for('leads.lead_detail', lead_id=lead.id, compose=1) }}#message" aria-label="Write a follow-up message to {{ lead_name(lead) }}">Write message</a>
+    {% if state in ('overdue', 'today', 'unscheduled') %}
+    <form method="post" action="{{ url_for('leads.lead_followup', lead_id=lead.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="next" value="{{ back }}">
+      <button type="submit" name="preset" value="tomorrow" class="btn btn-ghost btn-sm" aria-label="Move {{ lead_name(lead) }}'s follow-up to tomorrow">{{ 'Schedule tomorrow' if state == 'unscheduled' else 'Move to tomorrow' }}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+</li>
+{%- endmacro %}
+
+{% macro field_error(errors, name) -%}
+{% if errors.get(name) %}<p class="field-error" id="{{ name }}-error">{{ errors[name] }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro aria_err(errors, name) -%}
+{% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}
+{%- endmacro %}

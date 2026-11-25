@@ -1,0 +1,17 @@
+{% if testimonials and testimonials|selectattr('is_demo')|list %}
+<p class="demo-banner" role="note"><strong>Demo data:</strong> items marked DEMO are placeholders, not real testimonials.</p>
+{% endif %}
+<div class="wall">
+{% for t in testimonials %}
+  <figure class="wall-item">
+    {% if t.rating %}<div class="stars" aria-label="{{ t.rating }} out of 5">{{ t.rating|stars }}</div>{% endif %}
+    <blockquote>{{ t.feedback }}</blockquote>
+    <figcaption>
+      — <strong>{{ t.customer_name }}</strong>{% if t.business %}, {{ t.business }}{% endif %}
+      {% if t.is_demo %}<span class="badge badge-demo">DEMO</span>{% endif %}
+    </figcaption>
+  </figure>
+{% else %}
+  <p class="muted">No testimonials published yet.</p>
+{% endfor %}
+</div>

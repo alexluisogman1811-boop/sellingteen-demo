@@ -1,0 +1,21 @@
+{% from "macros.html" import csrf, flashes, site_footer with context %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}Log in{% endblock %} · ClientStart</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="container auth-wrap">
+    <p class="brand auth-brand"><a href="{{ url_for('public.index') }}" class="brand"><span class="logo">CS</span> ClientStart</a></p>
+    {{ flashes() }}
+    <div class="card">
+      {% block content %}{% endblock %}
+    </div>
+    <p class="muted small center">Your clients don't sign in here — they use the private portal link you send them.</p>
+  </main>
+  {{ site_footer(owner=False) }}
+</body>
+</html>

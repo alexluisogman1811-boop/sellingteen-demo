@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Business profile – JobProof AI{% endblock %}
+{% block container_class %}medium{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ "Set up your business" if welcome else "Business profile" }}</h1>
+    <p class="muted">This information appears at the top of every report your customers see.</p>
+  </div>
+</div>
+<form method="post" action="{{ url_for('profile.edit', welcome=1) if welcome else url_for('profile.edit') }}" enctype="multipart/form-data" class="card form-card" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="name">Business name <span class="req">*</span></label>
+  <input id="name" name="name" required maxlength="120" value="{{ business.name }}" placeholder="e.g. Torres Plumbing &amp; Repair">
+  <div class="grid-2">
+    <div>
+      <label for="contact_name">Owner / contact name</label>
+      <input id="contact_name" name="contact_name" maxlength="120" value="{{ business.contact_name }}" autocomplete="name">
+    </div>
+    <div>
+      <label for="phone">Phone</label>
+      <input id="phone" name="phone" type="tel" maxlength="40" value="{{ business.phone }}" autocomplete="tel">
+    </div>
+  </div>
+  <label for="email">Business email</label>
+  <input id="email" name="email" type="email" maxlength="254" value="{{ business.email }}" autocomplete="email">
+  <label for="address">Business address</label>
+  <input id="address" name="address" maxlength="300" value="{{ business.address }}" autocomplete="street-address">
+
+  <label for="logo">Logo <span class="hint">(optional – JPG, PNG or WEBP, up to 2 MB)</span></label>
+  {% if business.logo_file %}
+  <div class="logo-current">
+    <img src="{{ url_for('profile.logo') }}" alt="Current logo" class="logo-preview">
+    <label class="checkbox"><input type="checkbox" name="remove_logo" value="1"> Remove logo</label>
+  </div>
+  {% endif %}
+  <input id="logo" name="logo" type="file" accept="image/jpeg,image/png,image/webp">
+
+  <div class="form-actions">
+    <button type="submit" class="btn">{{ "Save and create first job" if welcome else "Save profile" }}</button>
+    {% if not welcome %}<a class="btn btn-secondary" href="{{ url_for('dashboard.index') }}">Cancel</a>{% endif %}
+  </div>
+</form>
+{% endblock %}

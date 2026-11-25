@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Delete account{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Delete my account</h1></div></div>
+<section class="card danger-card narrow">
+  <p>This permanently deletes your LicenseLedger account <strong>{{ account.email }}</strong> and everything in it:
+    {{ counts.products }} products, {{ counts.customers }} customers, {{ counts.orders }} orders,
+    {{ counts.licenses }} licenses, their history, your reminder templates and your reset backups.
+    It cannot be undone.</p>
+  <p class="muted">Want a copy first? <a href="{{ url_for('main.data_export_all') }}">Download all my data (ZIP of CSV files)</a>.</p>
+  <form method="post" action="{{ url_for('auth.delete_account') }}" class="stack-form"
+        data-confirm="Delete your account and all its data for good?">
+    {{ csrf() }}
+    <div class="field"><label for="confirm-delete">Type <strong>DELETE</strong> or your email to confirm</label>
+      <input id="confirm-delete" name="confirm" autocomplete="off" required></div>
+    <div class="field"><label for="password">Your password</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password"></div>
+    <button class="btn btn-danger" type="submit">Delete my account</button>
+  </form>
+</section>
+{% endblock %}

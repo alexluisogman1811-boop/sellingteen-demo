@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}Log in{% endblock %}
+{% block main_class %}narrow auth-page{% endblock %}
+{% block content %}
+<div class="auth-brand"><span class="brand-mark">SE</span> SignedExtra</div>
+<div class="card">
+  <h1>Log in</h1>
+  <form method="post" novalidate>
+    {{ csrf() }}
+    {{ field(form, "email", "Email", type="email", required=True, attrs='autocomplete="username" autofocus') }}
+    {{ field(form, "password", "Password", type="password", required=True, attrs='autocomplete="current-password"') }}
+    <button class="btn btn-primary btn-block" type="submit">Log in</button>
+  </form>
+  {% if mail_enabled() %}
+  <p class="small mt"><a href="{{ url_for('auth.forgot_email') }}">Forgot password?</a></p>
+  {% else %}
+  <p class="small mt"><a href="{{ url_for('auth.forgot') }}">Can't log in? How to reset your password</a></p>
+  {% endif %}
+  <p class="small muted mt">New company? <a href="{{ url_for('auth.signup') }}">Create an account</a>.
+    Foremen: use the invite link your office sent you.</p>
+</div>
+{% if config.DEMO_MODE %}
+<div class="card small">
+  <h2>Demo mode</h2>
+  <p>Run <code>flask --app signedextra seed-demo</code> once, then log in with a fictional demo account:</p>
+  <ul>
+    <li>Owner: <code>owner@demo.signedextra.test</code> / <code>demo-owner-pass</code></li>
+    <li>Office: <code>office@demo.signedextra.test</code> / <code>demo-office-pass</code></li>
+    <li>Foreman: <code>foreman@demo.signedextra.test</code> / <code>demo-foreman-pass</code></li>
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

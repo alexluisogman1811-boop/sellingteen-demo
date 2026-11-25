@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="auth-card card">
+  <div class="brand"><span class="brand-mark">LR</span> LeadRescue</div>
+  <h1>Log in</h1>
+  <form method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ field(form.email) }}
+    {{ field(form.password) }}
+    <button class="btn btn-primary btn-block" type="submit">Log in</button>
+  </form>
+  <p class="muted">New here? <a href="{{ url_for('auth.signup') }}">Create a workspace</a></p>
+</div>
+{% endblock %}

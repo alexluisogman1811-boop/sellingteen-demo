@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service{% endblock %}
+{% block main_class %}narrow{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>1. Who we are</h2>
+  <p>SignedExtra ("the service") is provided by {{ operator }} ("we", "us").{% if support_email %} You can contact us at {{ support_email }}.{% endif %}</p>
+
+  <h2>2. What the service does</h2>
+  <p>SignedExtra helps a contracting company record extra work, attach photos, collect signatures (on a device or through a
+    one-time link), prepare written notices, and create change-order invoices. <strong>SignedExtra never sends email or text
+    messages.</strong> You share links and send notices and invoices yourself. SignedExtra doesn't collect payments from your
+    customers and doesn't connect to accounting or project-management software.</p>
+
+  <h2>3. Written notices and signatures are not legal advice</h2>
+  <p>Notices prepared in SignedExtra are records that you review and send yourself. They are not legal advice and they do not
+    guarantee that you will be paid. Whether a notice or an electronic signature is valid or enforceable depends on your contract
+    and the rules where you work. Check your contract's notice and change-order clauses, and ask a lawyer if you're unsure.</p>
+
+  <h2>4. Your company account</h2>
+  <p>A company account is created by its Owner, who can invite Office and Foreman users. The Owner is responsible for who has
+    access and for what users do in the account. Keep passwords private. You must be allowed to enter into this agreement
+    where you operate.</p>
+
+  <h2>5. Your responsibilities</h2>
+  <ul>
+    <li>Only record accurate information and only ask people to sign work they can review.</li>
+    <li>Only share signing links with the people who should sign them.</li>
+    <li>Don't use the service to break the law, mislead anyone, or upload content you have no right to use.</li>
+  </ul>
+
+  <h2>6. Free trial and subscription</h2>
+  <p>New companies get a free trial of {{ trial_days }} days. After the trial, using the service requires a paid subscription
+    ({{ price }}), billed through our payment provider. Subscriptions renew each month until you cancel. You can cancel at any
+    time; access continues until the end of the period you paid for. See the <a href="{{ url_for('legal.refunds') }}">Refund Policy</a>.
+    If the trial or subscription ends, your data is kept, and signing links you already sent keep working.</p>
+
+  <h2>7. Your data</h2>
+  <p>Your company's data belongs to you. The Owner can export it at any time and can permanently delete the company. We handle
+    data as described in the <a href="{{ url_for('legal.privacy') }}">Privacy Policy</a>.</p>
+
+  <h2>8. Availability and changes</h2>
+  <p>We work to keep the service available but can't promise it will always be online or error-free. Keep your own copies of
+    important records (use the export). We may change features or these terms; we'll update the date above and, for important
+    changes, tell you in the app.</p>
+
+  <h2>9. Limitation of liability</h2>
+  <p>The service is provided "as is". To the extent the law allows, we are not liable for indirect losses, lost profits,
+    unpaid invoices or change orders, or the content of notices and messages you choose to send. Our total liability is limited
+    to the amount you paid us in the last 3 months.</p>
+
+  <h2>10. Ending the agreement</h2>
+  <p>You can stop using the service at any time. We may suspend accounts that break these terms.</p>
+</article>
+{% endblock %}

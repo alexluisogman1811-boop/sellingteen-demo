@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ContractorDocs{% endblock %} · ContractorDocs</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="{{ url_for('main.dashboard') }}">ContractorDocs</a>
+  {% if g.user %}
+  <nav>
+    <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('main.subcontractors') }}">Subcontractors</a>
+    <a href="{{ url_for('main.documents') }}">Documents</a>
+    <a href="{{ url_for('main.reminders') }}">Reminders{% if reminder_count %} <span class="badge">{{ reminder_count }}</span>{% endif %}</a>
+    <a href="{{ url_for('main.settings') }}">Settings</a>
+    <a href="{{ url_for('main.account') }}">Account</a>
+    <form method="post" action="{{ url_for('main.logout') }}" class="inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="link">Log out</button>
+    </form>
+  </nav>
+  {% endif %}
+</header>
+{% if g.user and g.access and g.access.state == 'trial' and request.endpoint != 'billing.subscribe' %}
+<div class="trial-bar" role="note"><span><strong>Free trial:</strong> {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.</span> <a href="{{ url_for('billing.subscribe') }}">Subscribe</a></div>
+{% endif %}
+{% if demo_mode() %}<div class="demo">Demo mode: documents are read with simple text rules, not AI. Images and scanned PDFs need manual entry.</div>{% endif %}
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer>
+  <p>ContractorDocs tracks the documents you upload. It does not verify authenticity or determine legal or insurance compliance.</p>
+  <div class="footer-links">
+    <span>ContractorDocs · by sellingteen</span>
+    <nav aria-label="Legal">
+      <a href="{{ url_for('legal.terms') }}">Terms</a>
+      <a href="{{ url_for('legal.privacy') }}">Privacy</a>
+      <a href="{{ url_for('legal.refunds') }}">Refunds</a>
+      {% if g.user and config.BILLING_ENABLED %}<a href="{{ url_for('billing.subscribe') }}">Subscription</a>{% endif %}
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

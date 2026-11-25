@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="auth-card">
+  <div class="auth-brand">
+    <img src="{{ url_for('static', filename='favicon.svg') }}" alt="" width="36" height="36">
+    <span>LeadFollowUp <strong>AI</strong></span>
+  </div>
+  <h1>Log in</h1>
+  <p class="muted">See who you need to contact today.</p>
+  {% if error %}<div class="alert alert-error" role="alert">{{ error }}</div>{% endif %}
+  <form method="post" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" value="{{ email }}" required autocomplete="email" autofocus>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn btn-primary btn-block" data-loading-text="Logging in…">Log in</button>
+  </form>
+  {% if mail_on() %}<p class="auth-switch"><a href="{{ url_for('auth.forgot_password') }}">Forgot password?</a></p>{% endif %}
+  <p class="auth-switch">New here? <a href="{{ url_for('auth.signup') }}">Create an account</a></p>
+</div>
+{% endblock %}

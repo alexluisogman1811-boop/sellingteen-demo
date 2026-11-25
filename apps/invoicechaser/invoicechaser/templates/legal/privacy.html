@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Your account:</strong> business name, optional sender name, email address, a secure hash of your password (never the password itself), currency and timezone.</li>
+    <li><strong>What you enter about your customers and invoices:</strong> customer name, contact name, email and phone; invoice number, amount, issue date, due date, paid date and notes; and the follow-ups you mark as sent.</li>
+    <li><strong>Basic technical logs</strong> (time, page, IP address) to keep the service secure and working.</li>
+  </ul>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't sell your data or your customers' data.</li>
+    <li>We don't send messages to your customers.</li>
+    <li>We don't use advertising or tracking cookies. We use one cookie to keep you logged in.</li>
+    <li>We never see your card details. Payments are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>AI-written wording</h2>
+  <p>When AI wording is switched on, we ask an AI provider (Anthropic) to write the general wording of a follow-up. It never receives your customers' names, amounts, dates or invoice numbers: those are filled in on our server from your records.</p>
+
+  <h2>Why we use it</h2>
+  <p>Only to run the service for you: to show your invoices and their status, write follow-ups, keep your account secure, manage your subscription, and answer your questions.</p>
+
+  <h2>Where it is stored</h2>
+  <p>On the server that hosts InvoiceChaser, protected by your login. Each business can only see its own data.</p>
+
+  <h2>Your customers' information</h2>
+  <p>You add your customers' details, so you are responsible for having a good reason to keep them (for example, you invoiced them) and for following privacy laws where you operate (such as Thailand's PDPA or similar laws). Delete a customer or invoice at any time and its details are removed.</p>
+
+  <h2>Your choices</h2>
+  <p>You can change or delete your customers and invoices at any time, and delete your whole account and all of its data yourself in Settings.{% if support_email %} You can also email {{ support_email }} from your account email and we will do it within 30 days.{% endif %}</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }}{% if support_email %} · {{ support_email }}{% endif %}</p>
+</article>
+{% endblock %}

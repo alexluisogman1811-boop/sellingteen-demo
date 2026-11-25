@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Settings</h1>
+  <p class="muted">Your account: {{ email }}. Only you can see this business's records.</p></div></div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Business name</h2>
+    <form method="post" action="{{ url_for('main.settings') }}" class="stack-form">
+      {{ csrf() }}<input type="hidden" name="action" value="business">
+      <div class="field"><label for="business_name">Shown as <code>{business_name}</code> in reminders</label>
+        <input id="business_name" name="business_name" maxlength="120" required value="{{ business_name }}"></div>
+      <button class="btn btn-primary btn-sm" type="submit">Save</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Login email</h2>
+    <form method="post" action="{{ url_for('main.settings') }}" class="stack-form">
+      {{ csrf() }}<input type="hidden" name="action" value="email">
+      <div class="field"><label for="new-email">Email</label>
+        <input id="new-email" name="email" type="email" maxlength="254" required value="{{ email }}" autocomplete="email"></div>
+      <div class="field"><label for="email-current">Current password</label>
+        <input id="email-current" name="current" type="password" required autocomplete="current-password"></div>
+      <button class="btn btn-primary btn-sm" type="submit">Change email</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Change password</h2>
+    <form method="post" action="{{ url_for('main.settings') }}" class="stack-form">
+      {{ csrf() }}<input type="hidden" name="action" value="password">
+      <div class="field"><label for="current">Current password</label>
+        <input id="current" name="current" type="password" required autocomplete="current-password"></div>
+      <div class="field"><label for="password">New password</label>
+        <input id="password" name="password" type="password" minlength="10" required autocomplete="new-password"></div>
+      <div class="field"><label for="confirm">Confirm new password</label>
+        <input id="confirm" name="confirm" type="password" minlength="10" required autocomplete="new-password"></div>
+      <button class="btn btn-primary btn-sm" type="submit">Change password</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Your data and subscription</h2>
+    <p><a class="btn btn-sm" href="{{ url_for('main.data_export_all') }}">Export all my data (ZIP)</a></p>
+    <p class="muted">CSV files of everything in this account. Full license keys are never stored, so exports show only
+      the last 4 characters.</p>
+    <p><a href="{{ url_for('billing.subscribe') }}">Subscription and free trial</a></p>
+    <p><a href="{{ url_for('auth.delete_account') }}">Delete my account</a></p>
+  </section>
+</div>
+
+<section class="card danger-card">
+  <h2>Demo data &amp; reset</h2>
+  <p>Current data: {{ counts.products }} products, {{ counts.customers }} customers, {{ counts.orders }} orders, {{ counts.licenses }} licenses.</p>
+  <p class="muted">Both actions first save a backup copy of this account's data. Your password,
+    business name and reminder templates are kept. Demo records use example.com-style addresses.</p>
+  <form method="post" action="{{ url_for('main.reset_data') }}" class="stack-form reset-form"
+        data-confirm="Replace all current business data? A backup is made first.">
+    {{ csrf() }}
+    <fieldset class="field">
+      <legend>Action</legend>
+      <label class="radio"><input type="radio" name="action" value="demo" checked> Replace all data with demo data</label>
+      <label class="radio"><input type="radio" name="action" value="empty"> Clear all data (start fresh)</label>
+    </fieldset>
+    <div class="field"><label for="confirm-reset">Type <strong>RESET</strong> to confirm</label>
+      <input id="confirm-reset" name="confirm" autocomplete="off" required pattern="RESET"></div>
+    <button class="btn btn-danger" type="submit">Back up and reset</button>
+  </form>
+</section>
+{% endblock %}

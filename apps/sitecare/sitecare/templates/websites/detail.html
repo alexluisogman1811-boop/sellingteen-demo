@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m %}
+{% block title %}{{ site.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow"><a href="{{ url_for('main.client_detail', client_id=site.client_id) }}">{{ site.client_name }}</a></p>
+    <h1>{{ site.name }}</h1>
+    <p class="meta-line">
+      <a href="https://{{ site.domain }}" target="_blank" rel="noopener noreferrer">{{ site.domain }}</a>
+      {{ m.site_status_badge(site.status) }}
+      <span class="badge badge-muted">{{ PLATFORMS.get(site.platform) }}</span>
+      <span class="badge badge-muted">{{ PLANS.get(site.plan) }} plan</span>
+    </p>
+  </div>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('main.website_edit', website_id=site.id) }}">Edit</a>
+    <a class="btn" href="{{ url_for('main.issue_new', website_id=site.id) }}">Log issue</a>
+    <a class="btn" href="{{ url_for('main.report_view', website_id=site.id, month=month) }}">Monthly report</a>
+    <a class="btn btn-primary" href="{{ url_for('main.task_new', website_id=site.id) }}">Add task</a>
+  </div>
+</div>
+
+<section class="stats stats-4" aria-label="Website summary">
+  <div class="stat{% if site.overdue %} stat-danger{% endif %}"><span class="stat-value">{{ site.overdue }}</span><span class="stat-label">Overdue</span></div>
+  <div class="stat"><span class="stat-value stat-value-sm">{{ site.next_due|nice_date or '-' }}</span><span class="stat-label">Next due</span></div>
+  <div class="stat"><span class="stat-value stat-value-sm">{{ site.last_done|nice_date or 'Never' }}</span><span class="stat-label">Last completed</span></div>
+  <div class="stat{% if site.open_issues %} stat-warn{% endif %}"><span class="stat-value">{{ site.open_issues }}</span><span class="stat-label">Open issues</span></div>
+</section>
+
+{% if site.status != 'active' %}
+<p class="flash flash-info">This website is {{ WEBSITE_STATUSES[site.status]|lower }}, so no tasks are due. Set it to Active to resume scheduling.</p>
+{% endif %}
+{% if site.notes %}<section class="card"><h2>Notes</h2><p class="prewrap">{{ site.notes }}</p></section>{% endif %}
+
+<section class="card">
+  <div class="card-head"><h2>Due in the next 30 days</h2></div>
+  {% if due %}
+  <div class="table-wrap">
+    <table class="table table-stack">
+      <thead><tr><th>Due</th><th>Task</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      {% for o in due %}
+        <tr>
+          <td data-label="Due" class="nowrap">{{ o.due_date|nice_date }}</td>
+          <td data-label="Task">{{ o.title }}<br><span class="muted small">{{ CATEGORIES.get(o.category) }}</span></td>
+          <td data-label="Status">{{ m.occ_status(o, today) }}</td>
+          <td data-label="" class="right"><a class="btn btn-sm btn-primary" href="{{ url_for('main.occurrence_record', occ_id=o.id) }}">Record</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="empty">Nothing due in the next 30 days.</p>{% endif %}
+</section>
+
+<section class="card">
+  <div class="card-head"><h2>Recurring tasks</h2><a href="{{ url_for('main.task_new', website_id=site.id) }}">Add task</a></div>
+  {% if tasks %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Task</th><th class="hide-sm">Schedule</th><th>Next due</th><th class="hide-sm">Last done</th><th></th></tr></thead>
+      <tbody>
+      {% for t in tasks %}
+        <tr{% if not t.active %} class="row-muted"{% endif %}>
+          <td>{{ t.title }}{% if not t.active %} <span class="badge badge-muted">Paused</span>{% endif %}
+              {% if t.overdue %} <span class="badge badge-danger">{{ t.overdue }} overdue</span>{% endif %}
+              <br><span class="muted small">{{ CATEGORIES.get(t.category) }}</span></td>
+          <td class="hide-sm">{{ describe_schedule(t.frequency, t.interval_days) }}<br><span class="muted small">from {{ t.start_date|nice_date }}</span></td>
+          <td>{{ t.next_due|nice_date or '-' }}</td>
+          <td class="hide-sm">{{ t.last_done|nice_date or 'Never' }}</td>
+          <td class="right row-actions">
+            <a class="btn btn-sm" href="{{ url_for('main.task_edit', task_id=t.id) }}">Edit</a>
+            {{ m.post_button(url_for('main.task_toggle', task_id=t.id), 'Resume' if not t.active else 'Pause') }}
+            {{ m.post_button(url_for('main.task_delete', task_id=t.id), 'Delete', 'btn btn-sm btn-danger-ghost', 'Delete this task AND its recorded history? Pausing keeps history.') }}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="empty">No recurring tasks yet. Start with a common one:</p>
+  {% endif %}
+  <div class="chips">
+    {% for key, label in CATEGORIES.items() if key != 'other' %}
+      <a class="chip" href="{{ url_for('main.task_new', website_id=site.id, category=key) }}">+ {{ label }}</a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head"><h2>Issues</h2><a href="{{ url_for('main.issue_new', website_id=site.id) }}">Log issue</a></div>
+  {% if issues %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Issue</th><th>Severity</th><th>Status</th><th class="hide-sm">Reported</th><th class="hide-sm">Resolved</th></tr></thead>
+      <tbody>
+      {% for i in issues %}
+        <tr>
+          <td><a href="{{ url_for('main.issue_edit', issue_id=i.id) }}">{{ i.title }}</a>
+            {% if i.resolution_notes %}<br><span class="muted small">{{ i.resolution_notes|truncate(90) }}</span>{% endif %}</td>
+          <td>{{ m.severity_badge(i.severity) }}</td>
+          <td>{{ m.issue_status_badge(i.status) }}</td>
+          <td class="hide-sm nowrap">{{ i.reported_on|nice_date }}</td>
+          <td class="hide-sm nowrap">{{ i.resolved_on|nice_date or '-' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="empty">No issues recorded.</p>{% endif %}
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Maintenance history</h2>
+    <span class="muted small hide-sm">All entries are manual records</span>
+    <a href="{{ url_for('main.website_history_csv', website_id=site.id) }}">Download CSV</a>
+  </div>
+  {% if history %}
+  <div class="table-wrap">
+    <table class="table table-stack">
+      <thead><tr><th>Date</th><th>Task</th><th>Reported result</th><th>Recorded</th><th>Notes</th></tr></thead>
+      <tbody>
+      {% for o in history %}
+        <tr>
+          <td data-label="Date" class="nowrap">{{ (o.completed_on or o.due_date)|nice_date }}</td>
+          <td data-label="Task"><a href="{{ url_for('main.occurrence_record', occ_id=o.id) }}">{{ o.title }}</a><br><span class="muted small">due {{ o.due_date|nice_date }}</span></td>
+          <td data-label="Result">{{ m.occ_status(o, today) }}</td>
+          <td data-label="Recorded">{{ m.verification_badge(o) }}{% if o.attachment_count %} <span class="muted small">{{ o.attachment_count }} file{{ '' if o.attachment_count == 1 else 's' }}</span>{% endif %}{% if o.recorded_by %}<br><span class="muted small">by {{ o.recorded_by }}</span>{% endif %}</td>
+          <td data-label="Notes">{{ o.notes|truncate(100) or '-' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if history|length == 100 %}<p class="muted small">Showing the latest 100 records. Download the CSV for the full history.</p>{% endif %}
+  {% else %}<p class="empty">No work recorded yet.</p>{% endif %}
+</section>
+
+<section class="card danger-zone">
+  <h2>Delete website</h2>
+  <p class="muted">Deletes the website with all its tasks, history, issues and evidence files. To keep history, set the status to Archived instead.</p>
+  {{ m.post_button(url_for('main.website_delete', website_id=site.id), 'Delete website', 'btn btn-danger', 'Delete ' ~ site.domain ~ ' and ALL of its history? This cannot be undone.') }}
+</section>
+{% endblock %}

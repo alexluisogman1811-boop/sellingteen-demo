@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Business profile — QuoteFlow AI{% endblock %}
+{% block container_class %}narrow{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Business profile</h1>
+    <p class="muted" style="margin:4px 0 0">The AI uses only this information when writing quotes. It will never make up prices, services, or policies.</p>
+  </div>
+</div>
+
+<form method="post" class="card" data-busy-label="Saving…" data-warn-unsaved>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="field-row">
+    <div class="field">
+      <label for="business_name">Business name</label>
+      <input type="text" id="business_name" name="business_name" value="{{ profile.business_name }}" placeholder="Sparkle Home Cleaning">
+    </div>
+    <div class="field">
+      <label for="currency">Currency</label>
+      <select id="currency" name="currency">
+        {% for c in currencies %}<option value="{{ c }}" {{ 'selected' if c == profile.currency }}>{{ c }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="description">Business description</label>
+    <textarea id="description" name="description" rows="3" placeholder="Family-run residential cleaning company, eco-friendly products, fully insured.">{{ profile.description }}</textarea>
+  </div>
+
+  <div class="field">
+    <label for="services">Services</label>
+    <p class="hint">One per line. Include typical job durations if you can — the AI uses them for time estimates.</p>
+    <textarea id="services" name="services" rows="5" placeholder="Standard clean – about 2–3 hours for a 2-bed home
+Deep clean – about 4–6 hours for a 3-bed home
+Move-in / move-out clean
+Inside oven clean (add-on) – 1 hour">{{ profile.services }}</textarea>
+  </div>
+
+  {% include "_pricing_fields.html" %}
+
+  <div class="field">
+    <label for="starting_prices">Other pricing notes <span class="hint" style="display:inline">(optional)</span></label>
+    <p class="hint">Anything not covered above, e.g. minimum charge or travel fee. Mentioned in replies but not used to calculate prices.</p>
+    <textarea id="starting_prices" name="starting_prices" rows="2" placeholder="Minimum booking 2 hours. Travel fee $15 outside Riverside.">{{ profile.starting_prices }}</textarea>
+  </div>
+
+  <div class="field-row">
+    <div class="field">
+      <label for="service_area">Service area</label>
+      <textarea id="service_area" name="service_area" rows="2" placeholder="Riverside, Oakwood and Downtown. $15 travel fee outside these areas.">{{ profile.service_area }}</textarea>
+    </div>
+    <div class="field">
+      <label for="opening_hours">Opening hours</label>
+      <textarea id="opening_hours" name="opening_hours" rows="2" placeholder="Mon–Fri 8am–6pm, Sat 9am–2pm">{{ profile.opening_hours }}</textarea>
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="contact_info">Contact information</label>
+    <textarea id="contact_info" name="contact_info" rows="2" placeholder="Phone: 555-0123 · Email: hello@sparklehome.com">{{ profile.contact_info }}</textarea>
+  </div>
+
+  <div class="field">
+    <label for="policies">Important policies</label>
+    <p class="hint">Cancellations, deposits, payment methods, guarantees, what you don't do.</p>
+    <textarea id="policies" name="policies" rows="4" placeholder="24 hours' notice for cancellations or a $30 fee applies.
+Payment by card or bank transfer after the clean.
+We don't clean biohazards or exteriors.">{{ profile.policies }}</textarea>
+  </div>
+
+  <div class="actions">
+    <button class="btn" type="submit">Save profile</button>
+    <a href="{{ url_for('new_quote') }}" class="btn secondary">Create a quote</a>
+  </div>
+</form>
+{% endblock %}

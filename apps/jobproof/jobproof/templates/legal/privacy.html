@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy – JobProof AI{% endblock %}
+{% block container_class %}medium{% endblock %}
+{% block content %}
+<article class="card legal">
+  <h1>Privacy Policy</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <h2>What we collect</h2>
+  <ul>
+    <li><strong>Your account:</strong> your email address and a secure hash of your password (never the password itself).</li>
+    <li><strong>Your business profile:</strong> business name, contact name, phone, email, address and logo, which appear on your reports.</li>
+    <li><strong>Your jobs:</strong> what you enter about each job (customer name, phone, email, job title, address, date, technician, notes and materials), the photos you upload, and the reports and share links created from them.</li>
+    <li><strong>Basic technical logs</strong> (time, page, IP address) to keep the service secure and working. Share links are removed from logs.</li>
+  </ul>
+
+  <h2>Photos</h2>
+  <p>Uploaded photos and logos are stored on our server under random file names. When you upload a photo we re-save it, which removes hidden information such as camera details and GPS location.</p>
+
+  <h2>Shared reports</h2>
+  <p>When you create a share link, anyone with that link can see the report: your business details, the customer's name, the job details, the report text and the job photos. The shared page and its PDF leave out your customer's phone number and email. You can turn a link off at any time.</p>
+
+  <h2>What we don't do</h2>
+  <ul>
+    <li>We don't sell your data or your customers' data.</li>
+    <li>We don't send reports or messages to your customers; you decide who gets a link.</li>
+    <li>We don't use advertising or tracking cookies. We use one cookie to keep you logged in.</li>
+    <li>We never see your card details. Payments are handled by our payment provider, which has its own privacy policy.</li>
+  </ul>
+
+  <h2>How reports are written</h2>
+  {% if ai_mock %}
+  <p>Reports are written by JobProof AI's built-in writer on our server. Your job details are not sent to an outside AI service.</p>
+  {% else %}
+  <p>To write a report, we send the job's details (customer name, job title, address, date, technician, status, notes and materials) to our AI provider, Anthropic. Photos are not sent. The provider handles this data under its own terms and privacy policy.</p>
+  {% endif %}
+
+  <h2>Why we use it</h2>
+  <p>Only to run the service for you: to store your jobs and photos, write and share your reports, keep your account secure, manage your subscription, and answer your questions.</p>
+
+  <h2>Where it is stored</h2>
+  <p>On the server that hosts JobProof AI, protected by your login. Each business can only see its own jobs; customers can only see reports you share with them by link.</p>
+
+  <h2>Your customers' information</h2>
+  <p>You add your customers' details and photos of their property, so you are responsible for having a good reason to keep them (for example, they hired you) and for following privacy laws where you operate (such as Thailand's PDPA or similar laws). Delete a job at any time and its photos, report and share links are removed.</p>
+
+  <h2>Your choices</h2>
+  <p>You can change or delete your jobs and photos at any time. On the Account page you can change your password, download all your data (a ZIP of CSV files), and delete your whole account. Deleting your account removes your login, business profile, jobs, photos, reports and share links straight away.{% if support_email %} You can also email {{ support_email }} from your account email.{% endif %}</p>
+
+  <h2>Contact</h2>
+  <p>{{ operator }}{% if support_email %} · {{ support_email }}{% endif %}</p>
+</article>
+{% endblock %}

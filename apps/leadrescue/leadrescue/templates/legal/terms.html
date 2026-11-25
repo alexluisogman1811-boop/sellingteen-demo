@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Terms of Service{% endblock %}
+{% block content %}
+{% include "legal/_legal_header.html" %}
+<article class="card legal">
+  <h1>Terms of Service</h1>
+  <p class="muted">Last updated: {{ updated }}</p>
+
+  <p>These terms are between you (the business that creates a LeadRescue workspace, and the people it invites) and <strong>{{ legal_operator }}</strong> ("we").</p>
+
+  <h2>1. Free trial and subscription</h2>
+  <ul>
+    <li>Every new workspace gets a <strong>{{ trial_days }}-day free trial</strong> with every feature. No card is needed to start.</li>
+    <li>After the trial, LeadRescue costs <strong>{{ price }}</strong>. You pay through our payment provider's secure page; we never see or store your card details.</li>
+    <li>The subscription belongs to the workspace. The workspace owner subscribes for the whole team.</li>
+    <li>If the trial or subscription ends, <strong>your data is kept</strong>. The owner can still log in to subscribe, export everything or delete the workspace. Other team members are asked to contact their owner.</li>
+    <li>You can cancel at any time; see the <a href="{{ url_for('main.refunds') }}">Refund Policy</a>.</li>
+  </ul>
+
+  <h2>2. Your account</h2>
+  <p>Keep your password private, and only invite people who work for your business. The workspace owner is responsible for who has access, and can create password reset links for team members.</p>
+
+  <h2>3. Your data</h2>
+  <p>You own the information you put into LeadRescue, including your customers' names, phone numbers, email addresses and street addresses. You confirm you have the right to store them to follow up on work they asked you about.
+    We only use your data to run LeadRescue for you, as described in the <a href="{{ url_for('main.privacy') }}">Privacy Policy</a>. The owner can export or permanently delete it at any time.</p>
+
+  <h2>4. Messages to your customers</h2>
+  <p><strong>LeadRescue never sends text messages or emails</strong>, and it doesn't call any AI service. Message drafts are suggestions written by built-in templates. You decide whether to send them, and you send them yourself.
+    <strong>You are responsible for checking every message before you send it</strong>, including prices, dates and promises, and for following the laws on contacting customers (for example, rules on texting people who haven't agreed to it).</p>
+
+  <h2>5. Acceptable use</h2>
+  <p>Don't use LeadRescue to store data you have no right to hold, to send spam, to break the law, or to try to access another business's data.</p>
+
+  <h2>6. No warranty</h2>
+  <p>LeadRescue is provided "as is". We work to keep it available and your data safe, but we don't guarantee it will be error-free or always available. Keep your own copy of important information (use <em>Export</em>).</p>
+
+  <h2>7. Liability</h2>
+  <p>To the extent the law allows, we are not liable for lost profits, lost jobs or indirect damages. Our total liability is limited to the amount you paid us in the 12 months before the claim.</p>
+
+  <h2>8. Ending</h2>
+  <p>You can delete your workspace at any time. If we stop offering LeadRescue, we'll give owners at least 30 days' notice to export their data.</p>
+
+  <h2>9. Contact</h2>
+  <p>{{ legal_contact }}</p>
+</article>
+{% endblock %}

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}SiteCare Desk{% endblock %} · SiteCare Desk</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+{% set ep = request.endpoint or '' %}
+{% set sections = [
+  ('Dashboard', url_for('main.dashboard'), ep == 'main.dashboard'),
+  ('Clients', url_for('main.clients_list'), ep.startswith('main.client') and not ep.startswith('main.client_report')),
+  ('Websites', url_for('main.websites_list'), ep.startswith('main.website')),
+  ('Tasks', url_for('main.tasks_list'), ep.startswith('main.task') or ep.startswith('main.schedule') or ep.startswith('main.occurrence')),
+  ('Issues', url_for('main.issues_list'), ep.startswith('main.issue')),
+  ('Reports', url_for('main.reports_index'), ep.startswith(('main.report', 'main.client_report', 'main.saved_report'))),
+  ('Settings', url_for('main.settings'), ep.startswith('main.settings')),
+  ('Account', url_for('auth.account'), ep.startswith('auth.') or ep.startswith('billing.')),
+] %}
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="{{ url_for('main.dashboard') }}"><span class="brand-mark" aria-hidden="true">SC</span>SiteCare Desk</a>
+    {% if g.get('account') %}
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-nav">Menu</button>
+    <nav id="main-nav" class="nav" aria-label="Main">
+      {% for label, href, active in sections %}
+        <a href="{{ href }}"{% if active %} class="active" aria-current="page"{% endif %}>{{ label }}</a>
+      {% endfor %}
+      <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="nav-logout">Sign out</button>
+      </form>
+    </nav>
+    {% elif ep not in ('auth.login', 'auth.signup') %}
+    <nav class="nav" aria-label="Account">
+      <a href="{{ url_for('auth.login') }}">Log in</a>
+      <a href="{{ url_for('auth.signup') }}">Sign up</a>
+    </nav>
+    {% endif %}
+  </div>
+</header>
+{% if g.get('account') and g.get('access') and g.access.state == 'trial' and ep != 'billing.subscribe' %}
+<div class="trial-bar" role="note">
+  <div class="container trial-bar-inner">
+    <span><strong>Free trial:</strong> {{ g.access.days_left }} day{{ '' if g.access.days_left == 1 else 's' }} left.</span>
+    <a href="{{ url_for('billing.subscribe') }}">Subscribe</a>
+  </div>
+</div>
+{% endif %}
+<main id="main" class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flashes" role="status">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="footer">
+  <div class="container footer-inner">
+    <span>SiteCare Desk · by sellingteen</span>
+    <nav aria-label="Legal" class="footer-links">
+      <a href="{{ url_for('legal.terms') }}">Terms</a>
+      <a href="{{ url_for('legal.privacy') }}">Privacy</a>
+      <a href="{{ url_for('legal.refunds') }}">Refunds</a>
+      {% if g.get('account') and config.BILLING_ENABLED and not g.account.is_demo %}<a href="{{ url_for('billing.subscribe') }}">Subscription</a>{% endif %}
+    </nav>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Subcontractors{% endblock %}
+{% block content %}
+<h1>Subcontractors</h1>
+<div class="grid2">
+  <div class="card">
+    <form method="get" action="{{ url_for('main.subcontractors') }}" class="search">
+      <input name="q" value="{{ q }}" placeholder="Search name, trade or email" aria-label="Search subcontractors">
+      <button>Search</button>
+      {% if q %}<a href="{{ url_for('main.subcontractors') }}">Clear</a>{% endif %}
+    </form>
+    {% if not subs %}
+      <p class="muted">{% if q %}No subcontractors match "{{ q }}".{% else %}No subcontractors yet.{% endif %}</p>
+    {% else %}
+    <table class="responsive">
+      <thead><tr><th>Name</th><th>Trade</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for s in subs %}{% set sm = summary.get(s.id, {}) %}
+        <tr>
+          <td data-label="Name"><a href="{{ url_for('main.subcontractor_detail', sub_id=s.id) }}">{{ s.name }}</a></td>
+          <td data-label="Trade">{{ s.trade or '–' }}</td>
+          <td data-label="Status">
+            {% for k in ['expired', 'missing', 'review', 'expiring', 'valid'] %}{% if sm.get(k) %}<span class="pill {{ k }}">{{ sm[k] }} {{ LABELS[k] }}</span> {% endif %}{% endfor %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+  <div class="card">
+    <h2>Add subcontractor</h2>
+    <form method="post" action="{{ url_for('main.subcontractors') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label>Company name * <input name="name" required maxlength="200"></label>
+      <label>Trade <input name="trade" placeholder="e.g. Electrical" maxlength="100"></label>
+      <label>Contact email <input name="contact_email" type="email" maxlength="200"></label>
+      <label>Phone <input name="phone" type="tel" maxlength="50"></label>
+      <button class="primary">Add subcontractor</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

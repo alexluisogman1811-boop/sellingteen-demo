@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, demo_badge, permission_badge, public_state, copy_text, field_error %}
+{% block title %}Testimonial from {{ t.customer_name }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ url_for('admin.testimonials') }}">Testimonials</a> /
+  <a href="{{ url_for('admin.project_detail', project_id=t.project_id) }}">{{ t.project_name }}</a></p>
+
+<div class="grid-2 detail">
+  <section class="card">
+    <div class="badges">
+      {{ status_badge(t.status) }} {{ permission_badge(t) }} {{ public_state(t) }} {{ demo_badge(t) }}
+      {% if t.edited %}<span class="badge">Edited {{ t.edited_at|date }}</span>{% endif %}
+    </div>
+    {% if t.rating %}<div class="stars big" aria-label="{{ t.rating }} out of 5">{{ t.rating|stars }}</div>
+    {% else %}<p class="muted small">No rating given</p>{% endif %}
+    <blockquote class="quote">{{ t.feedback }}</blockquote>
+    <p>— <strong>{{ t.customer_name }}</strong>{% if t.business %}, {{ t.business }}{% endif %}</p>
+    {% if t.website %}<p class="small">Website: <a href="{{ t.website }}" rel="nofollow noopener noreferrer ugc" target="_blank">{{ t.website }}</a></p>{% endif %}
+    <p class="muted small">Submitted {{ t.submitted_at|date(true) }}{% if t.status_changed_at %} · status changed {{ t.status_changed_at|date(true) }}{% endif %}</p>
+    <textarea id="copy-text" class="sr-only" readonly tabindex="-1" aria-hidden="true">{{ copy_text(t) }}</textarea>
+    <button type="button" class="btn btn-small" data-copy-target="copy-text">Copy testimonial</button>
+
+    {% if original %}
+    <details class="original">
+      <summary>Original wording submitted by the client</summary>
+      <p><strong>{{ original.customer_name }}</strong>{% if original.business %}, {{ original.business }}{% endif %}</p>
+      <blockquote class="quote">{{ original.feedback }}</blockquote>
+      {% if original.website %}<p class="small">{{ original.website }}</p>{% endif %}
+    </details>
+    {% endif %}
+  </section>
+
+  <div>
+    <section class="card">
+      <h2>Review</h2>
+      <p class="small">Current status: {{ status_badge(t.status) }}</p>
+      <div class="actions">
+        {% for s, label in [('approved', 'Approve'), ('rejected', 'Reject'), ('archived', 'Archive'), ('pending', 'Back to pending')] %}
+          {% if t.status != s %}
+          <form method="post" action="{{ url_for('admin.testimonial_status', tid=t.id) }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="status" value="{{ s }}">
+            <button class="btn btn-small {{ 'btn-primary' if s == 'approved' }}" type="submit">{{ label }}</button>
+          </form>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <p class="small muted">
+        {% if t.status == 'approved' and t.permission_granted %}This testimonial is <strong>visible</strong> on the project's public page.
+        {% elif t.status == 'approved' %}Approved, but <strong>not public</strong>: no publication permission recorded.
+        {% else %}Not public. Only approved testimonials with permission are shown.{% endif %}
+      </p>
+    </section>
+
+    <section class="card" id="permission">
+      <h2>Publication permission</h2>
+      <p class="small muted">Submitting feedback is not the same as agreeing to publication. A testimonial is only published when permission is recorded here.</p>
+      {% if t.permission_granted %}
+        <p>{{ permission_badge(t) }} on {{ t.permission_at|date(true) }}</p>
+        <p class="small">{{ t.permission_note }}</p>
+        <form method="post" action="{{ url_for('admin.testimonial_permission', tid=t.id) }}" data-confirm="Withdraw publication permission? The testimonial will be removed from public pages.">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="revoke">
+          <button class="btn btn-small" type="submit">Withdraw permission</button>
+        </form>
+      {% else %}
+        <p>The client did <strong>not</strong> give publication permission on the form.</p>
+        <form method="post" action="{{ url_for('admin.testimonial_permission', tid=t.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="grant">
+          <label for="note">If the client gave permission another way, record how:</label>
+          <textarea id="note" name="note" rows="2" maxlength="{{ limits.permission_note }}" required minlength="5"
+                    placeholder="e.g. Client confirmed by email on 3 Nov 2026"></textarea>
+          <button class="btn btn-small" type="submit">Record permission</button>
+        </form>
+      {% endif %}
+    </section>
+  </div>
+</div>
+
+<section class="card">
+  <details {% if open_edit %}open{% endif %}>
+    <summary><h2 class="inline-h">Edit</h2></summary>
+    <p class="small muted">Use for typo fixes or trimming. The client's original wording is preserved and the testimonial is marked “Edited”.
+      The rating can't be changed: it's the client's own score.</p>
+    <form method="post" action="{{ url_for('admin.testimonial_edit', tid=t.id) }}" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="customer_name">Name *</label>
+      <input id="customer_name" name="customer_name" maxlength="{{ limits.customer_name }}" value="{{ values.customer_name }}" required>
+      {{ field_error(errors, 'customer_name') }}
+      <label for="business">Business</label>
+      <input id="business" name="business" maxlength="{{ limits.business }}" value="{{ values.business }}">
+      {{ field_error(errors, 'business') }}
+      <label for="feedback">Feedback *</label>
+      <textarea id="feedback" name="feedback" rows="6" maxlength="{{ limits.feedback }}" required>{{ values.feedback }}</textarea>
+      {{ field_error(errors, 'feedback') }}
+      <label for="website">Website</label>
+      <input id="website" name="website" maxlength="{{ limits.website }}" value="{{ values.website }}">
+      {{ field_error(errors, 'website') }}
+      <button class="btn btn-primary" type="submit">Save changes</button>
+    </form>
+  </details>
+</section>
+
+<section class="card danger-zone">
+  <h2>Delete</h2>
+  <form method="post" action="{{ url_for('admin.testimonial_delete', tid=t.id) }}" data-confirm="Permanently delete this testimonial? This cannot be undone.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-danger" type="submit">Delete permanently</button>
+  </form>
+</section>
+{% endblock %}

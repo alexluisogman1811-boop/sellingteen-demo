@@ -1,0 +1,29 @@
+{
+  "_help": "Put each payment product's ID next to the app it unlocks. months: 1 for monthly, 12 for yearly. See HOW-TO-PUT-ALL-APPS-ONLINE.md.",
+  "accept_test_mode": false,
+  "lemonsqueezy": {
+    "variants": {},
+    "products": {}
+  },
+  "dodo": {
+    "products": {}
+  },
+  "_example": {
+    "lemonsqueezy": {
+      "variants": {
+        "123456": {
+          "app": "reviewboost",
+          "months": 1
+        }
+      }
+    },
+    "dodo": {
+      "products": {
+        "pdt_example123": {
+          "app": "reviewboost",
+          "months": 1
+        }
+      }
+    }
+  }
+}

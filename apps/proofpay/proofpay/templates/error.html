@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ code }} · ProofPay{% endblock %}
+{% block content %}
+<div class="card narrow center">
+  <h1>{% if code == 404 %}Page not found{% elif code >= 500 %}Something went wrong{% else %}We couldn't do that{% endif %}</h1>
+  <p class="muted">{{ message }}</p>
+  <p><a class="btn" href="{{ url_for('jobs.dashboard') if current_user.is_authenticated else url_for('public.home') }}">Go back home</a></p>
+</div>
+{% endblock %}

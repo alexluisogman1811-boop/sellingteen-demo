@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% from "macros.html" import status_badge, priority_badge, who_badge with context %}
+{% block title %}Tasks{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>All tasks</h1><p class="muted">{{ tasks|length }} result{{ '' if tasks|length == 1 else 's' }}</p></div>
+  <div class="actions"><a class="btn" href="{{ url_for('owner.tasks_export', **filters) }}">Export CSV</a></div>
+</div>
+
+<form class="filters card" method="get">
+  <input type="search" name="q" value="{{ filters.q }}" placeholder="Search tasks, answers, clients…" aria-label="Search">
+  <select name="status" aria-label="Status">
+    <option value="">Any status</option>
+    <option value="waiting" {{ 'selected' if filters.status == 'waiting' }}>Waiting (not submitted)</option>
+    {% for s, label in STATUS_LABELS.items() %}<option value="{{ s }}" {{ 'selected' if filters.status == s }}>{{ label }}</option>{% endfor %}
+  </select>
+  <select name="assignee" aria-label="Assigned to">
+    <option value="">Anyone</option>
+    <option value="client" {{ 'selected' if filters.assignee == 'client' }}>Client</option>
+    <option value="owner" {{ 'selected' if filters.assignee == 'owner' }}>Agency</option>
+  </select>
+  <select name="priority" aria-label="Priority">
+    <option value="">Any priority</option>
+    {% for p in ['high', 'medium', 'low'] %}<option value="{{ p }}" {{ 'selected' if filters.priority == p }}>{{ p|capitalize }}</option>{% endfor %}
+  </select>
+  <select name="client_status" aria-label="Onboarding status">
+    <option value="all" {{ 'selected' if filters.client_status not in ['active','completed','archived'] }}>All onboardings</option>
+    {% for s in ['active', 'completed', 'archived'] %}<option value="{{ s }}" {{ 'selected' if filters.client_status == s }}>{{ s|capitalize }} onboardings</option>{% endfor %}
+  </select>
+  <label class="check"><input type="checkbox" name="overdue" value="1" {{ 'checked' if filters.overdue == '1' }}> Overdue only</label>
+  <button class="btn" type="submit">Filter</button>
+  <a href="{{ url_for('owner.tasks') }}">Clear</a>
+</form>
+
+<div class="card table-wrap">
+  <table class="table">
+    <thead><tr><th>Task</th><th>Client</th><th>Owner</th><th>Priority</th><th>Due</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for t in tasks %}
+      <tr class="{{ 'row-overdue' if is_overdue(t) }}">
+        <td data-label="Task"><a href="{{ url_for('owner.task_detail', task_id=t.id) }}">{{ t.title }}</a><div class="muted small">{{ KIND_LABELS[t.kind] }}</div></td>
+        <td data-label="Client"><a href="{{ url_for('owner.client_detail', client_id=t.client_id) }}">{{ t.client_name }}</a><div class="muted small">{{ t.project_name }}</div></td>
+        <td data-label="Owner">{{ who_badge(t.assignee) }}</td>
+        <td data-label="Priority">{{ priority_badge(t.priority) }}</td>
+        <td data-label="Due">{{ t.due_date or '—' }}{% if is_overdue(t) %} <span class="badge st-overdue">Overdue</span>{% endif %}</td>
+        <td data-label="Status">{{ status_badge(t.status) }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="6" class="center empty">
+        {% if total == 0 %}
+          <p><strong>No tasks yet.</strong> Tasks come from each onboarding's checklist.</p>
+          <a class="btn btn-primary" href="{{ url_for('owner.client_new') }}">+ New onboarding</a>
+        {% else %}
+          <p class="muted">No tasks match these filters.</p><a href="{{ url_for('owner.tasks') }}">Clear filters</a>
+        {% endif %}
+      </td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

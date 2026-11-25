@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "macros.html" import field, textarea %}
+{% block title %}{{ 'Edit template' if template else 'New template' }}{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <p class="crumb"><a href="{{ url_for('main.templates') }}">Templates</a></p>
+  <h1>{{ 'Edit template' if template else 'New template' }}</h1>
+  <form method="post" action="{{ url_for('main.template_edit', template_id=template.id) if template else url_for('main.template_new') }}" class="stack">
+    {{ csrf_field() }}
+    {{ field('name', 'Template name', values.name, required=true) }}
+    {{ textarea('description', 'Description', values.description, rows=2, maxlength=2000) }}
+    {{ textarea('required_tasks', 'Required tasks', values.required_tasks, rows=8, maxlength=20000,
+                hint='One task per line. Each must be done, or marked not completed with a reason, before the job can be completed.') }}
+    {{ textarea('optional_tasks', 'Optional tasks', values.optional_tasks, rows=4, maxlength=20000, hint='One task per line.') }}
+    {% if template %}<p class="muted small">Changes apply to new jobs only. Existing jobs keep the checklist they were created with.</p>{% endif %}
+    <div class="actions">
+      <button class="btn btn-primary" type="submit">Save template</button>
+      <a class="btn" href="{{ url_for('main.templates') }}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

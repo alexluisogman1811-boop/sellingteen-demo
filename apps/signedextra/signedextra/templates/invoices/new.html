@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, csrf, ticket_no %}
+{% block title %}New invoice{% endblock %}
+{% block content %}
+<p class="small muted"><a href="{{ url_for('core.job_detail', job_id=job.id) }}">{{ job.name }}</a> · {{ job.customer_name }}</p>
+<h1>New invoice</h1>
+{% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+{% if candidates %}
+<form method="post">
+  {{ csrf() }}
+  <div class="card">
+    <h2>Signed or noticed tickets</h2>
+    <ul class="list">
+      {% for t in candidates %}
+      <li class="mt">
+        <label class="checkbox">
+          <input type="checkbox" name="ticket_id" value="{{ t.id }}" {{ "disabled" if t.id in unpriced else "checked" }}>
+          <span>{{ ticket_no(t) }} · {{ t.work_date }} {{ badge(t.status) }} <strong>{{ t.total_cents|money }}</strong><br>
+            <span class="small muted">{{ t.description|truncate(90) }}</span>
+            {% if t.id in unpriced %}<br><span class="small error-text">Has unpriced lines. <a href="{{ url_for('tickets.ticket_detail', ticket_id=t.id) }}">Price it first</a>.</span>{% endif %}
+          </span>
+        </label>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="card">
+    <div class="field"><label for="f-notes">Notes on invoice (optional)</label><textarea id="f-notes" name="notes" maxlength="2000" placeholder="Payment terms, remit-to details…"></textarea></div>
+    <button class="btn btn-primary" type="submit">Create invoice</button>
+  </div>
+</form>
+{% else %}
+<div class="card"><p class="empty">No signed or noticed tickets on this job are waiting to be invoiced.</p></div>
+{% endif %}
+{% endblock %}

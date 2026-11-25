@@ -1,0 +1,22 @@
+{% macro status_badge(status) -%}
+<span class="badge badge-{{ status }}">{{ status|capitalize }}</span>
+{%- endmacro %}
+
+{% macro field_error(errors, key) -%}
+{% if errors and errors.get(key) %}<p class="field-error" id="{{ key }}-error">{{ errors[key] }}</p>{% endif %}
+{%- endmacro %}
+
+{% macro csrf() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{% macro booking_summary(booking) -%}
+<dl class="summary">
+  <div><dt>Reference</dt><dd><strong class="ref">{{ booking.reference }}</strong></dd></div>
+  <div><dt>Service</dt><dd>{{ booking.service_name }} ({{ booking.duration_minutes }} min)</dd></div>
+  <div><dt>Date</dt><dd>{{ booking.start_utc|local('%A %d %B %Y') }}</dd></div>
+  <div><dt>Time</dt><dd>{{ booking.start_utc|local('%H:%M') }} – {{ booking.end_utc|local('%H:%M %Z') }}</dd></div>
+  <div><dt>Price</dt><dd>{{ booking.price_cents|money if booking.price_cents else 'Free' }}</dd></div>
+  <div><dt>Status</dt><dd>{{ status_badge(booking.status) }}</dd></div>
+</dl>
+{%- endmacro %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import empty %}
+{% block title %}Customers{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Customers</h1>
+    <p class="muted">The businesses and people you send invoices to.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('customers.new') }}">+ Add customer</a>
+</div>
+
+{% if customers or q %}
+<form class="filters" method="get" role="search">
+  <input name="q" type="search" placeholder="Search by name, contact or email" value="{{ q }}" aria-label="Search customers">
+  <button class="btn" type="submit">Search</button>
+  {% if q %}<a class="btn btn-ghost" href="{{ url_for('customers.index') }}">Clear</a>{% endif %}
+</form>
+{% endif %}
+
+{% if customers %}
+<ul class="rows card flush">
+  {% for c in customers %}
+  <li>
+    <a class="row" href="{{ url_for('customers.detail', customer_id=c.id) }}">
+      <span class="row-main">
+        <strong>{{ c.name }}</strong>
+        <span class="muted small">{{ c.contact_name or 'No contact person' }}{% if c.email %} · {{ c.email }}{% endif %}</span>
+      </span>
+      <span class="row-side">
+        <span class="small muted">{{ plural(c.invoice_count, 'invoice') }}</span>
+        {% if c.outstanding_cents %}<strong class="amount">{{ c.outstanding_cents | money_for_user }} owed</strong>{% else %}<span class="small muted">Nothing owed</span>{% endif %}
+      </span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% elif q %}
+  {{ empty("No matching customers", "Check the spelling, or try part of the name.") }}
+{% else %}
+  {{ empty("No customers yet", "Add the businesses or people you invoice. A name is all you need to start.", url_for('customers.new'), "Add a customer") }}
+{% endif %}
+{% endblock %}

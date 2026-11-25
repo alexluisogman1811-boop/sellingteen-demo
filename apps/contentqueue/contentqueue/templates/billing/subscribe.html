@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Subscription{% endblock %}
+{% block content %}
+<section class="card narrow">
+  {% if access.state == 'ended' %}
+    <h1>{{ 'Your subscription has ended' if access.was_paid else 'Your free trial has ended' }}</h1>
+    <p class="muted">Your posts, captions and images are saved. Subscribe to keep using ContentQueue.
+      You can still <a href="{{ url_for('auth.export_data') }}">download all your data (ZIP)</a>
+      or <a href="{{ url_for('main.export_csv', status='all') }}">export all your posts (CSV)</a>.</p>
+  {% elif access.state == 'paid' %}
+    <h1>You're subscribed</h1>
+    <p class="muted">Your account is active until {{ access.until.isoformat()|nice_date }}. Thank you!</p>
+  {% else %}
+    <h1>Subscribe to ContentQueue</h1>
+    <p class="muted">{% if access.days_left is defined %}You have {{ access.days_left }} day{{ '' if access.days_left == 1 else 's' }} left in your free trial.{% endif %} Subscribe any time to keep going after it.</p>
+  {% endif %}
+
+  {% if access.state != 'paid' %}
+  <div class="plan">
+    <p class="plan-price">{{ price }}</p>
+    <ul class="plan-list">
+      <li>Unlimited posts, captions and ideas</li>
+      <li>Content calendar, templates, campaigns and CSV export</li>
+      <li>Planning only — ContentQueue never posts to social networks for you</li>
+    </ul>
+    {% if payment_link %}
+      <a class="btn btn-primary" href="{{ payment_link }}" target="_blank" rel="noopener noreferrer">Subscribe now</a>
+      <p class="muted small">You pay on our payment provider's secure page. Use the same email as your account: <strong>{{ g.account.email }}</strong>. Your account is switched on within 24 hours of payment.</p>
+    {% else %}
+      <p class="flash flash-info">Online payment is opening soon.{% if support_email %} To subscribe now, email <strong>{{ support_email }}</strong> from <strong>{{ g.account.email }}</strong>.{% endif %}</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <p class="muted small">Questions? {% if support_email %}Email {{ support_email }}.{% endif %} See our <a href="{{ url_for('legal.terms') }}">Terms</a> and <a href="{{ url_for('legal.refunds') }}">Refund policy</a>.</p>
+  {% if access.state != 'ended' %}<a class="btn" href="{{ url_for('main.dashboard') }}">Back to dashboard</a>{% endif %}
+</section>
+{% endblock %}

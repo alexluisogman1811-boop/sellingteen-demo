@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "macros.html" import csrf %}
+{% block title %}Use template{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="crumbs"><a href="{{ url_for('library.templates') }}">Templates</a> /</p><h1>Use “{{ item.name }}”</h1></div></div>
+<div class="grid-2">
+  <section class="card">
+    <h2>Template</h2>
+    <div class="caption-box">{{ item.body }}</div>
+    {% if item.hashtags %}<p class="muted small">{{ item.hashtags }}</p>{% endif %}
+  </section>
+  <section class="card">
+    <h2>Fill in the details</h2>
+    <form method="post" class="stack">
+      {{ csrf() }}
+      {% for name, label in fields %}
+        <div class="field">
+          <label for="ph_{{ name }}">{{ label }}</label>
+          <input id="ph_{{ name }}" name="ph_{{ name }}" maxlength="300" data-placeholder-name="{{ name }}">
+        </div>
+      {% else %}
+        <p class="muted">This template has no fields — it will be copied as-is.</p>
+      {% endfor %}
+      <p class="help">Blank fields keep their {marker} so you can spot them later.</p>
+      <button class="btn btn-primary" type="submit">Create post from template</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

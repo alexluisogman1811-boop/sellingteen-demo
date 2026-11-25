@@ -1,0 +1,15 @@
+<!-- TestimonialTap: {{ project.name }} -->
+<style>.tt-list{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));font-family:system-ui,sans-serif}.tt-item{margin:0;padding:16px;border:1px solid #e3e3e8;border-radius:10px;background:#fff;color:#1d1d24}.tt-item blockquote{margin:0 0 10px;line-height:1.5;white-space:pre-line}.tt-stars{color:#b7791f;letter-spacing:2px}.tt-item figcaption{font-size:.9em;color:#555}</style>
+<div class="tt-list">
+{%- for t in testimonials %}
+  <figure class="tt-item">
+    {%- if t.rating %}
+    <div class="tt-stars" aria-label="{{ t.rating }} out of 5">{{ t.rating|stars }}</div>
+    {%- endif %}
+    <blockquote>{{ t.feedback }}</blockquote>
+    <figcaption>— <strong>{{ t.customer_name }}</strong>{% if t.business %}, {{ t.business }}{% endif %}{% if t.is_demo %} [DEMO DATA]{% endif %}</figcaption>
+  </figure>
+{%- else %}
+  <p>No published testimonials yet.</p>
+{%- endfor %}
+</div>
