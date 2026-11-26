@@ -61,7 +61,9 @@ HEAD_TAGS = ('<link rel="manifest" href="{root}/manifest.webmanifest">'
              '<meta name="apple-mobile-web-app-capable" content="yes">'
              '<meta name="mobile-web-app-capable" content="yes">'
              '<meta name="apple-mobile-web-app-title" content="{name}">'
-             '<script src="{root}/pwa-register.js" defer></script>')
+             '<script src="{root}/pwa-register.js" defer></script>'
+             '<script src="{root}/line-share.js" defer></script>')
+LINE_JS = (HERE / "line_share.js").read_text(encoding="utf-8") if (HERE / "line_share.js").is_file() else ""
 
 REGISTER_JS = """// sellingteen: register the install helper (works with strict Content-Security-Policy: no inline script).
 (function () {
@@ -102,7 +104,12 @@ def install_pwa(app, slug, name):
         r.headers["Cache-Control"] = "public, max-age=86400"
         return r
 
-    routes = {"/manifest.webmanifest": manifest, "/sw.js": sw, "/pwa-register.js": register_js}
+    def line_js():
+        r = Response(LINE_JS, mimetype="text/javascript")
+        r.headers["Cache-Control"] = "public, max-age=3600"
+        return r
+
+    routes = {"/manifest.webmanifest": manifest, "/sw.js": sw, "/pwa-register.js": register_js, "/line-share.js": line_js}
     for fname in ("pwa-icon-192.png", "pwa-icon-512.png", "apple-touch-icon.png"):
         routes["/" + fname] = icon(fname)
 
