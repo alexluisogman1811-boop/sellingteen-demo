@@ -9,8 +9,10 @@
 import importlib
 import json
 import os
+import re
 import sys
 from pathlib import Path
+from urllib.parse import quote
 
 HERE = Path(__file__).resolve().parent
 MANIFEST = json.loads((HERE / "apps.json").read_text(encoding="utf-8"))
@@ -73,7 +75,63 @@ def build_app(slug, root=None):
     finally:
         os.environ.clear()
         os.environ.update(saved)
-    return isolate_cookies(app, slug)
+    app = isolate_cookies(app, slug)
+    prefill_payment_email(app)
+    return app
+
+
+STRIPE_LINK = re.compile(r'href="(https://buy\.stripe\.com/[A-Za-z0-9_]+)(\?[^"]*)?"')
+
+
+def _current_email():
+    """The logged-in person's email, whichever way this app stores it (None if unknown)."""
+    try:
+        from flask_login import current_user
+        if getattr(current_user, "is_authenticated", False) and getattr(current_user, "email", None):
+            return current_user.email
+    except Exception:
+        pass
+    from flask import g
+    for name in ("user", "account", "business", "company", "membership"):
+        obj = g.get(name)
+        if obj is None:
+            continue
+        for key in ("email", "owner_email"):
+            try:
+                value = obj[key] if not hasattr(obj, key) else getattr(obj, key)
+            except (KeyError, IndexError, TypeError):
+                value = None
+            if isinstance(value, str) and "@" in value:
+                return value
+    return None
+
+
+def prefill_payment_email(app):
+    """Stripe Pay buttons open with the customer's sign-up email already filled in, so the payment
+    matches their account and switches it on automatically. Pages without a Stripe link are untouched."""
+    @app.after_request
+    def _prefill(response):
+        try:
+            if response.direct_passthrough or not (response.mimetype or "").startswith("text/html"):
+                return response
+            body = response.get_data(as_text=True)
+            if "buy.stripe.com/" not in body:
+                return response
+            email = _current_email()
+            if not email:
+                return response
+            param = "prefilled_email=" + quote(email.strip().lower(), safe="")
+
+            def add(m):
+                query = m.group(2) or ""
+                if "prefilled_email=" in query:
+                    return m.group(0)
+                return f'href="{m.group(1)}{query + "&amp;" if query else "?"}{param}"'
+
+            response.set_data(STRIPE_LINK.sub(add, body))
+        except Exception:
+            pass  # never break a page over this
+        return response
 
 
 def isolate_cookies(app, slug):
