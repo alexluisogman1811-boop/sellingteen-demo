@@ -19,6 +19,21 @@ def main():
         for env_file in sorted((HERE / "env").glob("*.env")):
             set_env_values(env_file, {"PAYMENT_LINK": ""})
         print("render_start: demo mode, payment links switched off")
+        # Ready-made example accounts that some apps include (all fictional sample data):
+        demo_flags = {"proofpay": {"DEMO_MODE": "1"},          # "Try the demo" button on its home page
+                      "slotsimple": {"DEMO_MODE": "1"}}        # demo studio; login shown on its login page
+        # (SignedExtra deliberately refuses demo data on a production server, so it is not switched on here.)
+        for slug, values in demo_flags.items():
+            env_file = HERE / "env" / f"{slug}.env"
+            if env_file.is_file():
+                set_env_values(env_file, values)
+        # Example accounts (fictional data) for apps that have no demo button of their own.
+        try:
+            from demo_accounts import seed_all
+            from sitehost import build_app
+            print("render_start: example accounts:", seed_all(build_app))
+        except Exception as exc:
+            print("render_start: example accounts skipped:", exc)
     url = os.environ.get("RENDER_EXTERNAL_URL", "").rstrip("/")
     if url:
         set_env_values(HERE / "site.env", {"BASE_URL": url})

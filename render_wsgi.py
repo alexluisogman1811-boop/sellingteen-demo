@@ -15,6 +15,17 @@ BANNER = (
     'Demo only: try everything freely, but anything you enter may be erased when this demo restarts. '
     'Please don\'t enter real customer data.</div>'
 ).encode()
+EXAMPLE_LOGINS = {"invoicechaser", "payrecover", "contractordocs", "leadfollowup"}   # see demo_accounts.py
+
+
+def banner_for(path):
+    slug = (path or "/").strip("/").split("/", 1)[0]
+    if slug in EXAMPLE_LOGINS:
+        return BANNER.replace(b"</div>", b" <strong>Look around without signing up:</strong> log in with "
+                                          b"<code>demo@example.com</code> / <code>demo-example-123</code> (example account).</div>")
+    return BANNER
+
+
 BANNER_CSS = (b".st-demo-banner{position:sticky;top:0;z-index:2147483647;background:#ffb35c;color:#2a1236;"
               b"font:600 14px/1.4 system-ui,sans-serif;padding:8px 14px;text-align:center}")
 
@@ -47,7 +58,7 @@ def _with_banner(app):
         if i != -1:
             j = body.find(b">", i)
             if j != -1:
-                body = body[: j + 1] + BANNER + body[j + 1:]
+                body = body[: j + 1] + banner_for(environ.get("SCRIPT_NAME", "") + environ.get("PATH_INFO", "")) + body[j + 1:]
         headers = [(k, v) for k, v in headers if k.lower() != "content-length"]
         headers.append(("Content-Length", str(len(body))))
         start_response(captured["status"], headers, captured.get("exc"))
