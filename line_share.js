@@ -4,6 +4,9 @@
 (function () {
   "use strict";
   var LINE_URL = "https://line.me/R/share?text=";
+  var THAI = (document.documentElement.getAttribute("lang") || "").toLowerCase().indexOf("th") === 0;
+  var LABEL = THAI ? "แชร์ทาง LINE" : "Share on LINE";
+  var EMPTY = THAI ? "ยังไม่มีข้อความให้แชร์" : "Nothing to share yet";
 
   function textOfToken(token) {
     token = (token || "").trim();
@@ -47,8 +50,8 @@
       line.type = "button";
       // Same look as the app's own button, minus any "copy" classes the app's script listens to.
       line.className = (btn.className || "").split(/\s+/).filter(function (c) { return c && !/copy/i.test(c); }).join(" ") + " st-line-share";
-      line.textContent = "Share on LINE";
-      line.setAttribute("aria-label", "Open LINE with this text ready to send");
+      line.textContent = LABEL;
+      line.setAttribute("aria-label", THAI ? "เปิด LINE พร้อมข้อความนี้" : "Open LINE with this text ready to send");
       line.style.background = "#06C755";
       line.style.borderColor = "#06C755";
       line.style.color = "#ffffff";
@@ -56,7 +59,7 @@
       line.style.marginTop = "4px";
       line.addEventListener("click", function () {
         var text = textFor(btn);
-        if (!text) { line.textContent = "Nothing to share yet"; setTimeout(function () { line.textContent = "Share on LINE"; }, 2000); return; }
+        if (!text) { line.textContent = EMPTY; setTimeout(function () { line.textContent = LABEL; }, 2000); return; }
         window.open(LINE_URL + encodeURIComponent(text), "_blank", "noopener");
       });
       btn.insertAdjacentElement("afterend", line);

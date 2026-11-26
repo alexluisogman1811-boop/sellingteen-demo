@@ -79,6 +79,8 @@ def build_app(slug, root=None):
     prefill_payment_email(app)
     from pwa import install_pwa
     install_pwa(app, slug, spec.get("name", slug))
+    from i18n import install_i18n
+    install_i18n(app, slug)          # Thai switch, only for apps that have a Thai word list
     return app
 
 
