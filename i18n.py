@@ -25,6 +25,7 @@ _TAG = re.compile(r"(<[^>]+>)")
 _ATTR = re.compile(r'(\s(?:placeholder|title|aria-label|alt)=")([^"]*)(")', re.I)
 _BUTTON_VALUE = re.compile(r'(<input\b[^>]*\btype="(?:submit|button)"[^>]*\bvalue=")([^"]*)(")', re.I)
 _WS = re.compile(r"\s+")
+_OPTION_NO_VALUE = re.compile(r"<option((?:\s(?![^>]*\bvalue=)[^>]*)?)>([^<]*)</option>", re.I)
 _AFTER = [(" per month", " ต่อเดือน"), (" a month", " ต่อเดือน"), ("/month", "/เดือน")]
 
 # Dates written in words ("Thursday, 26 November 2026", "Wed 26 Nov 2026") -> Thai names.
@@ -70,9 +71,14 @@ class Translator:
                 continue
             key = _WS.sub(" ", en).strip()
             if "{}" in key:
-                parts = [re.escape(p) for p in key.split("{}")]
-                rx = re.compile("^" + "(.+?)".join(parts) + "$", re.S)
-                self.patterns.append((rx, th))
+                raw_parts = key.split("{}")
+                parts = [re.escape(p) for p in raw_parts]
+                # Plural slots like "day{}" / "post{}" (a {} glued to the end of an English word): their value is
+                # "" or "s". Thai has no plurals, so when the Thai text has fewer {} we skip exactly these slots.
+                plural = [i for i in range(len(raw_parts) - 1)
+                          if re.search(r"[A-Za-z]$", raw_parts[i]) and not re.match(r"[A-Za-z]", raw_parts[i + 1])]
+                rx = re.compile("^" + "(.*?)".join(parts) + "$", re.S)
+                self.patterns.append((rx, th, plural))
             else:
                 self.exact[key] = th
         self.patterns.sort(key=lambda p: -len(p[0].pattern))   # most specific first
@@ -87,13 +93,23 @@ class Translator:
         if th is None and _DATE_ONLY.match(key):
             th = thai_date(key)
         if th is None:
-            for rx, template in self.patterns:
+            for rx, template, plural in self.patterns:
                 m = rx.match(key)
                 if m:
+                    groups = list(m.groups())
+                    if template.count("{}") < len(groups):
+                        drop = set(plural[: len(groups) - template.count("{}")])
+                        groups = [g for i, g in enumerate(groups) if i not in drop]
                     vals = iter([thai_date(v) if _DATE_ONLY.match(v.strip()) else self.exact.get(v.strip(), v)
-                                 for v in m.groups()])
+                                 for v in groups])
                     th = re.sub(r"\{\}", lambda _: next(vals, ""), template)
                     break
+        if th is None and " · " in key:
+            # Titles like "Dashboard · InvoiceChaser": translate each part that has a translation.
+            segs = key.split(" · ")
+            done = [self.exact.get(s, s) for s in segs]
+            if done != segs:
+                th = " · ".join(done)
         if th is None:
             return raw
         lead = raw[: len(raw) - len(raw.lstrip())]
@@ -115,6 +131,10 @@ class Translator:
         return "".join(out)
 
     def page(self, body):
+        # A drop-down choice without value="" sends its visible text. Pin the English text as its value first,
+        # so translating the visible label never changes what the form sends.
+        body = _OPTION_NO_VALUE.sub(lambda m: f'<option{m.group(1)} value="{html.escape(html.unescape(m.group(2).strip()), quote=True)}">{m.group(2)}</option>',
+                                    body)
         out, pos = [], 0
         for m in _SKIP_BLOCK.finditer(body):      # scripts, styles and what customers typed stay as they are
             out.append(self._chunk(body[pos:m.start()]))

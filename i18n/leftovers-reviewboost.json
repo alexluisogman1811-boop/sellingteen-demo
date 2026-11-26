@@ -1,0 +1,11 @@
+{
+ "Hi {first_name}, it's {business_name}. Thanks again for having us out for your {service}. A quick review would mean a lot: {review_link}": "/reviewboost/templates/",
+ "Hi {first_name}, thanks for choosing {business_name} for your {service}. If you're happy with the work, would you mind leaving us a quick review? It really helps a small local business: {review_link}": "/reviewboost/templates/",
+ "ReviewBoost AI:": "/reviewboost/settings",
+ "{job_date}": "/reviewboost/templates/new",
+ "{business_name}": "/reviewboost/templates/new",
+ "{service}": "/reviewboost/templates/new",
+ "{review_link}": "/reviewboost/templates/new",
+ "{customer_name}": "/reviewboost/templates/new",
+ "{first_name}": "/reviewboost/templates/new"
+}

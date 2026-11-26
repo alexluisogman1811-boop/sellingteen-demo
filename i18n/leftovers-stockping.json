@@ -1,0 +1,5 @@
+{
+ "category, supplier, description": "/stockping/import",
+ "sku, name, cost, price, quantity, reorder_threshold": "/stockping/import",
+ "DEMO-": "/stockping/demo"
+}

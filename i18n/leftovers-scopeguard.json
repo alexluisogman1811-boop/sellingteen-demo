@@ -1,0 +1,22 @@
+{
+ "Change request for {project_name}: {change_title}": "/scopeguard/templates",
+ "Revisions on {project_name}": "/scopeguard/templates",
+ "{change_reason}": "/scopeguard/templates",
+ "Hi {client_name}, Thanks for approving version {scope_version} of the scope for {project_name}. I've saved a record of the approval and will keep you posted on progress. Best, {freelancer_name}": "/scopeguard/templates",
+ "Hi {client_name}, Just a heads-up: the agreed number of revisions for {project_name} ({revision_allowance} per deliverable) has now been used for at least one deliverable. I'm happy to keep going; further rounds would be handled as a change request so we both have a clear record. Thanks, {freelancer_name}": "/scopeguard/templates",
+ "{revision_allowance}": "/scopeguard/templates",
+ "{project_name}": "/scopeguard/templates",
+ "{client_name}": "/scopeguard/templates",
+ "{scope_version}": "/scopeguard/templates",
+ "Hi {client_name}, I've documented the agreed scope for {project_name} (version {scope_version}). Please review the deliverables, exclusions and milestones here: {review_link} If everything looks right you can approve it on that page, or request changes if something needs adjusting. Thanks, {freelancer_name}": "/scopeguard/templates",
+ "{change_hours}": "/scopeguard/templates",
+ "Scope approved for {project_name}": "/scopeguard/templates",
+ "Hi {client_name}, You asked for: {change_title}. This falls outside the agreed scope. Reason: {change_reason} Time impact: {change_hours} extra hours. Price impact: {change_cost}. You can approve or decline it here: {review_link} I'll start once it's approved. Thanks, {freelancer_name}": "/scopeguard/templates",
+ "Please review the scope for {project_name}": "/scopeguard/templates",
+ "{freelancer_name}": "/scopeguard/templates",
+ "{review_link}": "/scopeguard/templates",
+ "{change_cost}": "/scopeguard/templates",
+ "{deadline}": "/scopeguard/templates",
+ "{change_title}": "/scopeguard/templates",
+ "· ScopeGuard": "/scopeguard/settings"
+}

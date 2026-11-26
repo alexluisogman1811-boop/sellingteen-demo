@@ -1,0 +1,15 @@
+{
+ "Google / Maps": "/leadrescue/leads/",
+ "Mountain (America/Denver)": "/leadrescue/workspace/settings",
+ "Arizona (no daylight saving) (America/Phoenix)": "/leadrescue/workspace/settings",
+ "Eastern (America/New_York)": "/leadrescue/workspace/settings",
+ "Alaska (America/Anchorage)": "/leadrescue/workspace/settings",
+ "Puerto Rico (America/Puerto_Rico)": "/leadrescue/workspace/settings",
+ "Central (America/Chicago)": "/leadrescue/workspace/settings",
+ "Pacific (America/Los_Angeles)": "/leadrescue/workspace/settings",
+ "Hawaii (Pacific/Honolulu)": "/leadrescue/workspace/settings",
+ "YYYY-MM-DD": "/leadrescue/leads/import",
+ "first_name": "/leadrescue/leads/import",
+ ".csv": "/leadrescue/leads/import",
+ "CSV UTF-8": "/leadrescue/leads/import"
+}

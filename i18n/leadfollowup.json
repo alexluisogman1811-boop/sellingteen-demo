@@ -220,5 +220,6 @@
  "Page not found": "ไม่พบหน้านี้",
  "This page doesn't exist, or you don't have access to it.": "ไม่มีหน้านี้ หรือคุณไม่มีสิทธิ์เข้าถึง",
  "{} · LeadFollowUp AI": "{} · LeadFollowUp AI",
- "Language": "ภาษา"
+ "Language": "ภาษา",
+ "You're all caught up. No follow-ups are due today.": "ติดตามครบหมดแล้ว วันนี้ไม่มีรายการที่ต้องติดตาม"
 }
