@@ -77,6 +77,8 @@ def build_app(slug, root=None):
         os.environ.update(saved)
     app = isolate_cookies(app, slug)
     prefill_payment_email(app)
+    from pwa import install_pwa
+    install_pwa(app, slug, spec.get("name", slug))
     return app
 
 
