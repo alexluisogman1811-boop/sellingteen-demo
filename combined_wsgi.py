@@ -26,6 +26,11 @@ def make_application():
     mounts = {"/" + slug: app for slug, app in apps.items()}
     mounts["/admin"] = create_admin_app(registry, settings, SITE_DATA)
     mounts["/webhooks"] = create_webhooks_app(registry, settings, SITE_DATA, HERE / "webhooks.json")
+    # One sellingteen account for every app (sign in / create accounts everywhere at once). It reaches each app
+    # through the whole site, so it needs a reference to the finished dispatcher (filled in below).
+    from hub import create_hub_app
+    site = {}
+    mounts["/account"] = create_hub_app(lambda: site["app"], MANIFEST)
 
     def home(environ, start_response):
         """The bare address sends visitors to the sellingteen website; /healthz is for monitoring."""
@@ -35,7 +40,8 @@ def make_application():
         start_response("302 Found", [("Location", MANIFEST.get("website", "https://sellingteen-apps.netlify.app"))])
         return [b""]
 
-    return DispatcherMiddleware(home, mounts), apps, registry
+    site["app"] = DispatcherMiddleware(home, mounts)
+    return site["app"], apps, registry
 
 
 application, APPS, REGISTRY = make_application()
