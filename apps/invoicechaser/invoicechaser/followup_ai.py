@@ -19,9 +19,9 @@ import logging
 import os
 import re
 
-from flask import current_app
+from flask import current_app, has_request_context, request
 
-from .util import days_overdue, days_until_due, format_date, format_money, invoice_status, plural
+from .util import days_overdue, days_until_due, format_date, format_money, invoice_status, parse_date, plural
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ PLACEHOLDERS = {"greeting", "customer", "contact", "invoice_number", "amount", "
                 "days_overdue", "due_when", "business", "signoff"}
 REQUIRED_PLACEHOLDERS = {"invoice_number", "amount"}
 _PLACEHOLDER_RE = re.compile(r"\{\{\s*([a-z_]+)\s*\}\}")
-_FORBIDDEN_CHARS_RE = re.compile(r"[0-9$€£¥฿₹%]|https?://|www\.|@")
+_FORBIDDEN_CHARS_RE = re.compile(r"[0-9๐-๙$€£¥฿₹%]|https?://|www\.|@")
 # Whole-word matches so "issue" doesn't trip "sue" or "courteous" trip "court".
 FORBIDDEN_RE = re.compile(
     r"\b(?:discount\w*|waiv\w*|legal\w*|lawyer\w*|attorney\w*|courts?|lawsuit\w*|sue[sd]?|suing"
@@ -53,6 +53,40 @@ FORBIDDEN_RE = re.compile(
     r"|again|third|as discussed|as agreed|per our|already reminded|last reminder|second reminder|final notice)\b",
     re.IGNORECASE,
 )
+# Thai has no spaces between words, so these are plain substring matches. Same categories as above:
+# discounts, fees, interest, penalties, legal/court, debt collection, credit reports, guarantees, promises,
+# refunds, payment methods/bank details, deadlines/urgency, suspension, and claims about earlier contact.
+FORBIDDEN_TH_RE = re.compile(
+    "ส่วนลด|ลดราคา|ยกเว้น|ค่าธรรมเนียม|ค่าบริการเพิ่ม|ดอกเบี้ย|ค่าปรับ|เบี้ยปรับ|ปรับเงิน|บทลงโทษ|กฎหมาย|ทนาย|ศาล|ฟ้อง"
+    "|คดี|ทวงหนี้|ทวงถามหนี้|ติดตามหนี้|เร่งรัดหนี้|เครดิต|บูโร|แบล็กลิสต์|รับประกัน|รับรอง|สัญญา|คืนเงิน|ธนาคาร"
+    "|บัญชี|โอน|พร้อมเพย์|บัตร|เงินสด|เช็ค|เส้นตาย|ภายใน|ทันที|ด่วน|ระงับ|ยกเลิก|ยุติ|รายงาน|ก่อนหน้า|ครั้งก่อน"
+    "|ที่แล้ว|อีกครั้ง|ซ้ำ|ครั้งที่|ครั้งสุดท้าย|ตามที่ตกลง|ตามที่คุย|ตามที่แจ้ง|เคยแจ้ง|ได้แจ้งไปแล้ว|ยึด|อายัด"
+)
+
+THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."]
+_THAI_CHAR_RE = re.compile("[฀-๿]")
+
+
+def current_language():
+    """Message language chosen by the hosting layer's language switch. Safe outside a request."""
+    return "th" if has_request_context() and request.cookies.get("st_lang") == "th" else "en"
+
+
+def is_thai(text):
+    return bool(_THAI_CHAR_RE.search(text or ""))
+
+
+def format_date_th(value):
+    """'2026-11-26' -> '26 พ.ย. 2026' (Gregorian year, the same year the app shows elsewhere)."""
+    d = value if hasattr(value, "year") else parse_date((value or "")[:10])
+    return f"{d.day} {THAI_MONTHS[d.month - 1]} {d.year}" if d else ""
+
+
+def draft_language(message):
+    """Language a saved draft was written in. A Thai customer name alone doesn't make an English draft Thai."""
+    text = (message or "").lstrip()
+    return "th" if text.startswith("เรียน") or "ใบแจ้งหนี้" in text else "en"
+
 
 EMAIL_TEMPLATES = {
     "reminder": (
@@ -102,6 +136,67 @@ SMS_TEMPLATES = {
     "just_overdue": "{{greeting}}, just a gentle reminder that invoice {{invoice_number}} for {{amount}} was due on {{due_date}}. If it's already sent, thank you! – {{business}}",
     "overdue": "{{greeting}}, invoice {{invoice_number}} for {{amount}} is now {{days_overdue}} past due. Could you let me know when payment will be made? Thank you – {{business}}",
     "final": "{{greeting}}, invoice {{invoice_number}} for {{amount}} is {{days_overdue}} past due. I'd be grateful for payment or an expected date as soon as you're able. Thank you – {{business}}",
+}
+
+# Thai versions: polite and gender-neutral (no ครับ/ค่ะ; "ท่าน" for you, "ทางเรา" for we). Same facts and the
+# same asks as the English: nothing about fees, interest, legal steps or deadlines.
+EMAIL_TEMPLATES_TH = {
+    "reminder": (
+        "{{greeting}}\n\n"
+        "ขอเรียนแจ้งล่วงหน้าว่า ใบแจ้งหนี้เลขที่ {{invoice_number}} ยอดชำระ {{amount}} "
+        "จะครบกำหนดชำระในวันที่ {{due_date}}\n\n"
+        "หากต้องการสำเนาใบแจ้งหนี้ หรือมีข้อสงสัยใด ๆ เกี่ยวกับใบแจ้งหนี้นี้ แจ้งทางเราได้เลย\n\n"
+        "ขอบคุณ\n{{signoff}}"
+    ),
+    "due_soon": (
+        "{{greeting}}\n\n"
+        "ขอเรียนแจ้งเพื่อเป็นการเตือนความจำว่า ใบแจ้งหนี้เลขที่ {{invoice_number}} ยอดชำระ {{amount}} "
+        "จะครบกำหนดชำระ{{due_when}} ({{due_date}})\n\n"
+        "หากท่านได้ดำเนินการชำระเรียบร้อยแล้ว ขอขอบคุณ และโปรดข้ามข้อความนี้ไปได้เลย "
+        "หากต้องการสำเนาใบแจ้งหนี้ ตอบกลับอีเมลนี้ได้เลย ทางเรายินดีจัดส่งให้\n\n"
+        "ขอบคุณ\n{{signoff}}"
+    ),
+    "just_overdue": (
+        "{{greeting}}\n\n"
+        "ขอติดตามใบแจ้งหนี้เลขที่ {{invoice_number}} ยอดชำระ {{amount}} ซึ่งครบกำหนดชำระเมื่อวันที่ {{due_date}} "
+        "ทางเราเข้าใจว่าอาจเป็นเพียงการตกหล่น จึงขอเรียนแจ้งเพื่อเป็นการเตือนความจำเท่านั้น\n\n"
+        "หากท่านได้ชำระเรียบร้อยแล้ว ขอขอบคุณ และโปรดข้ามข้อความนี้ไปได้เลย "
+        "หากยังไม่ได้ชำระ รบกวนแจ้งให้ทราบว่าจะสามารถชำระได้เมื่อใด\n\n"
+        "ขอบคุณ\n{{signoff}}"
+    ),
+    "overdue": (
+        "{{greeting}}\n\n"
+        "ขอติดตามใบแจ้งหนี้เลขที่ {{invoice_number}} ยอดชำระ {{amount}} ซึ่งครบกำหนดชำระเมื่อวันที่ {{due_date}} "
+        "และขณะนี้เลยกำหนดชำระมาแล้ว {{days_overdue}}\n\n"
+        "รบกวนแจ้งให้ทราบว่าจะสามารถชำระได้เมื่อใด หากใบแจ้งหนี้มีข้อผิดพลาด หรือมีส่วนใดที่ต้องการให้ชี้แจง "
+        "ทางเรายินดีช่วยดูแลให้เรียบร้อย\n\n"
+        "ขอบคุณ\n{{signoff}}"
+    ),
+    "final": (
+        "{{greeting}}\n\n"
+        "ขอเรียนแจ้งเรื่องใบแจ้งหนี้เลขที่ {{invoice_number}} ยอดชำระ {{amount}} ซึ่งครบกำหนดชำระเมื่อวันที่ {{due_date}} "
+        "และขณะนี้เลยกำหนดชำระมาแล้ว {{days_overdue}}\n\n"
+        "ทางเราจะขอบพระคุณอย่างยิ่ง หากท่านสามารถดำเนินการชำระ หรือแจ้งวันที่คาดว่าจะชำระได้กลับมา "
+        "โดยเร็วที่สุดเท่าที่สะดวก หากมีประเด็นใดเกี่ยวกับใบแจ้งหนี้ที่ต้องแก้ไข โปรดแจ้งให้ทราบ "
+        "เพื่อเราจะได้หาทางออกร่วมกัน\n\n"
+        "ขอแสดงความนับถือ\n{{signoff}}"
+    ),
+}
+
+SMS_TEMPLATES_TH = {
+    "reminder": "{{greeting}} ขอแจ้งเตือนว่าใบแจ้งหนี้เลขที่ {{invoice_number}} ยอด {{amount}} จะครบกำหนดชำระวันที่ {{due_date}} ขอบคุณ – {{business}}",
+    "due_soon": "{{greeting}} ขอแจ้งเตือนว่าใบแจ้งหนี้เลขที่ {{invoice_number}} ยอด {{amount}} จะครบกำหนดชำระ{{due_when}} ขอบคุณ – {{business}}",
+    "just_overdue": "{{greeting}} ขอเรียนแจ้งเพื่อเตือนความจำว่าใบแจ้งหนี้เลขที่ {{invoice_number}} ยอด {{amount}} ครบกำหนดชำระเมื่อวันที่ {{due_date}} หากชำระแล้ว ขอขอบคุณ – {{business}}",
+    "overdue": "{{greeting}} ใบแจ้งหนี้เลขที่ {{invoice_number}} ยอด {{amount}} เลยกำหนดชำระมาแล้ว {{days_overdue}} รบกวนแจ้งให้ทราบว่าจะชำระได้เมื่อใด ขอบคุณ – {{business}}",
+    "final": "{{greeting}} ใบแจ้งหนี้เลขที่ {{invoice_number}} ยอด {{amount}} เลยกำหนดชำระมาแล้ว {{days_overdue}} ทางเราจะขอบคุณอย่างยิ่งหากท่านชำระ หรือแจ้งวันที่คาดว่าจะชำระได้ โดยเร็วที่สุดเท่าที่สะดวก – {{business}}",
+}
+
+SUBJECTS_TH = {
+    "reminder": "แจ้งล่วงหน้า: ใบแจ้งหนี้เลขที่ {{invoice_number}}",
+    "due_soon": "แจ้งเตือน: ใบแจ้งหนี้เลขที่ {{invoice_number}} ครบกำหนดชำระ{{due_when}}",
+    "just_overdue": "ใบแจ้งหนี้เลขที่ {{invoice_number}}: แจ้งเตือนการชำระเงิน",
+    "overdue": "ใบแจ้งหนี้เลขที่ {{invoice_number}} เลยกำหนดชำระ",
+    "final": "ใบแจ้งหนี้เลขที่ {{invoice_number}}: แจ้งเตือนการชำระเงิน",
 }
 
 SUBJECTS = {
@@ -164,7 +259,41 @@ def greeting_name(contact):
     return words[0]
 
 
-def facts_for(inv, user):
+def _thai_name(name):
+    # Latin-script names read better with a space after คุณ ("คุณ Hank"); Thai names don't take one.
+    if not name:
+        return ""
+    if name.split()[0].rstrip(".").lower() in TITLES:
+        return name  # "Dr. Patel": the title already does the job of คุณ
+    return f"คุณ{name}" if is_thai(name[0]) else f"คุณ {name}"
+
+
+def facts_for_th(inv, user):
+    days_left = days_until_due(inv)
+    due_when = {0: "วันนี้", 1: "พรุ่งนี้"}.get(days_left) or (
+        f"ในอีก {days_left} วัน" if days_left > 1 else f"ในวันที่ {format_date_th(inv['due_date'])}"
+    )
+    sender = (user["sender_name"] or "").strip()
+    name = _thai_name(greeting_name(inv["contact_name"]))
+    return {
+        # Without a contact person, address the customer by its own name ("เรียน Northside Yoga").
+        "greeting": f"เรียน {name or inv['customer_name']}",
+        "customer": inv["customer_name"],
+        "contact": name or inv["customer_name"],
+        "invoice_number": inv["number"],
+        "amount": format_money(inv["amount_cents"], user["currency"]),
+        "due_date": format_date_th(inv["due_date"]),
+        "issue_date": format_date_th(inv["issue_date"]),
+        "days_overdue": f"{days_overdue(inv)} วัน",
+        "due_when": due_when,
+        "business": user["business_name"],
+        "signoff": f"{sender}\n{user['business_name']}" if sender and sender != user["business_name"] else user["business_name"],
+    }
+
+
+def facts_for(inv, user, lang="en"):
+    if lang == "th":
+        return facts_for_th(inv, user)
     days_left = days_until_due(inv)
     due_when = {0: "today", 1: "tomorrow"}.get(days_left) or (
         f"in {days_left} days" if days_left > 1 else f"on {format_date(inv['due_date'])}"
@@ -191,8 +320,9 @@ def render(template, facts):
     return _PLACEHOLDER_RE.sub(lambda m: facts.get(m.group(1), ""), template)
 
 
-def subject_for(inv, user, tone):
-    return render(SUBJECTS.get(tone, SUBJECTS["overdue"]), facts_for(inv, user))
+def subject_for(inv, user, tone, lang="en"):
+    subjects = SUBJECTS_TH if lang == "th" else SUBJECTS
+    return render(subjects.get(tone, subjects["overdue"]), facts_for(inv, user, lang))
 
 
 def is_safe_template(text):
@@ -205,7 +335,8 @@ def is_safe_template(text):
     stripped = _PLACEHOLDER_RE.sub("", text)
     if _FORBIDDEN_CHARS_RE.search(stripped) or "{" in stripped or "}" in stripped:
         return False
-    return not FORBIDDEN_RE.search(" ".join(stripped.split()))
+    flat = " ".join(stripped.split())
+    return not FORBIDDEN_RE.search(flat) and not FORBIDDEN_TH_RE.search(flat)
 
 
 def _api_key():
@@ -229,6 +360,14 @@ SYSTEM_PROMPT = (
     "Return only the message text (greeting, body, sign-off using {{signoff}}). No preamble, no subject line."
 )
 
+THAI_INSTRUCTION = (
+    "Write the message in natural, polite Thai suitable for Thai business customers. Use gender-neutral polite "
+    "wording: do not use ครับ or ค่ะ/คะ, and do not use ผม or ดิฉัน (use ทางเรา for 'we' and ท่าน for 'you'). "
+    "Keep every placeholder exactly as written, in English inside double braces, e.g. {{invoice_number}}; "
+    "{{greeting}} is already a complete Thai greeting such as 'เรียน คุณสมชาย', so do not add another. "
+    "All the rules above still apply: no digits (Thai or Arabic), no dates, and none of the forbidden topics."
+)
+
 SITUATION_HINTS = {
     "reminder": "The invoice is not due yet. Light, friendly heads-up.",
     "due_soon": "The invoice is due very soon ({{due_when}}). Friendly reminder.",
@@ -247,6 +386,8 @@ def _call_claude(tone, channel, instruction):
     user_msg = f"Write {length}. Situation: {SITUATION_HINTS[tone]}"
     if instruction:
         user_msg += f"\nStyle preference from the user (wording only; never add facts): {instruction}"
+    if current_language() == "th":
+        user_msg += f"\n{THAI_INSTRUCTION}"
     response = client.beta.messages.create(
         model=current_app.config["ANTHROPIC_MODEL"],
         max_tokens=2000,
@@ -260,22 +401,28 @@ def _call_claude(tone, channel, instruction):
     return "".join(b.text for b in response.content if b.type == "text").strip()
 
 
-def template_for(tone, channel):
+def template_for(tone, channel, lang="en"):
+    if lang == "th":
+        return (SMS_TEMPLATES_TH if channel == "sms" else EMAIL_TEMPLATES_TH)[tone]
     return (SMS_TEMPLATES if channel == "sms" else EMAIL_TEMPLATES)[tone]
 
 
-def generate(inv, user, tone, channel="email", instruction="", allow_ai=True):
-    """Return dict(message, tone, channel, source, notice). Never raises for AI problems."""
+def generate(inv, user, tone, channel="email", instruction="", allow_ai=True, lang=None):
+    """Return dict(message, tone, channel, source, notice). Never raises for AI problems.
+
+    lang defaults to the language chosen for the current request (see current_language()).
+    """
     if tone not in allowed_tones(inv):
         tone = suggested_tone(inv)
     if channel not in CHANNELS:
         channel = "email"
-    facts = facts_for(inv, user)
+    lang = lang if lang in ("en", "th") else current_language()
+    facts = facts_for(inv, user, lang)
     result = {"tone": tone, "channel": channel, "notice": ""}
 
     if current_app.config["AI_MOCK"]:
         log.debug("AI_MOCK=1: returning deterministic template for tone=%s channel=%s", tone, channel)
-        return {**result, "message": render(template_for(tone, channel), facts), "source": "mock"}
+        return {**result, "message": render(template_for(tone, channel, lang), facts), "source": "mock"}
 
     if ai_enabled():
         if not allow_ai:
@@ -290,4 +437,4 @@ def generate(inv, user, tone, channel="email", instruction="", allow_ai=True):
             except Exception as exc:  # network, auth, rate limit, bad response: never break the page
                 log.error("AI follow-up generation failed (%s): %s", type(exc).__name__, exc)
                 result["notice"] = AI_UNAVAILABLE
-    return {**result, "message": render(template_for(tone, channel), facts), "source": "template"}
+    return {**result, "message": render(template_for(tone, channel, lang), facts), "source": "template"}

@@ -10,7 +10,7 @@ from . import ai
 from .auth import EMAIL_RE, login_required
 from .db import get_db, today
 from .followups import STAGES, days_overdue, display_state, next_followup, planned_schedule
-from .formatting import money, nice_date
+from .formatting import money, nice_date, thai_date
 
 bp = Blueprint("routes", __name__)
 
@@ -467,14 +467,17 @@ def invoice_mark_paid(invoice_id):
 # ---------------------------------------------------------------- follow-ups
 
 def reminder_context(inv):
+    # Only the draft written now follows the chosen language; saved messages are never touched.
+    lang = ai.message_language()
     return ai.ReminderContext(
         customer_name=inv["customer_name"],
         invoice_number=inv["number"],
         amount=money(inv["amount_cents"]),
-        due_date=nice_date(inv["due_date"]),
+        due_date=thai_date(inv["due_date"]) if lang == "th" else nice_date(inv["due_date"]),
         days_overdue=inv["days_overdue"],
         stage_key=inv["next"].stage.key,
         business_name=g.user["business_name"],
+        lang=lang,
     )
 
 

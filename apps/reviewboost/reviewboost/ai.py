@@ -12,6 +12,8 @@ import urllib.error
 import urllib.request
 from datetime import date
 
+from flask import has_request_context, request
+
 ALLOWED_PLACEHOLDERS = ("customer_name", "first_name", "business_name", "service", "job_date", "review_link")
 PLACEHOLDER_RE = re.compile(r"\{([a-z_]+)\}")
 MAX_MESSAGE_LENGTH = 600
@@ -25,6 +27,16 @@ OFFER_RE = re.compile(
     r"guarantee[ds]?|warrant(?:y|ies)|refunds?|rebates?|free of charge|for free|policy|policies)\b",
     re.I,
 )
+# Thai equivalents: discounts, promos, coupons, freebies, rewards, guarantees, refunds, prices, star asks.
+THAI_OFFER_RE = re.compile(
+    r"ส่วนลด|ลดราคา|โปรโมชั่น|โปรโมชัน|คูปอง|บัตรกำนัล|รางวัล|ของแถม|ฟรี|"
+    r"รับประกัน|คืนเงิน|เงินคืน|\d[\d,.]*\s?บาท|฿\s?\d|ห้าดาว|\d\s?ดาว"
+)
+
+
+def current_lang():
+    """'th' when the hosting layer's language cookie selects Thai, else 'en'. Safe outside a request."""
+    return "th" if has_request_context() and request.cookies.get("st_lang") == "th" else "en"
 
 
 DEFAULT_MODEL = "claude-haiku-5-5"  # low-cost model
@@ -112,6 +124,7 @@ def find_invented_details(text, ctx, raw_values=()):
     known = " ".join(values).lower()
     known_digits = [re.sub(r"\D", "", v) for v in values]
     found = [m.group(0) for m in OFFER_RE.finditer(text) if m.group(0).lower() not in known]
+    found += [m.group(0) for m in THAI_OFFER_RE.finditer(text) if m.group(0) not in known]
     for m in URL_RE.findall(text) + EMAIL_RE.findall(text):
         token = m.rstrip(".,!?;:)'\"").lower()
         if token not in known:
@@ -160,6 +173,90 @@ _CLOSERS = [
 ]
 
 
+# Thai versions (same number of variants as English). Polite but gender-neutral: no ครับ/ค่ะ.
+# The business name, service and review link are inserted exactly as saved.
+_OPENERS_TH = [
+    "สวัสดีคุณ{first_name}",
+    "สวัสดีคุณ{first_name} ทาง {business_name} ขอทักมาสั้น ๆ",
+    "เรียนคุณ{first_name}",
+]
+_THANKS_TH = [
+    "ขอบคุณที่เลือกใช้บริการ {business_name} สำหรับงาน {service}",
+    "ขอบคุณอีกครั้งที่เลือกใช้บริการของเราสำหรับงาน {service}",
+    "ขอบคุณที่ไว้วางใจให้เราดูแลงาน {service}",
+    "ยินดีมากที่ได้มีโอกาสช่วยดูแลงาน {service}",
+]
+_THANKS_DATED_TH = [
+    "ขอบคุณที่ให้เราเข้าไปดูแลงาน {service} เมื่อวันที่ {job_date}",
+    "ขอบคุณที่เลือกใช้บริการ {business_name} สำหรับงาน {service} เมื่อวันที่ {job_date}",
+]
+_ASKS_TH = [
+    "หากพอใจกับงานของเรา รบกวนช่วยเขียนรีวิวสั้น ๆ ให้หน่อยได้ไหม {review_link}",
+    "ถ้าพอมีเวลาสักนิด รีวิวสั้น ๆ จะช่วยให้ลูกค้าคนอื่นรู้จักเรามากขึ้น: {review_link}",
+    "รบกวนช่วยเล่าประสบการณ์ที่ได้รับสักนิดผ่านรีวิวได้ไหม {review_link}",
+]
+_ASKS_NO_LINK_TH = [
+    "หากพอใจกับบริการ เราจะขอบคุณมากถ้าช่วยเล่าประสบการณ์ผ่านรีวิวออนไลน์",
+    "ถ้าพอมีเวลาสักนิด รีวิวออนไลน์สั้น ๆ จะช่วยให้ลูกค้าคนอื่นรู้จักเรามากขึ้น",
+    "รบกวนช่วยเล่าประสบการณ์ที่ได้รับสักนิดผ่านรีวิวได้ไหม",
+]
+_CLOSERS_TH = [
+    "รีวิวของคุณมีความหมายมากสำหรับธุรกิจเล็ก ๆ ในท้องถิ่นอย่างเรา ขอบคุณมาก",
+    "ขอบคุณที่สนับสนุนเรา",
+    "ขอบคุณที่อุดหนุนธุรกิจของเรา",
+    "ขอบคุณมาก จาก {business_name}",
+    "",
+]
+_CLOSER_FALLBACK = {"en": "We appreciate your support!", "th": "ขอบคุณที่สนับสนุนเรา"}
+_POOLS = {
+    "en": (_OPENERS, _THANKS, _THANKS_DATED, _ASKS, _ASKS_NO_LINK, _CLOSERS),
+    "th": (_OPENERS_TH, _THANKS_TH, _THANKS_DATED_TH, _ASKS_TH, _ASKS_NO_LINK_TH, _CLOSERS_TH),
+}
+
+# Thai text for the built-in default templates (seeded per account, in English). A stored row that
+# still matches an English default word for word is swapped for its Thai version at generation
+# time only; stored rows are never changed, and edited or user-written templates are used as-is.
+DEFAULT_TEMPLATE_BODIES_TH = {
+    "Hi {first_name}, thanks for choosing {business_name} for your {service}. "
+    "If you're happy with the work, would you mind leaving us a quick review? "
+    "It really helps a small local business: {review_link}":
+        "สวัสดีคุณ{first_name} ขอบคุณที่เลือกใช้บริการ {business_name} สำหรับงาน {service} "
+        "หากพอใจกับงานของเรา รบกวนช่วยเขียนรีวิวสั้น ๆ ให้หน่อยได้ไหม "
+        "รีวิวของคุณช่วยธุรกิจเล็ก ๆ ในท้องถิ่นได้มากจริง ๆ: {review_link}",
+    "Hi {first_name}, it's {business_name}. Thanks again for having us out for your "
+    "{service}. A quick review would mean a lot: {review_link}":
+        "สวัสดีคุณ{first_name} ทาง {business_name} ขอทักมาสั้น ๆ ขอบคุณอีกครั้งที่ให้เราดูแลงาน "
+        "{service} รีวิวสั้น ๆ จากคุณมีความหมายกับเรามาก: {review_link}",
+}
+_THAI_MONTHS = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม",
+                "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"]
+
+
+def _format_date_th(iso):
+    try:
+        d = date.fromisoformat(iso)
+    except (TypeError, ValueError):
+        return ""
+    return f"{d.day} {_THAI_MONTHS[d.month - 1]}"
+
+
+def thai_default_template(body):
+    """Thai text for an unedited built-in default template, else None."""
+    if not body:
+        return None
+    return DEFAULT_TEMPLATE_BODIES_TH.get(tidy(body))
+
+
+def thai_context(ctx, job_date_iso):
+    """Context for Thai built-in text: Thai date, and no doubled "คุณ" if the owner typed it."""
+    first = ctx["first_name"]
+    if first.startswith("คุณ") and len(first) > 3:
+        first = first[3:].lstrip()
+    if first[:1].isascii() and first[:1].isalpha():
+        first = " " + first   # "คุณ Jane" (space before a name in English letters), "คุณสมชาย" stays joined
+    return {**ctx, "first_name": first, "job_date": _format_date_th(job_date_iso)}
+
+
 def check_template_usable(template_body, ctx):
     if template_body and "{review_link}" in template_body and not ctx["review_link"]:
         raise AIError("This template includes your review link, but you haven't added one yet. "
@@ -170,29 +267,30 @@ def tidy(text):
     return re.sub(r"\s+", " ", text).strip()
 
 
-def mock_generate(ctx, template_body=None, seed=None):
+def mock_generate(ctx, template_body=None, seed=None, lang="en"):
     if template_body:
         check_template_usable(template_body, ctx)
         return fill_template(template_body, ctx)
+    openers, thanks, thanks_dated, asks_link, asks_no_link, closers = _POOLS.get(lang, _POOLS["en"])
     rng = random.Random(seed)
-    opener = rng.choice(_OPENERS)
+    opener = rng.choice(openers)
     if "{business_name}" in opener:
-        thanks_pool = [t for t in _THANKS + _THANKS_DATED if "{business_name}" not in t]
+        thanks_pool = [t for t in thanks + thanks_dated if "{business_name}" not in t]
     else:
-        thanks_pool = list(_THANKS) + _THANKS_DATED
+        thanks_pool = list(thanks) + thanks_dated
     if not ctx.get("job_date"):
         thanks_pool = [t for t in thanks_pool if "{job_date}" not in t]
-    closer = rng.choice(_CLOSERS)
+    closer = rng.choice(closers)
     if "{business_name}" in closer and "{business_name}" in opener:
-        closer = "We appreciate your support!"
-    asks = _ASKS if ctx.get("review_link") else _ASKS_NO_LINK
+        closer = _CLOSER_FALLBACK.get(lang, _CLOSER_FALLBACK["en"])
+    asks = asks_link if ctx.get("review_link") else asks_no_link
     parts = [opener, rng.choice(thanks_pool), rng.choice(asks), closer]
     return tidy(fill_template(" ".join(p for p in parts if p), ctx))
 
 
 # Live generation ------------------------------------------------------------
 
-def _live_generate(ctx, model, template_body=None, api_key=None):
+def _live_generate(ctx, model, template_body=None, api_key=None, lang="en"):
     if not api_key:
         raise AIError("AI is not configured. Set AI_MOCK=1 or add ANTHROPIC_API_KEY to your environment.")
     check_template_usable(template_body, ctx)
@@ -210,6 +308,14 @@ def _live_generate(ctx, model, template_body=None, api_key=None):
         "- Plain text only, no subject line, no quotes, no other placeholders.\n"
         f"Facts: {json.dumps(facts)}\n"
     )
+    if lang == "th":
+        prompt += (
+            "Language: write the whole message in natural, polite Thai suitable for LINE or SMS. "
+            "Use gender-neutral wording (no ครับ or ค่ะ), address the customer as คุณ followed by their "
+            "first name, keep the business name and service exactly as given, and keep the "
+            "{review_link} token unchanged. All the rules above still apply: no offers, rewards, "
+            "discounts or requests for a particular star rating.\n"
+        )
     if template_body:
         prompt += f"Match the tone and structure of this example:\n{template_body}\n"
     payload = json.dumps({
@@ -237,14 +343,25 @@ def _live_generate(ctx, model, template_body=None, api_key=None):
     return tidy(fill_template(text, ctx))
 
 
-def generate_review_request(config, business, customer, template_body=None, seed=None):
-    """Return (message, mode). Raises AIError with a user-safe message on failure."""
+def generate_review_request(config, business, customer, template_body=None, seed=None, lang=None):
+    """Return (message, mode). Raises AIError with a user-safe message on failure.
+
+    `lang` defaults to the visitor's chosen language (current_lang). In Thai, the built-in
+    generator and unedited default templates write Thai; the owner's own templates are used as-is.
+    """
+    if lang is None:
+        lang = current_lang()
     ctx = build_context(business, customer)
+    gen_ctx, gen_body = ctx, template_body
+    if lang == "th":
+        thai_body = thai_default_template(template_body)
+        if not template_body or thai_body:
+            gen_ctx, gen_body = thai_context(ctx, customer["job_date"]), thai_body or template_body
     if use_mock(config):
-        message, mode = mock_generate(ctx, template_body, seed), "mock"
+        message, mode = mock_generate(gen_ctx, gen_body, seed, lang=lang), "mock"
     else:
-        message, mode = _live_generate(ctx, config.get("AI_MODEL") or DEFAULT_MODEL, template_body,
-                                       api_key=_api_key(config)), "live"
+        message, mode = _live_generate(gen_ctx, config.get("AI_MODEL") or DEFAULT_MODEL, gen_body,
+                                       api_key=_api_key(config), lang=lang), "live"
 
     message = message.strip()
     # Templates are written by the business itself, so only model output is checked.
@@ -254,7 +371,7 @@ def generate_review_request(config, business, customer, template_body=None, seed
             raise AIError("The AI wrote a message that was too long. Please try again.")
         raw = (customer["phone"], customer["email"], customer["job_date"], business["review_link"],
                template_body or "")
-        if find_invented_details(message, ctx, raw):
+        if find_invented_details(message, gen_ctx, raw):
             raise AIError("The AI added details you didn't provide (like an offer or a phone number), "
                           "so we didn't use it. Please try again or pick a template.")
     return message, mode

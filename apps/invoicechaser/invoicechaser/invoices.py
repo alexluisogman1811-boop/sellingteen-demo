@@ -305,7 +305,9 @@ def detail(invoice_id):
         draft = None
     mailto = None
     if draft and draft["channel"] == "email" and invoice["customer_email"]:
-        subject = followup_ai.subject_for(invoice, g.user, draft["tone"])
+        # Subject in the same language as the saved draft, whatever the current language choice.
+        subject = followup_ai.subject_for(invoice, g.user, draft["tone"],
+                                          followup_ai.draft_language(draft["message"]))
         mailto = (f"mailto:{quote(invoice['customer_email'], safe='@')}"
                   f"?subject={quote(subject)}&body={quote(draft['message'])}")
     return render_template(

@@ -219,12 +219,10 @@ def client_detail(client_id):
         (client_id, A())).fetchall()
     templates = account_templates()
     link = portal_link(client)
-    values = svc.reminder_values(client, tasks, link, g.account["name"])
-    reminders = [
-        dict(name=r["name"], subject=svc.render_reminder(r["subject"], values),
-             body=svc.render_reminder(r["body"], values))
-        for r in db.execute("SELECT * FROM reminder_templates WHERE account_id = ? ORDER BY id", (A(),))
-    ]
+    # Unedited built-in templates render in Thai when st_lang=th; user text is never translated.
+    reminders = svc.render_reminders(
+        db.execute("SELECT * FROM reminder_templates WHERE account_id = ? ORDER BY id", (A(),)).fetchall(),
+        client, tasks, link, g.account["name"])
     # Checklist grouped by who needs to act next, so the page reads as a to-do list.
     groups = [
         ("review", "Needs your review", "Client submissions waiting for approval.",

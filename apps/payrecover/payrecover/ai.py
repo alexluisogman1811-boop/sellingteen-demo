@@ -12,13 +12,21 @@ import re
 import urllib.request
 from dataclasses import dataclass
 
-from .formatting import plural_days
+from flask import has_request_context, request
+
+from .formatting import plural_days, thai_days
 
 log = logging.getLogger(__name__)
 
 API_URL = "https://api.anthropic.com/v1/messages"
 TIMEOUT_SECONDS = 12
 MAX_LENGTH = 1500
+
+
+def message_language():
+    """Language for newly written reminders: "th" when the hosting layer's st_lang
+    cookie chooses Thai, otherwise "en". Safe to call outside a request."""
+    return "th" if has_request_context() and request.cookies.get("st_lang") == "th" else "en"
 
 
 @dataclass(frozen=True)
@@ -30,6 +38,7 @@ class ReminderContext:
     days_overdue: int
     stage_key: str  # friendly | second | firm | final
     business_name: str
+    lang: str = "en"  # "en" or "th"; due_date should already be formatted for this language
 
     @property
     def first_name(self):
@@ -105,25 +114,96 @@ MOCK_TEMPLATES = {
 }
 
 
+# Thai versions. Gender-neutral polite wording (no ครับ/ค่ะ, no ผม/ดิฉัน; the business
+# speaks as ทางเรา) so any owner can send them on LINE, SMS or email. Same facts and
+# the same asks as the English templates; nothing is added.
+TEMPLATES_TH = {
+    "friendly": (
+        "เรียน คุณ{name}\n\n"
+        "ขออนุญาตแจ้งเตือนว่า ใบแจ้งหนี้เลขที่ {number} ยอดเงิน {amount} ครบกำหนดชำระเมื่อวันที่ {due} "
+        "หากท่านชำระเรียบร้อยแล้ว ต้องขออภัยและโปรดละเว้นข้อความนี้\n\n"
+        "ขอบคุณมาก\n{business}"
+    ),
+    "second": (
+        "เรียน คุณ{name}\n\n"
+        "ขอติดตามใบแจ้งหนี้เลขที่ {number} ยอดเงิน {amount} ซึ่งครบกำหนดชำระเมื่อวันที่ {due} "
+        "รบกวนแจ้งให้ทราบว่าจะสะดวกชำระได้เมื่อใด\n\n"
+        "ขอบคุณมาก\n{business}"
+    ),
+    "firm": (
+        "เรียน คุณ{name}\n\n"
+        "ใบแจ้งหนี้เลขที่ {number} ยอดเงิน {amount} เลยกำหนดชำระวันที่ {due} มาแล้ว {days} "
+        "รบกวนดำเนินการชำระโดยเร็วที่สุด หรือหากใบแจ้งหนี้มีข้อผิดพลาดประการใด โปรดตอบกลับมาได้เลย\n\n"
+        "ขอแสดงความนับถือ\n{business}"
+    ),
+    "final": (
+        "เรียน คุณ{name}\n\n"
+        "ขอแจ้งเตือนเป็นครั้งสุดท้ายเรื่องใบแจ้งหนี้เลขที่ {number} ยอดเงิน {amount} "
+        "ซึ่งครบกำหนดชำระวันที่ {due} และขณะนี้เลยกำหนดมาแล้ว {days} "
+        "รบกวนดำเนินการชำระหรือติดต่อทางเราภายในสัปดาห์นี้ เพื่อให้เรื่องนี้เรียบร้อยร่วมกัน\n\n"
+        "ขอแสดงความนับถือ\n{business}"
+    ),
+}
+
+MOCK_TEMPLATES_TH = {
+    "friendly": (
+        "สวัสดี คุณ{first}\n\n"
+        "หวังว่าจะสบายดี ขอแจ้งเตือนสั้น ๆ ว่าใบแจ้งหนี้เลขที่ {number} ยอดเงิน {amount} "
+        "ครบกำหนดชำระเมื่อวันที่ {due} หากสะดวกรบกวนช่วยตรวจสอบด้วย "
+        "ถ้าชำระไว้แล้ว ขออภัยและโปรดละเว้นข้อความนี้\n\n"
+        "ขอบคุณมาก\n{business}"
+    ),
+    "second": (
+        "สวัสดี คุณ{first}\n\n"
+        "ขอติดตามใบแจ้งหนี้เลขที่ {number} ยอดเงิน {amount} ซึ่งครบกำหนดชำระเมื่อวันที่ {due} "
+        "ขณะนี้เลยกำหนดมาแล้ว {days} รบกวนแจ้งให้ทราบว่าจะสะดวกชำระได้ประมาณวันไหน\n\n"
+        "ขอบคุณมาก\n{business}"
+    ),
+    "firm": (
+        "สวัสดี คุณ{first}\n\n"
+        "ใบแจ้งหนี้เลขที่ {number} ยอดเงิน {amount} ยังค้างชำระอยู่ และเลยกำหนดชำระวันที่ {due} มาแล้ว {days} "
+        "รบกวนดำเนินการชำระโดยเร็วที่สุด หากมีรายการใดในใบแจ้งหนี้ที่ต้องตรวจสอบ "
+        "ตอบกลับมาได้เลย ทางเรายินดีช่วยดูให้\n\n"
+        "ขอแสดงความนับถือ\n{business}"
+    ),
+    "final": (
+        "สวัสดี คุณ{first}\n\n"
+        "ขอแจ้งเตือนเป็นครั้งสุดท้ายเรื่องใบแจ้งหนี้เลขที่ {number} ยอดเงิน {amount} "
+        "ซึ่งครบกำหนดชำระวันที่ {due} (เลยมาแล้ว {days}) "
+        "รบกวนดำเนินการชำระหรือติดต่อทางเราภายในสัปดาห์นี้ เพื่อให้เรื่องนี้เรียบร้อยร่วมกัน\n\n"
+        "ขอแสดงความนับถือ\n{business}"
+    ),
+}
+
+
 def _fill(template, ctx):
+    text = _fill_raw(template, ctx)
+    if ctx.lang == "th":   # "คุณ Maria" reads better than "คุณMaria" for names in English letters
+        text = re.sub(r"คุณ(?=[A-Za-z])", "คุณ ", text)
+    return text
+
+
+def _fill_raw(template, ctx):
     return template.format(
         name=ctx.customer_name,
         first=ctx.first_name,
         number=ctx.invoice_number,
         amount=ctx.amount,
         due=ctx.due_date,
-        days=plural_days(ctx.days_overdue),
+        days=thai_days(ctx.days_overdue) if ctx.lang == "th" else plural_days(ctx.days_overdue),
         business=ctx.business_name,
     )
 
 
 def template_message(ctx):
-    return _fill(TEMPLATES.get(ctx.stage_key, TEMPLATES["friendly"]), ctx)
+    templates = TEMPLATES_TH if ctx.lang == "th" else TEMPLATES
+    return _fill(templates.get(ctx.stage_key, templates["friendly"]), ctx)
 
 
 def mock_message(ctx):
     """Stands in for the AI when AI_MOCK=1, so the app works with no API key."""
-    return _fill(MOCK_TEMPLATES.get(ctx.stage_key, MOCK_TEMPLATES["friendly"]), ctx)
+    templates = MOCK_TEMPLATES_TH if ctx.lang == "th" else MOCK_TEMPLATES
+    return _fill(templates.get(ctx.stage_key, templates["friendly"]), ctx)
 
 
 # ------------------------------------------------------------ safety check
@@ -142,6 +222,17 @@ FORBIDDEN = [
     (r"(payment|funds) (has |have )?(been |was |were )?received|received your payment|"
      r"thank(s| you) for (your|the) payment|payment (is|was) (complete|confirmed)|already paid", "payment received claim"),
     (r"\bor else\b|\bconsequence|\bsuspend|\bterminate|\bfinal notice before|\bescalat|\bthreat", "threat"),
+    # Thai equivalents, for drafts written in Thai.
+    (r"ค่าปรับ|ปรับเงิน|เบี้ยปรับ", "late fee"),
+    (r"ค่าธรรมเนียม|ค่าใช้จ่ายเพิ่ม|ค่าบริการเพิ่ม|เรียกเก็บเพิ่ม", "fee"),
+    (r"ดอกเบี้ย", "interest"),
+    (r"กฎหมาย|ทนาย|ศาล|ฟ้อง|ดำเนินคดี|คดีความ", "legal"),
+    (r"ทวงหนี้|ทวงถามหนี้|ติดตามหนี้|ตามหนี้", "collections"),
+    (r"เครดิตบูโร|ประวัติเครดิต|แบล็กลิสต์|แบล็คลิสต์", "credit"),
+    (r"ส่วนลด|ลดราคา|ลดให้|ยกเว้นค่า", "discount"),
+    (r"สัญญา|ข้อตกลง|เงื่อนไข|นโยบาย", "contract or policy"),
+    (r"ได้รับ(การ)?ชำระ|ได้รับเงิน|ได้รับยอด|ขอบคุณ(ที่|สำหรับ)(การ)?ชำระ|ชำระครบแล้ว", "payment received claim"),
+    (r"มิฉะนั้น|ไม่เช่นนั้น|ผลที่ตามมา|ระงับ|ยกเลิกบริการ|ข่มขู่|ขั้นเด็ดขาด", "threat"),
 ]
 _FORBIDDEN_RE = [(re.compile(p, re.IGNORECASE), why) for p, why in FORBIDDEN]
 _MONEY_RE = re.compile(r"[$€£]\s?\d[\d,]*(?:\.\d+)?|\b\d[\d,]*\.\d{2}\b")
@@ -195,6 +286,21 @@ Tone by stage:
 - firm: clear and direct, still courteous; invite them to reply if there is a problem.
 - final: serious and respectful; ask them to pay or get in touch this week."""
 
+THAI_INSTRUCTION = """
+
+Language: write the whole message in natural, polite Thai that a Thai customer would expect \
+from a local service business, suitable for LINE, SMS or email. Use gender-neutral polite wording: \
+no ครับ or ค่ะ, no ผม or ดิฉัน (the business refers to itself as ทางเรา). Address the customer as \
+คุณ followed by their name. Copy the customer name, invoice number, amount (including its currency \
+symbol) and due date exactly as given; do not translate, convert or reformat them. Every rule above \
+still applies in Thai: never mention ค่าปรับ, ค่าธรรมเนียม, ดอกเบี้ย, ส่วนลด, สัญญา, ข้อตกลง, นโยบาย, \
+กฎหมาย, ฟ้องร้อง, ศาล, ทวงหนี้ or เครดิตบูโร, never threaten, never add any deadline other than \
+"this week" for the final stage, and never say or imply that a payment was received."""
+
+
+def system_prompt(ctx):
+    return SYSTEM_PROMPT + (THAI_INSTRUCTION if ctx.lang == "th" else "")
+
 
 def call_claude(ctx, config):
     facts = {
@@ -206,10 +312,12 @@ def call_claude(ctx, config):
         "days_overdue": ctx.days_overdue,
         "business_name": ctx.business_name,
     }
+    if ctx.lang == "th":
+        facts["language"] = "Thai"
     body = json.dumps({
         "model": config.get("AI_MODEL", "claude-haiku-5-5"),
         "max_tokens": 400,
-        "system": SYSTEM_PROMPT,
+        "system": system_prompt(ctx),
         "messages": [{"role": "user", "content": "Write the reminder using these facts:\n" + json.dumps(facts)}],
     }).encode("utf-8")
     req = urllib.request.Request(

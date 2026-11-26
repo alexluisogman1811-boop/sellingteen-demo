@@ -3,7 +3,7 @@
 import re
 from datetime import date, timedelta
 
-from flask import current_app, g
+from flask import current_app, g, has_request_context, request
 
 from .db import get_db, now_iso, today
 from .security import new_portal_token, store_upload
@@ -323,15 +323,98 @@ def render_reminder(text, values):
     return _PLACEHOLDER.sub(lambda m: str(values.get(m.group(1), m.group(0))), text)
 
 
-def reminder_values(client, tasks, portal_link, business_name):
+def current_lang() -> str:
+    """'th' when the hosting layer's language cookie selects Thai, else 'en'. Safe outside a request."""
+    return "th" if has_request_context() and request.cookies.get("st_lang") == "th" else "en"
+
+
+# Built-in reminder templates (name, subject, body). Seeded per account in English; rows are
+# never rewritten afterwards.
+DEFAULT_REMINDER_TEMPLATES = [
+    ("Friendly nudge", "Quick reminder: a few items for {project_name}",
+     "Hi {client_name},\n\nHope you're well! To keep {project_name} on track for {start_date}, "
+     "we still need a few things from you:\n\n{open_items}\n\nYou can complete everything in your "
+     "secure onboarding portal:\n{portal_link}\n\nThanks so much,\n{agency_name}"),
+    ("Overdue items", "Action needed: overdue onboarding items for {project_name}",
+     "Hi {client_name},\n\nThe following onboarding items are now past their due date:\n\n"
+     "{overdue_items}\n\nCould you take a look when you have a moment? Your portal link:\n"
+     "{portal_link}\n\nLet us know if anything is unclear.\n\n{agency_name}"),
+    ("Corrections requested", "A couple of updates needed for {project_name}",
+     "Hi {client_name},\n\nThanks for your submissions! We've reviewed them and need a small "
+     "update on:\n\n{correction_items}\n\nOur notes are on each item in your portal:\n"
+     "{portal_link}\n\nThank you,\n{agency_name}"),
+]
+
+# Thai versions of the built-ins, same order and same placeholders. Polite, gender-neutral
+# (no ครับ/ค่ะ), and they add no deadlines or consequences the English does not state.
+DEFAULT_REMINDER_TEMPLATES_TH = [
+    ("แจ้งเตือนรายการที่รอข้อมูล", "แจ้งเตือน: รายการที่ยังรอข้อมูลสำหรับ {project_name}",
+     "เรียน คุณ{client_name}\n\nหวังว่าคุณจะสบายดี เพื่อให้โครงการ {project_name} ดำเนินไปตามแผนสำหรับวันที่ "
+     "{start_date} ทางเรายังต้องการข้อมูลบางรายการจากคุณ ดังนี้\n\n{open_items}\n\n"
+     "คุณสามารถดำเนินการทุกรายการได้ในพอร์ทัลเริ่มงานที่ปลอดภัยของคุณ:\n{portal_link}\n\n"
+     "ขอบคุณมาก\n{agency_name}"),
+    ("รายการที่เลยกำหนด", "ขอความร่วมมือ: รายการเริ่มงานที่เลยกำหนดสำหรับ {project_name}",
+     "เรียน คุณ{client_name}\n\nรายการเริ่มงานต่อไปนี้เลยวันครบกำหนดแล้ว\n\n{overdue_items}\n\n"
+     "รบกวนช่วยตรวจสอบเมื่อสะดวก ลิงก์พอร์ทัลของคุณ:\n{portal_link}\n\n"
+     "หากมีข้อสงสัยใด ๆ โปรดแจ้งให้เราทราบ\n\n{agency_name}"),
+    ("ขอแก้ไขข้อมูล", "ขอแก้ไขข้อมูลเล็กน้อยสำหรับ {project_name}",
+     "เรียน คุณ{client_name}\n\nขอบคุณสำหรับข้อมูลที่ส่งมา ทางเราได้ตรวจสอบแล้ว "
+     "และขอให้ช่วยปรับแก้เล็กน้อยในรายการต่อไปนี้\n\n{correction_items}\n\n"
+     "เราได้เขียนหมายเหตุไว้ในแต่ละรายการในพอร์ทัลของคุณ:\n{portal_link}\n\n"
+     "ขอบคุณ\n{agency_name}"),
+]
+
+_BUILTIN_TH = {en: th for en, th in zip(DEFAULT_REMINDER_TEMPLATES, DEFAULT_REMINDER_TEMPLATES_TH)}
+
+
+def _nl(text):
+    return (text or "").replace("\r\n", "\n")
+
+
+def builtin_reminder(row, lang):
+    """The (name, subject, body) translation for an UNEDITED built-in row in `lang`, else None.
+
+    A row counts as built-in only if name, subject and body all still equal the English default
+    exactly (line endings aside). Any user edit, or a user-created template, returns None so the
+    user's own text is used as-is.
+    """
+    if lang != "th":
+        return None
+    return _BUILTIN_TH.get((_nl(row["name"]), _nl(row["subject"]), _nl(row["body"])))
+
+
+def render_reminders(rows, client, tasks, portal_link, business_name, lang=None):
+    """Render reminder rows for one client. Thai built-ins are used only for unedited defaults."""
+    lang = lang or current_lang()
+    values = {"en": reminder_values(client, tasks, portal_link, business_name)}
+    out = []
+    for r in rows:
+        name, subject, body = r["name"], r["subject"], r["body"]
+        th = builtin_reminder(r, lang)
+        if th:
+            name, subject, body = th
+            if "th" not in values:
+                values["th"] = reminder_values(client, tasks, portal_link, business_name, lang="th")
+            vals = values["th"]
+        else:
+            vals = values["en"]
+        out.append(dict(name=name, subject=render_reminder(subject, vals), body=render_reminder(body, vals)))
+    return out
+
+
+def reminder_values(client, tasks, portal_link, business_name, lang="en"):
     on = today()
+    thai = lang == "th"
 
     def bullet(rows):
         if not rows:
-            return "- (none)"
+            return "- (ไม่มี)" if thai else "- (none)"
         lines = []
         for r in rows:
-            due = f" (due {r['due_date']})" if r["due_date"] else ""
+            if r["due_date"]:
+                due = f" (กำหนดส่ง {r['due_date']})" if thai else f" (due {r['due_date']})"
+            else:
+                due = ""
             lines.append(f"- {r['title']}{due}")
         return "\n".join(lines)
 
@@ -341,7 +424,7 @@ def reminder_values(client, tasks, portal_link, business_name):
         "client_name": client["name"],
         "company": client["company"] or client["name"],
         "project_name": client["project_name"],
-        "start_date": client["start_date"] or "TBC",
+        "start_date": client["start_date"] or ("รอยืนยัน" if thai else "TBC"),
         "portal_link": portal_link,
         "agency_name": business_name,
         "open_items": bullet(open_items),
@@ -384,23 +467,9 @@ def reset_account_data(account_id, load_demo=True):
 
 def seed_reminder_templates(account_id):
     ts = now_iso()
-    templates = [
-        ("Friendly nudge", "Quick reminder: a few items for {project_name}",
-         "Hi {client_name},\n\nHope you're well! To keep {project_name} on track for {start_date}, "
-         "we still need a few things from you:\n\n{open_items}\n\nYou can complete everything in your "
-         "secure onboarding portal:\n{portal_link}\n\nThanks so much,\n{agency_name}"),
-        ("Overdue items", "Action needed: overdue onboarding items for {project_name}",
-         "Hi {client_name},\n\nThe following onboarding items are now past their due date:\n\n"
-         "{overdue_items}\n\nCould you take a look when you have a moment? Your portal link:\n"
-         "{portal_link}\n\nLet us know if anything is unclear.\n\n{agency_name}"),
-        ("Corrections requested", "A couple of updates needed for {project_name}",
-         "Hi {client_name},\n\nThanks for your submissions! We've reviewed them and need a small "
-         "update on:\n\n{correction_items}\n\nOur notes are on each item in your portal:\n"
-         "{portal_link}\n\nThank you,\n{agency_name}"),
-    ]
     get_db().executemany(
         "INSERT INTO reminder_templates (account_id, name, subject, body, created_at) VALUES (?, ?, ?, ?, ?)",
-        [(account_id, n, s, b, ts) for n, s, b in templates],
+        [(account_id, n, s, b, ts) for n, s, b in DEFAULT_REMINDER_TEMPLATES],
     )
 
 
