@@ -9,16 +9,22 @@ import os
 
 from combined_wsgi import application as _inner
 
+# Styled by a separate CSS file (not inline), so apps with a strict Content-Security-Policy still show it properly.
 BANNER = (
-    '<div style="position:sticky;top:0;z-index:2147483647;background:#ffb35c;color:#2a1236;'
-    'font:600 14px/1.4 system-ui,sans-serif;padding:8px 14px;text-align:center">'
+    '<link rel="stylesheet" href="/_demo/banner.css"><div class="st-demo-banner" role="note">'
     'Demo only: try everything freely, but anything you enter may be erased when this demo restarts. '
     'Please don\'t enter real customer data.</div>'
 ).encode()
+BANNER_CSS = (b".st-demo-banner{position:sticky;top:0;z-index:2147483647;background:#ffb35c;color:#2a1236;"
+              b"font:600 14px/1.4 system-ui,sans-serif;padding:8px 14px;text-align:center}")
 
 
 def _with_banner(app):
     def wrapped(environ, start_response):
+        if environ.get("PATH_INFO") == "/_demo/banner.css":
+            start_response("200 OK", [("Content-Type", "text/css"), ("Content-Length", str(len(BANNER_CSS))),
+                                      ("Cache-Control", "public, max-age=86400")])
+            return [BANNER_CSS]
         captured = {}
 
         def capture(status, headers, exc_info=None):
