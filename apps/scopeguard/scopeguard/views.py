@@ -12,6 +12,7 @@ from flask import (
 from . import services as s
 from .auth import login_required
 from .db import get_db
+from .message_i18n import localized_message
 
 bp = Blueprint("main", __name__)
 
@@ -824,8 +825,11 @@ def link_create(project_id):
     local_only = not base and request.host.rsplit(":", 1)[0].strip("[]") in ("127.0.0.1", "localhost", "::1")
     tmpl = db.execute("SELECT * FROM message_templates WHERE account_id = ? ORDER BY id", (aid(),)).fetchall()
     ctx = s.message_context(db, p, g.account["name"], review_link=url)
-    rendered = [{"name": t["name"], "subject": s.render_text(t["subject"], ctx), "body": s.render_text(t["body"], ctx)}
-                for t in tmpl if "{review_link}" in t["body"]]
+    rendered = []
+    for t in tmpl:
+        if "{review_link}" in t["body"]:
+            subject, body = localized_message(t, ctx, s.render_text)  # Thai only for unedited built-ins
+            rendered.append({"name": t["name"], "subject": subject, "body": body})
     return render_template("link_created.html", p=p, url=url, days=days, rendered=rendered, local_only=local_only,
                            recipient=recipient, can_decide=can_decide)
 
@@ -1026,9 +1030,9 @@ def compose(project_id):
     changes = db.execute("SELECT id, title FROM change_requests WHERE project_id = ? AND account_id = ? ORDER BY id DESC",
                          (project_id, aid())).fetchall()
     ctx = s.message_context(db, p, g.account["name"], change_request=cr)
+    subject, body = localized_message(t, ctx, s.render_text)  # Thai only for unedited built-ins
     return render_template(
-        "compose.html", p=p, templates=templates, t=t, cr=cr, changes=changes,
-        subject=s.render_text(t["subject"], ctx), body=s.render_text(t["body"], ctx),
+        "compose.html", p=p, templates=templates, t=t, cr=cr, changes=changes, subject=subject, body=body,
     )
 
 

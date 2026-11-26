@@ -15,7 +15,7 @@ BANNER = (
     'Demo only: try everything freely, but anything you enter may be erased when this demo restarts. '
     'Please don\'t enter real customer data.</div>'
 ).encode()
-EXAMPLE_LOGINS = {"invoicechaser", "payrecover", "contractordocs", "leadfollowup"}   # see demo_accounts.py
+EXAMPLE_LOGINS = {"invoicechaser", "payrecover", "contractordocs", "leadfollowup", "quoteflow"}   # see demo_accounts.py
 
 
 def banner_for(path):

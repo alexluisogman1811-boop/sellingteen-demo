@@ -14,12 +14,16 @@ import re
 from dataclasses import dataclass, field
 from datetime import date
 
+from flask import has_request_context, request
+
 from ..dates import local_today
 
 from .services import ServiceMatch, classify_service
 
 # A plausible first name: letters plus internal space, hyphen, apostrophe or period.
 _NAME_RE = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ'’.\- ]{0,39}$")
+# Thai drafts only: the same, but names typed in Thai script ("สมชาย") are allowed too.
+_NAME_RE_TH = re.compile(r"^[A-Za-zÀ-ÖØ-öø-ÿก-ฮ][A-Za-zÀ-ÖØ-öø-ÿก-๛'’.\- ]{0,39}$")
 _SUSPICIOUS_NAME_WORDS = {
     "ignore", "instruction", "instructions", "system", "prompt", "assistant", "previous",
     "discount", "free", "guarantee", "warranty", "price", "offer", "admin", "test", "demo",
@@ -29,6 +33,20 @@ STALENESS_UNKNOWN = "unknown"
 STALENESS_RECENT = "recent"      # 0-3 days
 STALENESS_WEEK = "week"          # 4-13 days
 STALENESS_STALE = "stale"        # 14+ days
+
+LANGUAGE_COOKIE = "st_lang"
+
+
+def message_language() -> str:
+    """Language for a NEW draft: "th" when the owner chose Thai, else "en".
+
+    The hosting layer sets the cookie st_lang=th when Thai is selected. Safe to
+    call outside a request (always "en" then). It is read once, when a draft is
+    generated; drafts that already exist are stored text and are never rewritten.
+    """
+    if has_request_context() and request.cookies.get(LANGUAGE_COOKIE) == "th":
+        return "th"
+    return "en"
 
 
 @dataclass(frozen=True)
@@ -44,6 +62,7 @@ class DraftContext:
     has_phone: bool
     has_email: bool
     warnings: tuple[str, ...] = field(default_factory=tuple)
+    lang: str = "en"                  # "en" | "th": the language the draft is written in
 
     def facts(self) -> list[tuple[str, str]]:
         """Human-readable list of facts the draft was allowed to use."""
@@ -55,15 +74,20 @@ class DraftContext:
             ("Your business", self.business_name or "(missing)"),
             ("Signed by", self.sender_name or "(not signed)"),
         ]
+        if self.lang == "th":
+            items.append(("Message language", "Thai"))
         return items
 
 
-def safe_first_name(raw: str | None) -> tuple[str | None, str | None]:
-    """Return (name, warning). Never raises; never returns text that isn't a plain name."""
+def safe_first_name(raw: str | None, lang: str = "en") -> tuple[str | None, str | None]:
+    """Return (name, warning). Never raises; never returns text that isn't a plain name.
+
+    For Thai drafts, names typed in Thai script are accepted as well.
+    """
     value = (raw or "").strip()
     if not value:
         return None, "No customer first name on file, so the draft says “Hi there”."
-    if not _NAME_RE.match(value):
+    if not (_NAME_RE_TH if lang == "th" else _NAME_RE).match(value):
         return None, "The customer name contains unusual characters, so it was left out. Check the lead record."
     words = value.replace("-", " ").split()
     if len(words) > 2 or any(w.lower().strip(".'’") in _SUSPICIOUS_NAME_WORDS for w in words):
@@ -79,11 +103,13 @@ def _clean_label(raw: str | None, max_len: int) -> str | None:
 
 
 def build_context(lead, channel: str, business_name: str | None, sender_name: str | None,
-                  today: date | None = None) -> DraftContext:
+                  today: date | None = None, lang: str | None = None) -> DraftContext:
+    """lang: "en" or "th"; when not given it is decided from the request (see message_language)."""
     today = today or local_today()
+    lang = lang if lang in ("en", "th") else message_language()
     warnings: list[str] = []
 
-    name, warn = safe_first_name(lead.first_name)
+    name, warn = safe_first_name(lead.first_name, lang)
     if warn:
         warnings.append(warn)
 
@@ -125,4 +151,5 @@ def build_context(lead, channel: str, business_name: str | None, sender_name: st
         has_phone=has_phone,
         has_email=has_email,
         warnings=tuple(warnings),
+        lang=lang,
     )

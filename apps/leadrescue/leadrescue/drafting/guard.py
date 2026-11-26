@@ -52,6 +52,27 @@ _CHECKS = [
 ]
 _COMPILED = [(code, msg, re.compile(rx, re.IGNORECASE)) for code, msg, rx in _CHECKS]
 
+# The same claims written in Thai (Thai drafts, or Thai text an owner typed).
+# These only match Thai script, so English text is checked exactly as before.
+_CHECKS_TH = [
+    ("price", r"\d[\d,]*(\.\d+)?\s*บาท|฿|ราคา\s*\d|ค่าบริการ\s*\d"),
+    ("discount", r"ส่วนลด|ลดราคา|ลด\s*\d|โปรโมชั่น|โปรโมชัน|ฟรี|แถม|ไม่มีค่าใช้จ่าย|ไม่เสียค่าใช้จ่าย|ราคาพิเศษ|ข้อเสนอพิเศษ"),
+    ("guarantee", r"รับประกัน|การันตี|รับรองว่า|สัญญาว่า|ตลอดชีพ|ไม่รั่วแน่นอน"),
+    ("policy", r"นโยบาย|ข้อกำหนดและเงื่อนไข|คืนเงิน"),
+    ("date_time", r"พรุ่งนี้|มะรืน|คืนนี้|สัปดาห์หน้า|อาทิตย์หน้า|เดือนหน้า|"
+                  r"วัน(จันทร์|อังคาร|พุธ|พฤหัส|ศุกร์|เสาร์|อาทิตย์)|"
+                  r"(มกรา|กุมภา|มีนา|เมษา|พฤษภา|มิถุนา|กรกฎา|สิงหา|กันยา|ตุลา|พฤศจิกา|ธันวา)|"
+                  r"\d{1,2}\s*(โมง|นาฬิกา|น\.)|เวลา\s*\d"),
+    ("appointment", r"(นัด|จอง)ไว้แล้ว|ยืนยันนัด|ยืนยันแล้ว|นัดหมายเรียบร้อย|เจอกันวัน|เจอกันพรุ่งนี้"),
+    ("insurance", r"ประกัน(ภัย)?\s*(จะ)?(จ่าย|ครอบคลุม|คุ้มครอง)|เคลมประกันได้|ค่าเสียหายส่วนแรก"),
+    ("urgency", r"ด่วน|รีบ|เท่านั้น|หมดเขต|คิวว่าง|คิวเต็ม|เหลือ(อีก)?\s*\d|โอกาสสุดท้าย"),
+]
+_MESSAGES = {code: msg for code, msg, _ in _CHECKS}
+_MESSAGES["urgency"] = "pressures the customer with urgency or availability claims"
+_COMPILED_TH = [(code, _MESSAGES[code], re.compile(rx)) for code, rx in _CHECKS_TH]
+# A Thai greeting followed by a title means a name was used ("สวัสดีคุณ...", "เรียน คุณ...").
+_THAI_NAMED_GREETING = re.compile(r"^(สวัสดี|เรียน)\s*(คุณ|พี่|น้อง)")
+
 MAX_TEXT_LEN = 640       # ~4 SMS segments
 MAX_EMAIL_LEN = 2000
 
@@ -76,6 +97,11 @@ def find_issues(text: str, ctx: DraftContext | None = None, channel: str = "text
     for code, msg, rx in _COMPILED:
         if rx.search(checked):
             issues.append(Issue(code, msg))
+    if re.search("[฀-๿]", checked):
+        found = {i.code for i in issues}
+        for code, msg, rx in _COMPILED_TH:
+            if code not in found and rx.search(checked):
+                issues.append(Issue(code, msg))
     limit = MAX_TEXT_LEN if channel == "text" else MAX_EMAIL_LEN
     if len(body) > limit:
         issues.append(Issue("length", f"is longer than {limit} characters"))
@@ -83,6 +109,8 @@ def find_issues(text: str, ctx: DraftContext | None = None, channel: str = "text
         # A generator must not make up a customer name when none was supplied.
         first_line = body.strip().splitlines()[0]
         if re.match(r"^(?i:hi|hello|hey|dear)\s+(?!(?i:there|folks|all)\b)[A-Za-z]", first_line):
+            issues.append(Issue("invented_name", "greets the customer by a name that isn't on file"))
+        elif _THAI_NAMED_GREETING.match(first_line):
             issues.append(Issue("invented_name", "greets the customer by a name that isn't on file"))
     return issues
 

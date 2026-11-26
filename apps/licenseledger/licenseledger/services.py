@@ -1477,6 +1477,26 @@ def reminder_context(db, lic):
     }
 
 
+def render_reminder(db, tpl, lic, lang=None):
+    """(subject, body) for a stored template filled in for a license.
+
+    English (and any edited/user-created template) is rendered exactly as stored.
+    In Thai mode an unedited built-in is rendered from its Thai version instead;
+    the stored row is never changed.
+    """
+    from . import i18n
+
+    thai = i18n.thai_builtin(tpl["subject"], tpl["body"]) if (lang or i18n.current_lang()) == "th" else None
+    ctx = reminder_context(db, lic)
+    if thai is None:
+        return render_placeholders(tpl["subject"], ctx), render_placeholders(tpl["body"], ctx)
+    for field, (en_value, th_value) in i18n.THAI_FALLBACKS.items():
+        if ctx[field] == en_value:
+            ctx[field] = th_value
+    subject, body = (i18n.thai_honorific(t, ctx["customer_name"]) for t in thai)
+    return render_placeholders(subject, ctx), render_placeholders(body, ctx)
+
+
 def delete_template(db, template_id):
     get_template(db, template_id)
     db.execute("DELETE FROM reminder_templates WHERE id = ? AND account_id = ?", (template_id, acct()))

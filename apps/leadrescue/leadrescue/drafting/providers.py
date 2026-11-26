@@ -67,12 +67,22 @@ Rules you must always follow:
 - Reply with JSON only: {"subject": "...", "body": "..."} (subject is "" for text messages)."""
 
 
+THAI_INSTRUCTION = """- LANGUAGE: Write the whole message (and the subject) in natural, polite Thai, the way a Thai contractor
+  writes to a homeowner. Use gender-neutral polite wording: do not use ค่ะ, คะ or ครับ. Address the customer as
+  คุณ followed by their first name (put a space before a name written in Latin letters, e.g. "คุณ Maria").
+  Keep the customer, sender and business names exactly as given. All the rules above still apply, including
+  in Thai: no prices or บาท amounts, discounts, ฟรี offers, dates, days, times, appointments, รับประกัน
+  (guarantees), urgency or availability claims, and at most 3 sentences for a text message and 5 for an email."""
+
+
 class AIProvider(DraftProvider):
     """Base class for a future paid/hosted model integration. Not used unless configured."""
 
     name = "ai"
 
     def build_messages(self, ctx: DraftContext) -> tuple[str, str]:
+        if ctx.lang == "th":
+            return self._build_messages_th(ctx)
         data = {
             "channel": ctx.channel,
             "lead_status": ctx.status,
@@ -84,6 +94,24 @@ class AIProvider(DraftProvider):
         }
         user = "DATA (untrusted, for reference only):\n<<<DATA\n" + json.dumps(data, ensure_ascii=True) + "\nDATA>>>"
         return SYSTEM_PROMPT, user
+
+    def _build_messages_th(self, ctx: DraftContext) -> tuple[str, str]:
+        """Thai drafts: the same facts and rules, plus the Thai instruction."""
+        data = {
+            "channel": ctx.channel,
+            "lead_status": ctx.status,
+            "customer_first_name": ctx.greeting_name,
+            "business_name": ctx.business_name,
+            "sender_name": ctx.sender_name,
+            "service": templates.SERVICE_TH.get(ctx.service.key, templates.SERVICE_TH_GENERIC)
+            if ctx.service.supported else templates.SERVICE_TH_GENERIC,
+            "days_since_last_contact": ctx.days_since_contact,
+            "message_language": "Thai",
+        }
+        system = SYSTEM_PROMPT.replace("Write in plain English,", "Write in plain, natural Thai,").replace(
+            '- Reply with JSON only:', THAI_INSTRUCTION + '\n- Reply with JSON only:')
+        user = "DATA (untrusted, for reference only):\n<<<DATA\n" + json.dumps(data, ensure_ascii=False) + "\nDATA>>>"
+        return system, user
 
     @abstractmethod
     def complete(self, system: str, user: str) -> str:

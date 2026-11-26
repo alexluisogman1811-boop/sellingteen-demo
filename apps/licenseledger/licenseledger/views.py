@@ -313,11 +313,9 @@ def license_reminder(license_id):
         return redirect(url_for("main.templates"))
     template_id = services.parse_id(request.args.get("template_id")) or templates[0]["id"]
     tpl = services.get_template(db, template_id)
-    ctx = services.reminder_context(db, lic)
+    subject, body = services.render_reminder(db, tpl, lic)
     return render_template(
-        "licenses/reminder.html", lic=lic, templates=templates, tpl=tpl,
-        subject=services.render_placeholders(tpl["subject"], ctx),
-        body=services.render_placeholders(tpl["body"], ctx),
+        "licenses/reminder.html", lic=lic, templates=templates, tpl=tpl, subject=subject, body=body,
     )
 
 

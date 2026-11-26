@@ -125,8 +125,29 @@ def seed_leadfollowup(app):
         return "created"
 
 
+# ---------------------------------------------------------------- QuoteFlow (a ready business profile with prices)
+def seed_quoteflow(app):
+    with app.app_context():
+        db = _app_db(app)
+        if db.execute("SELECT 1 FROM users WHERE email = ?", (EMAIL,)).fetchone():
+            return "already there"
+        uid = db.execute("INSERT INTO users (email, password_hash, onboarded) VALUES (?, ?, 1)",
+                         (EMAIL, generate_password_hash(PASSWORD))).lastrowid
+        db.execute(
+            "INSERT INTO business_profiles (user_id, business_name, description, services, starting_prices, service_area, "
+            "opening_hours, contact_info, currency, policies, basic_price, deep_price, bedrooms_included, bathrooms_included, "
+            "extra_bedroom_price, extra_bathroom_price, addons) VALUES (?, ?, ?, ?, '', ?, ?, ?, 'USD', ?, ?, ?, ?, ?, ?, ?, ?)",
+            (uid, "Sparkle Home Cleaning (Example)", "Home cleaning for apartments and houses. Fictional example business.",
+             "Regular cleaning\nDeep cleaning\nMove-out cleaning", "Downtown and nearby areas",
+             "Mon-Sat 8:00-18:00", "hello@example.com",
+             "Free cancellation up to 24 hours before the visit.\nA regular clean takes about 2-3 hours.",
+             "120", "220", "2", "1", "25", "20", "Inside oven: 45\nInside fridge: 30\nInterior windows: 40"))
+        db.commit()
+        return "created"
+
+
 SEEDERS = {"invoicechaser": seed_invoicechaser, "payrecover": seed_payrecover,
-           "contractordocs": seed_contractordocs, "leadfollowup": seed_leadfollowup}
+           "contractordocs": seed_contractordocs, "leadfollowup": seed_leadfollowup, "quoteflow": seed_quoteflow}
 
 
 def seed_all(build_app):

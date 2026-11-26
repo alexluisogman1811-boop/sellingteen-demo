@@ -86,14 +86,21 @@ def _line_name(line):
     return re.split(r"\s+[-–—]\s+|\s*\(|:", line, maxsplit=1)[0].strip()
 
 
-def _duration(line):
+def _duration_text(line):
+    """The duration part of a service line, exactly as the owner typed it."""
     if not line:
         return ""
     m = re.search(r"((?:about|around|approx\.?|approximately)\s+)?\d+(?:\.\d+)?(?:\s*(?:-|–|to)\s*\d+(?:\.\d+)?)?"
                   r"\s*(?:hours?|hrs?|minutes?|mins?)\b.*$", line, re.IGNORECASE)
     if not m:
         return ""
-    d = m.group(0).strip().rstrip(".")
+    return m.group(0).strip().rstrip(".")
+
+
+def _duration(line):
+    d = _duration_text(line)
+    if not d:
+        return ""
     return d[0].upper() + d[1:]
 
 
@@ -124,8 +131,165 @@ def _covers(rules):
     return "covers " + " and ".join(parts) if parts else ""
 
 
-def simulate_quote(profile, customer_request):
-    """Return the same structure the real AI path returns (before _finalize)."""
+# --- Thai replies (owner chose Thai; see language.reply_language) ---------------------------------
+# Only the template's own sentences are translated. Everything the owner typed (business name,
+# service and add-on names, durations, policies, hours, area, contact) is quoted exactly as written,
+# and every amount is the calculator's / format_money's own text.
+
+_TH_JOB = {"deep": "ทำความสะอาดแบบละเอียด", "basic": "ทำความสะอาดทั่วไป"}
+_TH_SERVICES = {
+    "carpet cleaning": "ทำความสะอาดพรม",
+    "window cleaning": "ทำความสะอาดหน้าต่าง",
+    "oven cleaning": "ทำความสะอาดเตาอบ",
+    "fridge cleaning": "ทำความสะอาดตู้เย็น",
+    "laundry and ironing": "ซักรีดเสื้อผ้า",
+    "pressure washing": "ฉีดล้างด้วยน้ำแรงดันสูง",
+    "gutter cleaning": "ทำความสะอาดรางน้ำฝน",
+    "upholstery cleaning": "ทำความสะอาดโซฟาและเฟอร์นิเจอร์บุผ้า",
+    "mattress cleaning": "ทำความสะอาดที่นอน",
+    "move-in/move-out cleaning": "ทำความสะอาดก่อนย้ายเข้าหรือหลังย้ายออก",
+    "commercial cleaning": "ทำความสะอาดสำนักงานและสถานที่เชิงพาณิชย์",
+    "specialist cleaning": "ทำความสะอาดเฉพาะทาง",
+}
+_TH_ROOM = {"bedroom": "ห้องนอน", "bathroom": "ห้องน้ำ"}
+_DAY_TH = r"(วันจันทร์|วันอังคาร|วันพุธ|วันพฤหัส|วันศุกร์|วันเสาร์|วันอาทิตย์|พรุ่งนี้|วันนี้|มะรืน|สัปดาห์นี้|สัปดาห์หน้า|อาทิตย์หน้า|เสาร์อาทิตย์|สุดสัปดาห์)"
+
+
+def _join_th(items):
+    """'A, B และ C' (no space after และ before Thai text, one before Latin text)."""
+    items = list(items)
+    if len(items) == 1:
+        return items[0]
+    last = items[-1]
+    sep = "" if re.match(r"[฀-๿]", last) else " "
+    return ", ".join(items[:-1]) + " และ" + sep + last
+
+
+def _covers_th(rules):
+    bed, bath = rules["bedrooms_included"], rules["bathrooms_included"]
+    parts = [f"ไม่เกิน {n} {w}" for n, w in ((bed, "ห้องนอน"), (bath, "ห้องน้ำ")) if n]
+    return "ครอบคลุม" + " และ".join(parts) if parts else ""
+
+
+def _ask_th(ask):
+    """calculate_price's ask_customer item ("How many bedrooms the property has.") in Thai."""
+    for room, th in _TH_ROOM.items():
+        if room in ask.lower():
+            return "จำนวน" + th
+    return "รายละเอียดเพิ่มเติมของที่พัก"
+
+
+def _breakdown_th(calc, rules, currency):
+    """The calculator's breakdown lines with the template words in Thai. Amounts are copied from the
+    calculator's own text; add-on lines are the owner's names and prices, unchanged."""
+    from .pricing import format_money
+    addon_lines = {f"{a['name']}: {format_money(a['price'], currency)}" for a in rules["addons"]}
+    out = []
+    for i, line in enumerate(calc["breakdown"]):
+        m = re.match(r"^(Basic|Deep) cleaning(?: \(includes (.*)\))?: (.+)$", line) if i == 0 else None
+        if m:
+            incl = (m.group(2) or "").replace(" bed", " ห้องนอน").replace(" bath", " ห้องน้ำ")
+            out.append(f"{_TH_JOB[m.group(1).lower()]}{' (รวม ' + incl + ')' if incl else ''}: {m.group(3)}")
+            continue
+        m = re.match(r"^(\d+) extra (bedroom|bathroom)s? × (.+): (.+)$", line) if line not in addon_lines else None
+        if m:
+            out.append(f"{_TH_ROOM[m.group(2)]}เพิ่ม {m.group(1)} ห้อง × {m.group(3)}: {m.group(4)}")
+            continue
+        out.append(line)
+    return out
+
+
+def _owner_text(text):
+    """An owner-written field on one line, otherwise exactly as typed."""
+    return " ".join(text.split())
+
+
+def _owner_lines(text):
+    """Non-empty lines of an owner-written field, exactly as typed (bullet markers removed)."""
+    return [l for l in (line.strip().lstrip("-•* ").strip() for line in text.splitlines()) if l]
+
+
+def _thai_reply(profile, rules, calc, *, name, service_type, explicit, bedrooms, bathrooms, addons_requested,
+                upsells, line, not_offered, offered_unpriced, other_requested, services_text, t):
+    """The customer reply in Thai. Mirrors the English reply in simulate_quote sentence for sentence."""
+    from .language import address_th
+    cur = profile.get("currency") or "USD"
+    business = (profile.get("business_name") or "").strip()
+    duration = _duration_text(line) if calc and calc["can_quote"] else ""
+    paragraphs = [f"ขอบคุณที่ติดต่อ {business}" if business else "ขอบคุณที่ติดต่อเรา"]
+
+    if calc:
+        job = _TH_JOB[service_type]
+        home = ""
+        if bedrooms is not None and bathrooms is not None:
+            home = f" สำหรับบ้านของคุณขนาด {bedrooms} ห้องนอน {bathrooms} ห้องน้ำ"
+        elif bedrooms is not None:
+            home = f" สำหรับบ้านของคุณขนาด {bedrooms} ห้องนอน"
+        extras = f" พร้อม {_join_th([a['name'] for a in addons_requested])}" if addons_requested else ""
+        if not calc["can_quote"]:
+            paragraphs.append(f"เรายินดีให้บริการ{job}{home} และจะแจ้งราคาที่แน่นอนให้ทราบอีกครั้งโดยเร็ว")
+        elif calc["is_starting_price"]:
+            asks = [_ask_th(a) for a in calc["ask_customer"]]
+            covers = _covers_th(rules)
+            text = (f"ราคา{job}{extras} เริ่มต้นที่ {calc['price_display'].replace('From ', '')}"
+                    f"{' (' + covers + ')' if covers else ''}")
+            if asks:
+                text += f" รบกวนแจ้ง{_join_th(asks)}ของที่พัก เพื่อที่เราจะได้แจ้งราคาที่แน่นอนให้ทราบ"
+            paragraphs.append(text)
+        elif len(calc["breakdown"]) > 1:
+            items = "\n".join(f"• {b}" for b in _breakdown_th(calc, rules, cur))
+            paragraphs.append(f"ใบเสนอราคา{job}{home}{extras} มีรายละเอียดดังนี้\n\n{items}\n"
+                              f"รวมทั้งหมด: {calc['price_display']}")
+        else:
+            paragraphs.append(f"ค่าบริการ{job}{home}{extras} อยู่ที่ {calc['price_display']}")
+        if duration and not calc["is_starting_price"]:
+            paragraphs.append(f"ระยะเวลาโดยประมาณ: {duration}")
+        if not explicit and profile.get("deep_price") and service_type == "basic":
+            paragraphs.append("หากต้องการความสะอาดที่ละเอียดยิ่งขึ้น เรามีบริการทำความสะอาดแบบละเอียดด้วย")
+        if calc["can_quote"] and upsells:
+            paragraphs.append("บริการเสริมที่เพิ่มได้: " + _join_th(configured_addons(profile, upsells)))
+
+    if not_offered:
+        sentence = f"ขออภัย ขณะนี้เรายังไม่มีบริการ{_join_th([_TH_SERVICES[l] for l in not_offered])}"
+        ours = [_line_name(l.strip().lstrip("-•* ")) for l in services_text.splitlines()
+                if l.strip() and not l.lower().lstrip("-•* ").startswith("add-on")][:3]
+        if ours and not calc:
+            sentence += f" บริการที่เรามีคือ {_join_th(ours)} ยินดีเสนอราคาให้สำหรับบริการเหล่านี้"
+        paragraphs.append(sentence)
+    for label in offered_unpriced:
+        paragraphs.append(f"เรามีบริการ{_TH_SERVICES[label]} และจะแจ้งราคาสำหรับบริการนี้ให้ทราบแยกต่างหาก")
+
+    if not calc and not other_requested:
+        paragraphs.append("เพื่อจัดทำใบเสนอราคา รบกวนแจ้งประเภทการทำความสะอาดที่ต้องการ (แบบทั่วไปหรือแบบละเอียด) "
+                          "รวมถึงจำนวนห้องนอนและห้องน้ำของที่พัก")
+
+    if calc:
+        notes = []
+        if (profile.get("service_area") or "").strip():
+            notes.append(f"พื้นที่ให้บริการ: {_owner_text(profile['service_area'])}")
+        if (profile.get("opening_hours") or "").strip():
+            notes.append(f"เวลาทำการ: {_owner_text(profile['opening_hours'])}")
+        notes += _owner_lines(profile.get("starting_prices", "")) + _owner_lines(profile.get("policies", ""))
+        if notes:
+            paragraphs.append("ข้อมูลเพิ่มเติม:\n" + "\n".join(f"• {n}" for n in notes[:6]))
+
+    if re.search(_DAY, t) or re.search(_DAY_TH, t):
+        paragraphs.append("เราจะตรวจสอบตารางงานสำหรับวันที่คุณแจ้งมา แล้วจะยืนยันกลับอีกครั้ง")
+    elif calc and calc["can_quote"] and not calc["is_starting_price"]:
+        paragraphs.append("หากต้องการจอง ตอบกลับพร้อมแจ้งวันและเวลาที่สะดวกได้เลย แล้วเราจะยืนยันกลับอีกครั้ง")
+    if calc and calc["can_quote"] and not calc["is_starting_price"]:
+        paragraphs.append("หากรายละเอียดใดไม่ตรงกับที่แจ้งไว้ โปรดแจ้งให้เราทราบ แล้วเราจะปรับใบเสนอราคาให้")
+    contact = (profile.get("contact_info") or "").strip()
+    if contact:
+        paragraphs.append(f"ช่องทางติดต่อ: {_owner_text(contact)}")
+
+    greeting = "สวัสดี " + address_th(name) if name else "สวัสดี"
+    return greeting + "\n\n" + "\n\n".join(paragraphs) + "\n\nขอแสดงความนับถือ\n" + (business or "ทีมงาน")
+
+
+def simulate_quote(profile, customer_request, lang="en"):
+    """Return the same structure the real AI path returns (before _finalize).
+    lang "th" writes the customer reply in Thai; everything else (and the price) is the same."""
     from .ai import _finalize   # local import: ai imports this module
 
     original = customer_request
@@ -249,6 +413,12 @@ def simulate_quote(profile, customer_request):
         paragraphs.append(f"Our contact details: {_sentence(contact, end='')}.")
 
     reply = f"Hi {name or 'there'},\n\n" + "\n\n".join(paragraphs) + f"\n\nKind regards,\n{business}"
+    if lang == "th":
+        reply = _thai_reply(profile, rules, calc, name=name, service_type=service_type, explicit=explicit,
+                            bedrooms=bedrooms, bathrooms=bathrooms, addons_requested=addons_requested,
+                            upsells=upsells, line=line, not_offered=not_offered,
+                            offered_unpriced=offered_unpriced, other_requested=other_requested,
+                            services_text=services_text, t=t)
 
     # Owner-facing summary.
     parts = []

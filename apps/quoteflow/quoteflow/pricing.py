@@ -199,6 +199,35 @@ _AMOUNT = re.compile(
 )
 
 
+_CODES = r"USD|EUR|GBP|CAD|AUD|NZD|CHF|SEK|NOK|DKK|SGD|THB|ZAR|INR"
+_THAI_CHAR = "฀-๿"
+_ANY_NUM = r"[\d๐-๙][\d๐-๙,]*(?:\.[\d๐-๙]+)?"
+# Amounts that only appear in Thai text and that _AMOUNT misses: Thai digits after a currency symbol,
+# "<number> บาท", and currency codes written right next to Thai letters (no word boundary there).
+# Each alternative needs Thai characters, so English replies are checked exactly as before.
+_AMOUNT_TH = re.compile(
+    r"[$€£₹฿]\s?([๐-๙][๐-๙,]*(?:\.[๐-๙]+)?)"
+    rf"|({_ANY_NUM})\s?บาท"
+    rf"|(?<=[{_THAI_CHAR}])(?:{_CODES})\s?({_ANY_NUM})"
+    rf"|({_ANY_NUM})\s?(?:{_CODES}|kr)(?=[{_THAI_CHAR}])"
+)
+_THAI_DIGITS = str.maketrans("๐๑๒๓๔๕๖๗๘๙", "0123456789")
+
+
+def _amounts(reply):
+    """(number, matched text) for every money amount in the reply, English or Thai."""
+    found, spans = [], []
+    for m in _AMOUNT.finditer(reply or ""):
+        found.append((float((m.group(1) or m.group(2)).replace(",", "")), m.group(0).strip()))
+        spans.append(m.span())
+    for m in _AMOUNT_TH.finditer(reply or ""):
+        if any(m.start() < e and s < m.end() for s, e in spans):
+            continue                      # already found by _AMOUNT
+        num = next(g for g in m.groups() if g)
+        found.append((float(num.translate(_THAI_DIGITS).replace(",", "")), m.group(0).strip()))
+    return found
+
+
 def unsupported_amounts(reply, profile, calcs=None):
     """Money amounts in the reply that don't appear anywhere in the owner's
     saved information or in our own calculations. Used as a safety net."""
@@ -210,11 +239,10 @@ def unsupported_amounts(reply, profile, calcs=None):
         sources += calc["breakdown"]
         allowed.add(float(calc["total"] or 0))
     for v in sources:
-        for n in _NUMBER.findall(str(v or "")):
+        for n in _NUMBER.findall(str(v or "").translate(_THAI_DIGITS)):
             allowed.add(float(n.replace(",", "")))
     bad = []
-    for m in _AMOUNT.finditer(reply or ""):
-        n = float((m.group(1) or m.group(2)).replace(",", ""))
+    for n, text in _amounts(reply):
         if n not in allowed:
-            bad.append(m.group(0).strip())
+            bad.append(text)
     return bad
