@@ -143,6 +143,10 @@ def isolate_cookies(app, slug):
     app.config["SESSION_COOKIE_NAME"] = f"st_{slug}"
     app.config["SESSION_COOKIE_PATH"] = f"/{slug}"
     app.config["SESSION_COOKIE_DOMAIN"] = None
+    # "Keep me logged in" cookies (Flask-Login) too: otherwise every app would share one "remember_token" at "/".
+    app.config["REMEMBER_COOKIE_NAME"] = f"st_{slug}_remember"
+    app.config["REMEMBER_COOKIE_PATH"] = f"/{slug}"
+    app.config["REMEMBER_COOKIE_DOMAIN"] = None
     return app
 
 
