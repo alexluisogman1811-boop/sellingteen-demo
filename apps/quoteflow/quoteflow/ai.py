@@ -196,7 +196,10 @@ def ai_enabled():
 
 def generate_quote(profile, customer_request, lang=None):
     # The reply language is decided once, here, and used for the whole quote.
-    lang = lang if lang in ("en", "th") else reply_language()
+    # A customer who wrote in Thai gets a Thai reply, whatever language the owner's screen is in.
+    if lang not in ("en", "th"):
+        from .thai_request import has_thai
+        lang = "th" if has_thai(customer_request) else reply_language()
     if not ai_enabled():
         from .demo import simulate_quote   # demo mode: no API calls (see demo.py)
         return simulate_quote(profile, customer_request, lang=lang)

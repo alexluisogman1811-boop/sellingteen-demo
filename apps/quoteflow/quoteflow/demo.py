@@ -14,6 +14,7 @@ It reads simple phrasing well, but it is NOT a measure of real AI quality.
 import re
 
 from .pricing import calculate_price, configured_addons, pricing_rules
+from .thai_request import asks_for, english_hints
 
 DEMO_NOTICE = "Demo mode: this quote was written by the built-in simulator, not the real AI (AI_MOCK=1)."
 
@@ -294,11 +295,15 @@ def simulate_quote(profile, customer_request, lang="en"):
 
     original = customer_request
     t = original.lower()
+    hints = english_hints(original)          # Thai message: add English words this simulator knows
+    if hints:
+        t = t + " " + hints
     rules = pricing_rules(profile)
     services_text = profile.get("services", "")
     offered_text = (services_text + "\n" + "\n".join(a["name"] for a in rules["addons"])).lower()
 
     addons_requested = _requested_addons(t, rules["addons"])
+    addons_requested += [a for a in rules["addons"] if a not in addons_requested and asks_for(original, a["name"])]
     addon_words = set().union(*(_significant(a["name"]) for a in addons_requested)) if addons_requested else set()
 
     explicit = "deep" if re.search(_DEEP, t) else ("basic" if re.search(_BASIC, t) else None)
